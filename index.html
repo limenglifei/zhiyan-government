@@ -1203,3 +1203,62 @@ renderLogicAnnotations();
   renderLogicAnnotations();
 })();
 </script>
+<style>
+.kb-list-toolbar .kb-date-filter{height:42px;display:none;align-items:center;gap:7px;padding:0 10px;border:1px solid #dce4ef;border-radius:7px;background:#fff;color:#718096;font-size:9px;white-space:nowrap}
+.kb-list-toolbar .kb-date-filter input{height:38px!important;border:0!important;padding:0!important;min-width:118px;background:transparent;color:#34465d}
+</style>
+<script>
+// policy-news-time-filters-v29
+(function enhanceKnowledgeTimeFilters(){
+  var policyCreatedTimes=['2026-07-20 09:16','2026-07-18 14:32','2026-07-17 17:08','2026-07-15 10:26','2026-07-12 16:45','2026-07-10 11:20'];
+  var newsCreatedTimes=['2026-07-24 08:36','2026-07-23 16:28','2026-07-23 11:12','2026-07-22 20:18','2026-07-21 09:07','2026-07-20 14:48'];
+  knowledgeBaseConfigs.policy.rows.forEach(function(row,index){row.createdAt=policyCreatedTimes[index]||row.date+' 09:00'});
+  knowledgeBaseConfigs.news.rows.forEach(function(row,index){row.createdAt=newsCreatedTimes[index]||String(row.date).slice(0,10)+' 09:00'});
+
+  function ensureDateFilter(id,labelText,after){
+    var wrap=document.getElementById(id+'Wrap');
+    if(!wrap){
+      wrap=document.createElement('label');wrap.id=id+'Wrap';wrap.className='kb-date-filter';
+      var label=document.createElement('span');label.textContent=labelText;
+      var input=document.createElement('input');input.type='date';input.id=id;input.setAttribute('aria-label',labelText);input.onchange=function(){filterKnowledgeList()};
+      wrap.appendChild(label);wrap.appendChild(input);after.insertAdjacentElement('afterend',wrap);
+    }
+    return wrap;
+  }
+  function configureTimeFilters(type){
+    var category=document.getElementById('kbCategoryFilter');if(!category)return;
+    var publishWrap=ensureDateFilter('kbPublishDateFilter','发布时间',category);
+    var createWrap=ensureDateFilter('kbCreateDateFilter','创建时间',publishWrap);
+    var enabled=type==='policy'||type==='news';
+    publishWrap.style.display=enabled?'inline-flex':'none';createWrap.style.display=enabled?'inline-flex':'none';
+    document.getElementById('kbPublishDateFilter').value='';document.getElementById('kbCreateDateFilter').value='';
+  }
+  var previousOpenKnowledgeBase=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenKnowledgeBase(type);configureTimeFilters(type);renderKnowledgeList()};
+
+  var previousRenderKnowledgeList=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderKnowledgeList();
+    if(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='news')return;
+    var publishInput=document.getElementById('kbPublishDateFilter'),createInput=document.getElementById('kbCreateDateFilter');
+    var publishDate=publishInput?publishInput.value:'',createDate=createInput?createInput.value:'';
+    var beforeRows=activeKnowledgeRows.slice();
+    var headRow=document.querySelector('#kbTableHead tr');
+    if(headRow&&headRow.children.length){var createdHead=document.createElement('th');createdHead.textContent='入库创建时间';headRow.insertBefore(createdHead,headRow.lastElementChild)}
+    var renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    beforeRows.forEach(function(item,index){
+      var row=item.row,tr=renderedRows[index];if(!tr)return;
+      var createdCell=document.createElement('td');createdCell.innerHTML='<em>'+row.createdAt+'</em>';tr.insertBefore(createdCell,tr.lastElementChild);
+      var matchesPublish=!publishDate||String(row.date).slice(0,10)===publishDate;
+      var matchesCreate=!createDate||String(row.createdAt).slice(0,10)===createDate;
+      if(!matchesPublish||!matchesCreate)tr.remove();
+    });
+    activeKnowledgeRows=beforeRows.filter(function(item){return (!publishDate||String(item.row.date).slice(0,10)===publishDate)&&(!createDate||String(item.row.createdAt).slice(0,10)===createDate)});
+    if(!activeKnowledgeRows.length){document.getElementById('kbTableBody').innerHTML='<tr><td colspan="9"><div class="kb-empty"><b>暂无符合双时间条件的数据</b><span>请调整发布时间或创建时间后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.fields.push(['入库创建时间','数据完成采集、解析、去重并首次写入对应精品知识库的时间；后续内容更新不覆盖首次入库时间。','采集任务日志、知识入库流水、数据血缘记录','首次入库时写入']);
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['双时间筛选','政策库和新闻舆情库可分别选择发布时间、创建时间。','两个条件同时填写时按交集筛选；清空任一条件后立即恢复对应范围。']);
+  renderLogicAnnotations();
+})();
+</script>
