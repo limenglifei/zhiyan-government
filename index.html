@@ -1106,3 +1106,100 @@ if(typeof originalPrototypeShow==='function'){
 document.addEventListener('keydown',function(event){if(event.key==='Escape')toggleLogicAnnotations(false);});
 renderLogicAnnotations();
 </script>
+<style>
+.kb-list-toolbar .kb-region-select{min-width:122px}
+.kb-list-toolbar select:disabled{color:#aab4c2;background:#f5f7fa;cursor:not-allowed}
+</style>
+<script>
+// knowledge-filter-ranking-annotation-v28
+(function enhanceKnowledgeWorkbench(){
+  var originalOpenKnowledgeBase=window.openKnowledgeBase;
+  var regionTree={
+    '江苏省':{'海州市':['经开区','高新区','临港区','化工园区','科创园','软件园'],'南京市':['玄武区','江宁区'],'苏州市':['工业园区','吴中区']},
+    '浙江省':{'杭州市':['滨江区','余杭区'],'宁波市':['鄞州区','北仑区']},
+    '安徽省':{'合肥市':['高新区','经开区'],'芜湖市':['鸠江区','弋江区']}
+  };
+
+  function optionHtml(label,values){return '<option value="all">'+label+'</option>'+values.map(function(value){return '<option>'+value+'</option>'}).join('')}
+  function getOrCreateRegionSelect(id,after){
+    var select=document.getElementById(id);
+    if(!select){select=document.createElement('select');select.id=id;select.className='kb-region-select';select.onchange=function(){updateCompanyRegionFilters(id);filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    return select;
+  }
+  window.updateCompanyRegionFilters=function(sourceId){
+    var province=document.getElementById('kbLevelFilter'),city=document.getElementById('kbCityFilter'),district=document.getElementById('kbDistrictFilter');
+    if(!province||!city||!district)return;
+    if(sourceId==='kbLevelFilter'){
+      var cities=province.value==='all'?[]:Object.keys(regionTree[province.value]||{});
+      city.innerHTML=optionHtml('全部城市',cities);city.disabled=province.value==='all';
+    }
+    if(sourceId==='kbLevelFilter'||sourceId==='kbCityFilter'){
+      var districts=(province.value!=='all'&&city.value!=='all'&&regionTree[province.value])?(regionTree[province.value][city.value]||[]):[];
+      district.innerHTML=optionHtml('全部区县',districts);district.disabled=city.value==='all';
+    }
+  };
+  function configureKnowledgeFilters(type){
+    var keyword=document.getElementById('kbKeyword'),level=document.getElementById('kbLevelFilter'),category=document.getElementById('kbCategoryFilter');
+    if(!keyword||!level||!category)return;
+    var city=getOrCreateRegionSelect('kbCityFilter',level),district=getOrCreateRegionSelect('kbDistrictFilter',city);
+    level.style.display='';category.style.display='';city.style.display='none';district.style.display='none';
+    level.disabled=false;category.disabled=false;
+    keyword.placeholder='输入标题、企业或关键词搜索';
+    if(type==='company'){
+      keyword.placeholder='输入企业名称或关键词搜索';
+      level.innerHTML=optionHtml('全部省份',Object.keys(regionTree));level.value='all';
+      level.onchange=function(){updateCompanyRegionFilters('kbLevelFilter');filterKnowledgeList()};
+      city.style.display='';district.style.display='';city.innerHTML=optionHtml('全部城市',[]);district.innerHTML=optionHtml('全部区县',[]);city.disabled=true;district.disabled=true;
+      var first=category.options[0];if(first)first.textContent='行业分类';
+    }else{
+      level.onchange=function(){filterKnowledgeList()};
+      level.innerHTML='<option value="all">全部级别</option><option>国家级</option><option>省级</option><option>市级</option><option>区级</option>';level.value='all';
+      if(type==='chain'){keyword.placeholder='输入产业链主题或关键词搜索';level.style.display='none';category.style.display='none'}
+      if(type==='project')keyword.placeholder='输入项目名称或关键词搜索';
+      if(type==='news'){keyword.placeholder='输入新闻标题或关键词搜索';level.style.display='none'}
+    }
+  }
+
+  window.openKnowledgeBase=function(type){
+    configureKnowledgeFilters(type);
+    originalOpenKnowledgeBase(type);
+    configureKnowledgeFilters(type);
+    renderKnowledgeList();
+  };
+  window.renderKnowledgeList=function(){
+    var cfg=knowledgeBaseConfigs[activeKnowledgeType];if(!cfg)return;
+    var keyword=document.getElementById('kbKeyword'),levelControl=document.getElementById('kbLevelFilter'),categoryControl=document.getElementById('kbCategoryFilter');
+    var q=keyword.value.trim().toLowerCase(),level=levelControl.value,category=categoryControl.value;
+    var province=document.getElementById('kbLevelFilter'),city=document.getElementById('kbCityFilter'),district=document.getElementById('kbDistrictFilter');
+    activeKnowledgeRows=cfg.rows.map(function(row,index){return {row:row,index:index}}).filter(function(item){
+      var row=item.row,base=(!q||JSON.stringify(row).toLowerCase().includes(q))&&(category==='all'||activeKnowledgeType==='chain'||row.category===category);
+      if(!base)return false;
+      if(activeKnowledgeType==='company'){
+        return (province.value==='all'||row.region.indexOf(province.value)>-1)&&(city.value==='all'||row.region.indexOf(city.value)>-1)&&(district.value==='all'||row.region.indexOf(district.value)>-1);
+      }
+      return activeKnowledgeType==='chain'||activeKnowledgeType==='news'||level==='all'||row.level===level;
+    });
+    document.getElementById('kbTableHead').innerHTML='<tr>'+cfg.columns.map(function(x){return '<th>'+x+'</th>'}).join('')+'<th>操作</th></tr>';
+    var body=document.getElementById('kbTableBody');
+    if(!activeKnowledgeRows.length){body.innerHTML='<tr><td colspan="8"><div class="kb-empty"><b>暂无符合筛选条件的数据</b><span>请调整关键词或筛选条件后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    body.innerHTML=activeKnowledgeRows.map(function(item){var r=item.row,cells=[];if(activeKnowledgeType==='policy')cells=[r.category,r.level,r.org,r.date,r.industry];else if(activeKnowledgeType==='company')cells=[r.code,r.category,r.region,r.capital,r.honor];else if(activeKnowledgeType==='chain')cells=[r.category,r.nodes,r.companies,r.rate,r.weak];else if(activeKnowledgeType==='project')cells=[r.category,r.level,r.org,r.amount,r.deadline];else cells=[r.date,r.org,r.region,r.product,r.sentiment];return '<tr onclick="openKnowledgeDetail('+item.index+')"><td><div class="kb-title-cell"><i>'+cfg.icon+'</i><div><b>'+r.title+'</b><span>'+r.sub+'</span></div></div></td>'+cells.map(function(cell,i){var cls=((activeKnowledgeType==='news'&&i===4)||(activeKnowledgeType==='policy'&&i===0))?' class="green"':'';return '<td><em'+cls+'>'+cell+'</em></td>'}).join('')+'<td><button class="kb-row-action" onclick="event.stopPropagation();openKnowledgeDetail('+item.index+')">查看详情 →</button></td></tr>'}).join('');
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+
+  var innovationCard=Array.from(document.querySelectorAll('.dashboard-bottom-rankings .ranking-card')).find(function(card){return card.querySelector('h2')&&card.querySelector('h2').textContent.indexOf('创新榜单')>-1});
+  if(innovationCard){
+    innovationCard.querySelector('h2').textContent='科创企业榜单';innovationCard.querySelector('.card-title p').textContent='近三月新增专利数量 · 单位：项';
+    var patentCounts=[['68','发明专利 39 项'],['54','发明专利 31 项'],['41','发明专利 24 项'],['33','发明专利 18 项'],['27','发明专利 16 项']];
+    innovationCard.querySelectorAll('.rank-row strong').forEach(function(node,index){node.innerHTML=patentCounts[index][0]+'<em>'+patentCounts[index][1]+'</em>'});
+  }
+  prototypeLogicAnnotations.dashboard.fields=prototypeLogicAnnotations.dashboard.fields.map(function(field){return field[0]==='纳税与科技创新榜'?['纳税与科创企业榜','纳税榜按本年度累计实缴税额降序；科创企业榜按近三月新增专利数量降序，同值时依次比较新增发明专利数、专利授权率。','税务汇总、国家知识产权数据、企业统一社会信用代码','专利数据每日增量，榜单月度固化']:field});
+  prototypeLogicAnnotations.chain.fields=[
+    ['链上企业','统计本地正常经营且与任一产业链节点关系强度达到配置阈值（默认≥60%）的企业，按统一社会信用代码去重；同一企业挂靠多个节点只计1家。','企业主数据、企业产品、产业链节点挂靠关系、经营状态','企业或节点关系更新后重算'],
+    ['链条完备度','Σ已覆盖必备节点权重÷Σ全部必备节点权重×100%。节点存在至少1家有效链上企业即视为覆盖，关键节点权重可在模型中配置。','产业链标准节点库、本地企业节点挂靠关系、节点权重配置','产业家底透视时计算，月度校准'],
+    ['本地配套率','Σmin（本地有效供给量，本地需求量）×参考价÷Σ本地关键投入品需求金额×100%；缺失真实产能时采用企业规模和产品产能区间估算并标注置信度。','企业采购需求、产品供给、供应关系、产能与参考价格','月度更新，重大项目落地后重算'],
+    ['关键薄弱点','先识别未覆盖节点、供需缺口超阈值节点及外部依赖度高的节点，再按“节点关键性×供需缺口×外部依赖度×风险暴露”排序，超过薄弱阈值的节点计入数量。','产业链节点权重、供需缺口、外地采购依赖、风险事件','产业家底透视时计算，业务人员复核']
+  ];
+  prototypeLogicAnnotations.investment.fields=prototypeLogicAnnotations.chain.fields.concat(prototypeLogicAnnotations.investment.fields);
+  renderLogicAnnotations();
+})();
+</script>
