@@ -1327,3 +1327,66 @@ renderLogicAnnotations();
   renderLogicAnnotations();
 })();
 </script>
+<style>
+.governance-scope-note{margin-top:12px;padding:10px 12px;border-radius:8px;background:#edf5ff;color:#3972bd;font-size:8px;line-height:1.6}
+.kb-list-toolbar #kbMatchFilter{min-width:132px}
+.kb-match-switch{position:relative;width:37px;height:20px;border:0;border-radius:12px;background:#cbd4df;margin-right:7px;vertical-align:middle;transition:.2s}
+.kb-match-switch:after{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(20,45,75,.25);transition:.2s}
+.kb-match-switch.on{background:#2878e8}.kb-match-switch.on:after{transform:translateX(17px)}
+.kb-match-status{font-size:8px;color:#76869a;margin-right:8px;vertical-align:middle}
+</style>
+<script>
+// governance-and-project-match-v31
+(function enhanceGovernanceAndProjectMatching(){
+  var configPanel=document.querySelector('[data-system-panel="config"]');
+  if(configPanel){
+    var governanceCard=Array.from(configPanel.querySelectorAll('.config-card')).find(function(card){return card.querySelector('h3')?.textContent.trim()==='数据治理策略'});
+    if(governanceCard){
+      governanceCard.querySelector('p').textContent='面向政策、新闻数据执行自动去重与敏感数据过滤。';
+      Array.from(governanceCard.querySelectorAll('.config-item')).forEach(function(item){item.remove()});
+      governanceCard.insertAdjacentHTML('beforeend','<div class="config-item"><div><b>自动去重</b><span>按标题、主体、来源与内容指纹识别重复数据</span></div><button class="system-switch on" aria-pressed="true" onclick="toggleSystemSwitch(this)"></button></div><div class="config-item"><div><b>敏感数据过滤</b><span>自动识别并过滤个人隐私及敏感字段</span></div><button class="system-switch on" aria-pressed="true" onclick="toggleSystemSwitch(this)"></button></div><div class="governance-scope-note">默认开启 · 仅对政策库、新闻舆情库的新增与更新数据生效</div>');
+    }
+  }
+
+  var defaultMatchStates=[true,true,true,false,true,false];
+  knowledgeBaseConfigs.project.rows.forEach(function(row,index){if(typeof row.participates!=='boolean')row.participates=defaultMatchStates[index]!==false});
+  function ensureMatchFilter(after){
+    var select=document.getElementById('kbMatchFilter');
+    if(!select){select=document.createElement('select');select.id='kbMatchFilter';select.onchange=function(){filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    select.innerHTML='<option value="all">是否参与匹配</option><option value="yes">参与匹配</option><option value="no">不参与匹配</option>';return select;
+  }
+  function configureMatchFilter(type){
+    var anchor=document.getElementById('kbRegionFilter')||document.getElementById('kbCategoryFilter'),filter=ensureMatchFilter(anchor);
+    filter.style.display=type==='project'?'block':'none';filter.value='all';
+  }
+  window.toggleProjectMatch=function(index,button,event){
+    if(event){event.preventDefault();event.stopPropagation()}
+    var row=knowledgeBaseConfigs.project.rows[index];if(!row)return;row.participates=!row.participates;
+    button.classList.toggle('on',row.participates);button.setAttribute('aria-checked',String(row.participates));
+    var label=button.nextElementSibling;if(label)label.textContent=row.participates?'参与':'不参与';
+    toast(row.title+(row.participates?' 已加入政策匹配范围':' 已从政策匹配范围移除'));
+    var filter=document.getElementById('kbMatchFilter');if(filter&&filter.value!=='all')renderKnowledgeList();
+  };
+  var previousOpenWithRange=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenWithRange(type);configureMatchFilter(type);renderKnowledgeList()};
+  var previousRenderWithRange=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderWithRange();if(activeKnowledgeType!=='project')return;
+    var matchFilter=document.getElementById('kbMatchFilter'),matchValue=matchFilter?matchFilter.value:'all';
+    var beforeRows=activeKnowledgeRows.slice(),renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    beforeRows.forEach(function(item,index){
+      var tr=renderedRows[index],row=item.row;if(!tr||!tr.lastElementChild)return;
+      var checked=row.participates!==false,label=checked?'参与':'不参与';
+      tr.lastElementChild.insertAdjacentHTML('afterbegin','<button type="button" role="switch" aria-label="参与匹配" aria-checked="'+checked+'" class="kb-match-switch'+(checked?' on':'')+'" onclick="toggleProjectMatch('+item.index+',this,event)"></button><span class="kb-match-status">'+label+'</span>');
+    });
+    activeKnowledgeRows=beforeRows.filter(function(item){return matchValue==='all'||(matchValue==='yes'&&item.row.participates!==false)||(matchValue==='no'&&item.row.participates===false)});
+    beforeRows.forEach(function(item,index){if(activeKnowledgeRows.indexOf(item)===-1&&renderedRows[index])renderedRows[index].remove()});
+    if(!activeKnowledgeRows.length){var columns=document.querySelectorAll('#kbTableHead th').length||7;document.getElementById('kbTableBody').innerHTML='<tr><td colspan="'+columns+'"><div class="kb-empty"><b>暂无符合参与匹配条件的项目</b><span>请切换筛选条件或调整项目参与状态</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.fields.push(['参与匹配','控制项目是否进入企业政策匹配与政策精准扶持的候选项目集；关闭后项目仍保留在项目库，但不参与召回和排序。','项目库匹配状态、操作审计日志','开关变更后实时生效']);
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['项目匹配开关','项目库列表可逐条开启或关闭“参与匹配”，并可按参与状态筛选。','开关更新后同步刷新筛选结果；操作不删除项目数据并保留审计记录。']);
+  prototypeLogicAnnotations.system.fields.push(['数据治理策略','自动去重与敏感数据过滤默认开启，仅作用于政策、新闻新增及更新数据。','政策库、新闻舆情库、采集与治理任务日志','入库前实时执行']);
+  renderLogicAnnotations();
+})();
+</script>
