@@ -1262,3 +1262,68 @@ renderLogicAnnotations();
   renderLogicAnnotations();
 })();
 </script>
+<style>
+.kb-list-toolbar>div:first-child{flex-wrap:wrap}
+.kb-list-toolbar .kb-date-filter.range{gap:6px;padding-right:8px}
+.kb-list-toolbar .kb-date-filter.range input{min-width:104px!important;width:104px}
+.kb-list-toolbar .kb-date-filter.range em{font-style:normal;color:#a2adba;font-size:8px}
+.kb-list-toolbar #kbRegionFilter{min-width:138px}
+</style>
+<script>
+// knowledge-range-region-filters-v30
+(function enhanceRangeAndRegionFilters(){
+  var policyRegions=['江苏省','江苏省 / 海州市','江苏省','全国','江苏省 / 海州市 / 海州高新区','江苏省 / 海州市'];
+  var projectRegions=['江苏省','江苏省 / 海州市','江苏省 / 海州市','江苏省','江苏省 / 海州市','全国'];
+  knowledgeBaseConfigs.policy.rows.forEach(function(row,index){row.region=policyRegions[index]||'江苏省'});
+  knowledgeBaseConfigs.project.rows.forEach(function(row,index){row.region=projectRegions[index]||'海州市'});
+
+  function ensureRangeInputs(wrapId,inputPrefix){
+    var wrap=document.getElementById(wrapId);if(!wrap)return;
+    wrap.classList.add('range');
+    var legacy=wrap.querySelector('input[id$="DateFilter"]');if(legacy)legacy.style.display='none';
+    if(document.getElementById(inputPrefix+'Start'))return;
+    var start=document.createElement('input');start.type='date';start.id=inputPrefix+'Start';start.setAttribute('aria-label',wrap.querySelector('span').textContent+'开始日期');
+    var separator=document.createElement('em');separator.textContent='至';
+    var end=document.createElement('input');end.type='date';end.id=inputPrefix+'End';end.setAttribute('aria-label',wrap.querySelector('span').textContent+'结束日期');
+    start.onchange=end.onchange=function(){filterKnowledgeList()};wrap.appendChild(start);wrap.appendChild(separator);wrap.appendChild(end);
+  }
+  function ensureRegionFilter(after){
+    var select=document.getElementById('kbRegionFilter');
+    if(!select){select=document.createElement('select');select.id='kbRegionFilter';select.onchange=function(){filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    return select;
+  }
+  function configureRangeRegionFilters(type){
+    ensureRangeInputs('kbPublishDateFilterWrap','kbPublishRange');ensureRangeInputs('kbCreateDateFilterWrap','kbCreateRange');
+    ['kbPublishRangeStart','kbPublishRangeEnd','kbCreateRangeStart','kbCreateRangeEnd'].forEach(function(id){var input=document.getElementById(id);if(input)input.value=''});
+    var category=document.getElementById('kbCategoryFilter'),region=ensureRegionFilter(category),enabled=type==='policy'||type==='project';
+    region.style.display=enabled?'block':'none';region.value='all';
+    if(enabled){
+      var options=type==='policy'?['全国','江苏省','海州市','海州高新区']:['全国','江苏省','海州市'];
+      region.innerHTML='<option value="all">全部地区</option>'+options.map(function(value){return '<option>'+value+'</option>'}).join('');
+    }
+  }
+  var previousOpenWithTime=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenWithTime(type);configureRangeRegionFilters(type);renderKnowledgeList()};
+
+  function inDateRange(value,start,end){var date=String(value||'').slice(0,10);return (!start||date>=start)&&(!end||date<=end)}
+  var previousRenderWithTime=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderWithTime();
+    var publishStart=document.getElementById('kbPublishRangeStart')?.value||'',publishEnd=document.getElementById('kbPublishRangeEnd')?.value||'';
+    var createStart=document.getElementById('kbCreateRangeStart')?.value||'',createEnd=document.getElementById('kbCreateRangeEnd')?.value||'';
+    var regionControl=document.getElementById('kbRegionFilter'),region=regionControl&&regionControl.style.display!=='none'?regionControl.value:'all';
+    var beforeRows=activeKnowledgeRows.slice(),renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    activeKnowledgeRows=beforeRows.filter(function(item){
+      var row=item.row,timeMatch=(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='news')||(inDateRange(row.date,publishStart,publishEnd)&&inDateRange(row.createdAt,createStart,createEnd));
+      var regionMatch=(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='project')||region==='all'||String(row.region||'').indexOf(region)>-1;
+      return timeMatch&&regionMatch;
+    });
+    beforeRows.forEach(function(item,index){if(activeKnowledgeRows.indexOf(item)===-1&&renderedRows[index])renderedRows[index].remove()});
+    if(!activeKnowledgeRows.length){var columns=document.querySelectorAll('#kbTableHead th').length||8;document.getElementById('kbTableBody').innerHTML='<tr><td colspan="'+columns+'"><div class="kb-empty"><b>暂无符合筛选条件的数据</b><span>请调整时间区间或地区条件后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.interactions=prototypeLogicAnnotations.knowledgeList.interactions.map(function(item){return item[0]==='双时间筛选'?['双时间区间筛选','政策库和新闻舆情库可分别设置发布时间起止、入库创建时间起止。','起止边界日期均计入；两个时间区间同时设置时按交集过滤，任一端为空表示不限制该方向。']:item});
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['地区筛选','政策库和项目库可选择全国、省级或本地城市/园区地区条件。','地区与关键词、级别、分类及时间条件联动，列表数量同步刷新。']);
+  renderLogicAnnotations();
+})();
+</script>
