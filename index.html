@@ -1390,3 +1390,124 @@ renderLogicAnnotations();
   renderLogicAnnotations();
 })();
 </script>
+<style id="qa-network-toggle-style">
+#qa .qa-context-input .qa-network-btn{margin-left:auto;margin-right:8px;width:auto;height:36px;border:1px solid #bfd6f4;border-radius:10px;background:#edf5ff;color:#216ed8;padding:0 10px;display:flex;align-items:center;gap:6px;font-size:8px;font-weight:700;box-shadow:none;transition:.18s ease}
+#qa .qa-context-input .qa-network-btn:hover{border-color:#6da4e9;background:#e6f1ff}
+#qa .qa-context-input .qa-network-btn i{position:relative;width:20px;height:20px;border:1.5px solid currentColor;border-radius:50%;display:block;font-style:normal;overflow:hidden}
+#qa .qa-context-input .qa-network-btn i:before{content:"";position:absolute;left:3px;right:3px;top:8px;border-top:1px solid currentColor;box-shadow:0 -4px 0 -0.4px currentColor,0 4px 0 -0.4px currentColor}
+#qa .qa-context-input .qa-network-btn i:after{content:"";position:absolute;top:2px;bottom:2px;left:6px;right:6px;border-left:1px solid currentColor;border-right:1px solid currentColor;border-radius:50%}
+#qa .qa-context-input .qa-network-btn i s{display:none;position:absolute;left:1px;right:1px;top:8px;z-index:2;border-top:2px solid currentColor;transform:rotate(45deg);box-shadow:0 0 0 1px #fff;text-decoration:none}
+#qa .qa-context-input .qa-network-btn.off{border-color:#d8e2ee;background:#fff;color:#758397;font-weight:500}
+#qa .qa-context-input .qa-network-btn.off i s{display:block}
+#qa .qa-context-input .qa-voice-btn{margin-left:0}
+#qa .qa-context-summary.network-on{background:#edf5ff;color:#216ed8}
+#qa .qa-context-summary.network-off{background:#f3f5f8;color:#6f7e91}
+@media(max-width:720px){#qa .qa-context-input .qa-network-btn{margin-left:auto;padding:0 8px}#qa .qa-network-btn em{display:none}}
+</style>
+<script id="qa-network-toggle-script">
+(function(){
+  var qaNetworkEnabled=true;
+  var actionBar=document.querySelector('#qa .qa-input-actions');
+  var voiceButton=document.getElementById('qaVoiceBtn');
+  if(!actionBar||!voiceButton)return;
+
+  var networkButton=document.createElement('button');
+  networkButton.type='button';
+  networkButton.id='qaNetworkToggle';
+  networkButton.className='qa-network-btn';
+  networkButton.setAttribute('role','switch');
+  networkButton.innerHTML='<i aria-hidden="true"><s></s></i><em>联网</em>';
+  networkButton.onclick=function(){setQaNetworkEnabled(!qaNetworkEnabled,true)};
+  actionBar.insertBefore(networkButton,voiceButton);
+
+  function updateReasoningScope(){
+    var selected=typeof getSelectedQaKnowledge==='function'?getSelectedQaKnowledge():[];
+    var searchStep=document.querySelector('.reasoning-steps [data-step="1"]');
+    var verifyStep=document.querySelector('.reasoning-steps [data-step="2"]');
+    if(searchStep){
+      searchStep.querySelector('b').textContent=qaNetworkEnabled?'检索知识库与公开网络':'检索已选知识库';
+      searchStep.querySelector('span').textContent=qaNetworkEnabled?'检索 '+selected.join('、')+' 及权威公开网络信源':'仅检索 '+selected.join('、')+'，不访问互联网';
+    }
+    if(verifyStep){
+      verifyStep.querySelector('b').textContent=qaNetworkEnabled?'交叉验证网络与本地信源':'校验知识库内部信源';
+      verifyStep.querySelector('span').textContent=qaNetworkEnabled?'比对权威政务、行业与新闻来源':'基于已选知识库完成多源一致性核验';
+    }
+  }
+
+  function updateQaNetworkUi(){
+    networkButton.classList.toggle('off',!qaNetworkEnabled);
+    networkButton.setAttribute('aria-checked',String(qaNetworkEnabled));
+    networkButton.setAttribute('aria-label',qaNetworkEnabled?'关闭联网检索':'开启联网检索');
+    networkButton.title=qaNetworkEnabled?'联网检索已开启，点击关闭':'当前仅检索知识库，点击开启联网';
+    networkButton.querySelector('em').textContent=qaNetworkEnabled?'联网':'离线';
+    var summary=document.getElementById('qaContextSummary');
+    var count=document.getElementById('qaKnowledgeCount');
+    if(summary){
+      summary.textContent='已关联 '+(count?count.textContent:'0')+' 个知识库 · '+(qaNetworkEnabled?'联网检索':'仅知识库');
+      summary.classList.toggle('network-on',qaNetworkEnabled);
+      summary.classList.toggle('network-off',!qaNetworkEnabled);
+    }
+    var hint=document.getElementById('qaInputHint');
+    if(hint&&!voiceButton.classList.contains('listening'))hint.textContent=qaNetworkEnabled?'联网检索已开启 · 知识库检索 · 语音输入':'仅检索已选知识库 · 语音输入';
+    document.getElementById('qa').setAttribute('data-network-enabled',String(qaNetworkEnabled));
+    updateReasoningScope();
+  }
+
+  function setQaNetworkEnabled(enabled,notify){
+    qaNetworkEnabled=!!enabled;
+    updateQaNetworkUi();
+    if(notify&&typeof toast==='function')toast(qaNetworkEnabled?'联网检索已开启，将联合检索权威公开信源':'联网检索已关闭，仅使用已选知识库');
+  }
+  window.setQaNetworkEnabled=setQaNetworkEnabled;
+  window.isQaNetworkEnabled=function(){return qaNetworkEnabled};
+
+  var previousUpdateQaContext=window.updateQaContext;
+  if(typeof previousUpdateQaContext==='function'){
+    window.updateQaContext=function(){previousUpdateQaContext.apply(this,arguments);updateQaNetworkUi()};
+  }
+
+  var previousSyncQaEvidence=window.syncQaEvidence;
+  if(typeof previousSyncQaEvidence==='function'){
+    window.syncQaEvidence=function(question){
+      previousSyncQaEvidence(question);
+      if(qaNetworkEnabled)return;
+      var nav=document.querySelector('.qa-source-drawer>nav');
+      var localButton=nav&&nav.querySelector('button:nth-child(3)');
+      var match=localButton&&localButton.textContent.match(/（(\d+)）/);
+      var localCount=match?match[1]:document.querySelectorAll('.qa-source-list article[data-source-kind="本地"]').length;
+      var localArticles=[].slice.call(document.querySelectorAll('.qa-source-list article[data-source-kind="本地"]'));
+      var cards=document.querySelector('.qa-source-cards');
+      if(cards){
+        cards.innerHTML=localArticles.slice(0,3).map(function(article,index){
+          var title=article.querySelector('b'),desc=article.querySelector('p'),meta=article.querySelector('span');
+          var metaClone=meta?meta.cloneNode(true):document.createElement('span');
+          var kind=metaClone.querySelector('small');if(kind)kind.remove();
+          return '<article onclick="openQaSources()"><b>'+(index+1)+'. '+(title?title.textContent.replace(/^\d+\.\s*/, ''):'知识库资料')+'</b><p>'+(desc?desc.textContent:'')+'</p><span>'+metaClone.innerHTML+'</span></article>';
+        }).join('')+'<button onclick="openQaSources()"><span>查看全部</span><b>'+localCount+'</b><i>☰</i></button>';
+      }
+      var summary=document.querySelector('.qa-reference-summary>div:first-child b');
+      if(summary)summary.textContent='引用 '+localCount+' 篇已选知识库资料作为参考 · 未访问互联网';
+      if(nav)nav.innerHTML='<button class="active">知识库（'+localCount+'）</button>';
+      document.querySelectorAll('.qa-source-list article').forEach(function(article){article.style.display=article.getAttribute('data-source-kind')==='本地'?'block':'none'});
+      var reopen=document.getElementById('qaSourceReopen');if(reopen)reopen.textContent='知识库来源 '+localCount;
+    };
+  }
+
+  var previousBuildQaAnswer=window.buildQaAnswer;
+  if(typeof previousBuildQaAnswer==='function'){
+    window.buildQaAnswer=function(question){
+      var answer=previousBuildQaAnswer(question);
+      if(!qaNetworkEnabled){var source=document.getElementById('answerSource');if(source)source.textContent='参考范围：已选知识库（联网检索已关闭）'}
+      return answer;
+    };
+  }
+
+  var voiceObserver=new MutationObserver(function(){if(!voiceButton.classList.contains('listening'))updateQaNetworkUi()});
+  voiceObserver.observe(voiceButton,{attributes:true,attributeFilter:['class']});
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.qa){
+    prototypeLogicAnnotations.qa.fields.push(['联网检索状态','开启后联合检索权威公开网络与已选知识库；关闭后仅在已选知识库内检索，结果页同步标识“未访问互联网”。','用户开关状态、知识库范围、网络信源白名单','每次问答读取']);
+    prototypeLogicAnnotations.qa.interactions.push(['联网检索开关','点击输入框右侧“联网/离线”按钮。','状态立即切换，并同步更新输入提示、推理步骤、参考信源范围与可追溯标识。']);
+  }
+  setQaNetworkEnabled(true,false);
+})();
+</script>
