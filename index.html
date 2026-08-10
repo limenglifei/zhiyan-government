@@ -1021,3 +1021,1799 @@ function openDueReport(name){currentDueCompany=name||currentDueCompany;closeNode
 (function removeLegacyAiCapabilityConfig(){const panel=document.querySelector('[data-system-panel="config"]');if(!panel)return;const legacy=Array.from(panel.querySelectorAll('.config-card')).find(function(card){const title=card.querySelector('h3');return title&&title.textContent.trim()==='AI能力配置'});if(legacy)legacy.remove();const description=panel.querySelector('.system-section-title p');if(description)description.textContent='管理账号安全、通知渠道和数据治理策略'})();
 function openDueReport(name){currentDueCompany=name||currentDueCompany;closeNodeCompanyList();document.getElementById('dueReportTitle').textContent=currentDueCompany+'招商尽调报告';document.getElementById('dueSummaryCompany').textContent=currentDueCompany;const profile=document.getElementById('dueBaseCompanyV2');if(profile)profile.textContent=currentDueCompany;show('dueReport');window.scrollTo({top:0,behavior:'smooth'})}
 </script><style>.logic-annotation-launcher{position:fixed;right:24px;bottom:92px;z-index:60;border:0;border-radius:18px;padding:10px 14px;background:linear-gradient(135deg,#173f78,#2678ea);color:#fff;font-size:9px;font-weight:700;box-shadow:0 10px 28px rgba(20,65,124,.28);display:flex;align-items:center;gap:7px}.logic-annotation-launcher i{width:20px;height:20px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-style:normal}.logic-annotation-drawer{position:fixed;top:64px;right:0;bottom:0;width:min(440px,calc(100vw - 72px));z-index:70;background:#f7f9fc;border-left:1px solid #dce4ef;box-shadow:-18px 0 52px rgba(15,42,83,.18);transform:translateX(104%);transition:transform .25s ease;display:flex;flex-direction:column}.logic-annotation-drawer.open{transform:none}.logic-annotation-head{padding:20px 20px 14px;background:#fff;border-bottom:1px solid #e5eaf1}.logic-annotation-head>div:first-child{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.logic-annotation-head label{font-size:7px;letter-spacing:1.5px;color:#2673df;font-weight:800}.logic-annotation-head h2{font-size:16px;margin:5px 0 4px}.logic-annotation-head p{font-size:8px;color:#8794a6;margin:0;line-height:1.6}.logic-annotation-close{border:0;background:#f1f4f8;color:#66758a;width:30px;height:30px;border-radius:8px}.logic-page-chip{display:inline-flex;margin-top:12px;padding:5px 9px;border-radius:11px;background:#edf5ff;color:#246fd7;font-size:8px}.logic-annotation-tabs{display:flex;padding:10px 20px 0;background:#fff;border-bottom:1px solid #e5eaf1}.logic-annotation-tabs button{flex:1;border:0;background:transparent;padding:10px 4px;color:#77869a;font-size:9px}.logic-annotation-tabs button.active{color:#176bd9;font-weight:700;border-bottom:2px solid #2676e8}.logic-annotation-body{padding:16px 18px 28px;overflow:auto}.logic-annotation-tip{padding:10px 12px;border-radius:9px;background:#fff8e9;color:#9a6b1f;font-size:8px;line-height:1.6;margin-bottom:12px;border:1px solid #f4e5bd}.logic-note-list{display:grid;gap:10px}.logic-note-card{background:#fff;border:1px solid #e1e7ef;border-radius:11px;padding:14px;box-shadow:0 5px 16px rgba(20,54,98,.04)}.logic-note-card header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}.logic-note-card header b{font-size:10px;color:#20324a}.logic-note-card header em{font-style:normal;font-size:7px;padding:4px 7px;border-radius:9px;background:#edf5ff;color:#2673df}.logic-note-card p{font-size:8px;line-height:1.7;color:#53657c;margin:0 0 9px}.logic-note-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px}.logic-note-meta span{background:#f7f9fc;border-radius:7px;padding:7px;font-size:7px;color:#7c899b;line-height:1.5}.logic-note-meta span b{display:block;color:#3d5068;font-size:7px;margin-bottom:2px}.logic-note-card.interaction header em{background:#ecf8f3;color:#148b67}.logic-note-card.interaction .logic-note-meta{grid-template-columns:1fr}.logic-annotation-empty{padding:32px;text-align:center;color:#8d99aa;font-size:9px}@media(max-width:800px){.logic-annotation-launcher{right:14px;bottom:78px}.logic-annotation-drawer{top:0;width:calc(100vw - 32px)}.logic-note-meta{grid-template-columns:1fr}}</style><button class="logic-annotation-launcher" id="logicAnnotationLauncher" type="button" onclick="toggleLogicAnnotations()" aria-expanded="false"><i>注</i>产品逻辑批注</button><aside class="logic-annotation-drawer" id="logicAnnotationDrawer" aria-hidden="true"><header class="logic-annotation-head"><div><div><label>PRODUCT LOGIC NOTES</label><h2>产品逻辑批注</h2><p>用于产品评审、数据对接与研发验收，不代表页面当前展示数据的真实生产状态。</p></div><button class="logic-annotation-close" type="button" onclick="toggleLogicAnnotations(false)" aria-label="关闭批注">×</button></div><span class="logic-page-chip" id="logicAnnotationPage">当前页面</span></header><nav class="logic-annotation-tabs"><button class="active" id="logicFieldTab" type="button" onclick="setLogicAnnotationMode('field')">字段取数逻辑</button><button id="logicInteractionTab" type="button" onclick="setLogicAnnotationMode('interaction')">交互逻辑</button></nav><div class="logic-annotation-body"><div class="logic-annotation-tip" id="logicAnnotationTip"></div><div class="logic-note-list" id="logicAnnotationList"></div></div></aside><script>const prototypeLogicAnnotations={dashboard:{title:'产业运行总览',fields:[['产业GDP贡献','产业增加值÷区域GDP×100%，按产业分类汇总后排序。','统计部门GDP核算、企业行业归属、园区经济运行报表','月度更新，季度校准'],['产业密度','区域经济总产出÷区域土地总面积，用于比较不同片区产业集聚强度。','区域GDP/工业产值、自然资源部门土地面积','季度更新'],['企业注册与退出趋势','按工商登记事件统计新设、迁入、迁出、注销企业，按事件发生月去重。','市场监管企业登记库、企业变更记录','每日增量，月度归档'],['纳税与科技创新榜','纳税榜按年度实缴税额排序；创新榜按研发投入、发明专利、科技荣誉综合评分。','税务汇总、知识产权、科技项目与企业荣誉库','月度更新']],interactions:[['指标联动筛选','点击产业、区域或时间条件。','刷新地图、榜单与趋势图，保留当前筛选条件。'],['图表下钻','点击榜单产业或地图集聚点。','进入对应产业链或区域企业清单；无权限时展示申请提示。'],['趋势查看','悬浮曲线节点或切换图例。','显示当月数值、同比/环比，并支持隐藏单类数据。']]},qa:{title:'产业智能问答',fields:[['回答内容','基于用户选择的知识库进行检索增强生成，答案结论必须绑定证据片段。','政策库、企业库、产业链库、项目库、新闻舆情库','查询时实时检索'],['参考信源','按权威性、时效性、相关度综合排序，保留标题、机构、发布时间和原文链接。','知识库文档元数据与网页原始链接','随知识库同步更新'],['回答置信度','由检索覆盖率、信源一致性和关键结论证据完整度综合计算。','检索结果、引用覆盖与模型自检结果','每次问答计算']],interactions:[['提交问题','输入问题后按回车或点击发送，也可使用语音输入。','进入AI推理中间态，再跳转结果页；空问题不提交。'],['选择知识库','支持选择一个或多个知识库作为检索范围。','选择结果在输入区显示，回答页同步标识使用范围。'],['查看信源','点击引用编号或“查看全部参考来源”。','打开信源侧栏并定位对应原文，不离开当前答案上下文。']]},enterprisePolicy:{title:'企业政策匹配',fields:[['匹配项目数','企业画像与有效申报项目完成硬条件过滤后得到的项目数量。','企业库、政策项目库、历史享受记录','点击匹配时实时计算'],['政策匹配度','硬性条件通过后，对行业、规模、研发、资质、投入等条件加权评分。','政策条件结构化字段、企业画像字段','每次匹配重新计算'],['申报诊断','逐条输出符合、待补充、不符合，并关联企业字段值与政策原文。','政策申报条件、企业画像、证明材料','企业画像或政策更新后重算']],interactions:[['一键匹配','输入或确认企业名称后点击一键匹配。','显示分析过程并刷新政策列表、统计数字与诊断结果。'],['完善企业画像','点击企业卡片右上角“完善企业画像”。','弹窗允许人工确认缺失字段，保存后触发重新匹配。'],['查看政策诊断','点击单个政策卡片。','展开逐项条件、补充材料建议和申报时间窗口。']]},support:{title:'政策精准扶持',fields:[['扶持企业数','政策硬条件过滤后，满足申报主体、区域、行业和时间要求的企业数量。','政策项目库、区域企业库','点击匹配时实时计算'],['高匹配企业','匹配度达到配置阈值且不存在硬性否决条件的企业。','政策条件解析、企业画像、历史享受记录','每次匹配重算'],['已享受/未享受','按企业统一社会信用代码关联历史扶持和兑现记录。','项目申报库、资金兑现记录','日更新']],interactions:[['政策找企业','输入政策名称或选择本地热门政策后点击一键匹配。','先显示解析状态，再生成企业排序名单。'],['统计卡联动','点击全部、高匹配、未享受、已享受等统计卡。','列表按对应状态刷新并保持分页条件。'],['加入扶持名单','点击企业卡片操作按钮。','加入当前政策扶持名单，重复加入时提示已存在。']]},chain:{title:'产业链分析',fields:[['链条完备度','本地已覆盖有效节点数÷目标产业链全部必备节点数×100%。','产业链标准节点库、本地企业节点挂靠关系','企业与节点关系变更后重算'],['本地配套率','本地可满足的关键投入品需求金额÷关键投入品总需求金额×100%。','企业采购需求、产品供给、供应关系与产能数据','月度更新'],['节点强弱','综合企业数量、产值贡献、链主牵引、技术创新、增长和风险韧性评分。','企业库、统计数据、知识产权、供需关系','月度更新，人工复核']],interactions:[['切换产业链','选择产业链仅更新待分析条件。','不立即刷新图谱，避免误触发分析。'],['AI产业家底透视','点击按钮后执行本地企业挂靠、节点强弱和缺口识别。','完成后刷新图谱并将按钮置灰为“已透视”。'],['节点下钻','点击单个产业链节点。','弹窗默认展示本地企业，可切换推荐外地企业名单。']]},strength:{title:'强链补链分析',fields:[['薄弱节点','节点综合评分低于阈值，或关键产品本地供给缺失。','产业链图谱、本地企业与产品供给','随产业家底分析更新'],['补链优先级','综合缺口重要性、市场规模、招商可行性与本地承载能力排序。','节点缺口、全国企业库、要素条件','每次分析计算']],interactions:[['生成分析','点击强链补链分析推荐。','输出节点缺口、目标企业与行动优先级。'],['查看证据','点击结论依据。','展示参与计算的指标、来源与更新时间。']]},investment:{title:'招商线索雷达',fields:[['招商推荐分','召回企业经产业链相关度、扩张意愿、风险合规、技术创新和财务能力加权精排。','全国企业库、产业链图谱、风险与经营信号','每次推荐计算'],['扩张意愿度','综合招聘增长、融资、产线招标、土地厂房、对外投资等近期信号并做时间衰减。','招聘、招投标、融资、投资公告、新闻舆情','日更新'],['协同度','目标企业与本地上下游企业形成供需、技术或市场协作的预估程度。','产品供需关系、产业链节点、企业关联网络','每次推荐计算']],interactions:[['产业家底透视','选择产业链后点击AI产业家底透视。','刷新本地家底、缺口节点与招商线索。'],['推荐名单联动','点击节点统计指标。','按本地关联企业、重点企业或外地企业类型刷新名单。'],['企业行动','点击生成尽调报告或加入招商名单。','生成报告进入详情页；加入名单后记录来源节点和推荐理由。']]},dueDiligence:{title:'企业尽调助手',fields:[['关注企业名单','汇总从招商雷达加入关注的企业及尽调状态。','招商名单、企业主数据、尽调任务记录','实时更新'],['尽调状态','未生成、生成中、已生成、需复核四类状态。','尽调任务与报告版本记录','任务状态实时更新']],interactions:[['发起尽调','输入企业名称或点击关注名单中的“去尽调”。','校验企业主体后显示生成过程并进入报告页。'],['查看报告','已生成报告的企业显示“查看报告”。','进入该企业最新报告，允许切换历史版本。']]},dueReport:{title:'招商尽调报告',fields:[['执行摘要','从工商、股权、经营、创新、司法和招商适配信息中提炼核心判断。','企业主数据、司法风险、知识产权、经营与舆情数据','生成时固化版本'],['风险结论','区分事实、计算、推断和建议；重大风险必须关联原始证据。','司法、行政处罚、经营异常、舆情事件','日更新并提示重算'],['招商适配评分','综合产业链位置、扩张意愿、合规风险、创新与财务能力计算。','招商评估模型与企业指标','报告生成时计算']],interactions:[['报告导航','点击目录或风险标签。','定位对应章节，保留当前企业上下文。'],['证据查看','点击来源或更新时间。','打开字段证据、原文链接与数据版本。'],['重新生成','企业数据或模型版本变化后点击重新生成。','创建新版本，历史报告不覆盖。']]},knowledge:{title:'精品知识库',fields:[['知识条目数','各库通过审核并可检索的有效实体或文档数量。','政策、企业、产业链、项目与舆情主题库','按采集任务增量更新'],['AI自动打标率','成功完成标签分类的新增内容数÷新增内容总数。','标签任务日志、知识库入库记录','每日统计'],['异常任务数','采集失败、解析失败、重复冲突或审核退回的任务数量。','采集与审核任务日志','实时更新']],interactions:[['进入知识库','点击政策库、企业库、产业链库、项目库或新闻舆情库。','进入对应列表并加载专属筛选条件。'],['创建精品库','点击创建按钮填写名称、简介、筛选规则、信源和定时。','校验规则后创建空库并启动首次打标任务。']]},knowledgeList:{title:'知识库列表与详情',fields:[['列表字段','由知识类型决定展示字段；统一保留来源、更新时间、审核状态和唯一标识。','对应主题库结构化数据','随入库审核更新'],['详情证据','字段值关联原始网页、文件页码、解析规则与人工修订记录。','原始文件、采集快照、数据血缘记录','每次修订留痕']],interactions:[['组合筛选','按时间、级别、地区、行业、状态等条件筛选。','列表、数量和分页同步刷新。'],['查看详情','点击单条记录。','进入类型化详情页，支持返回时保留筛选条件。']]},collection:{title:'数据采集',fields:[['新增入库量','统计周期内通过解析、去重和质量校验后成功入库的数据量。','采集任务日志与入库流水','实时汇总'],['异常统计','采集失败、网页结构变化、文件解析失败和接口超时任务数。','任务执行日志、质量校验结果','实时更新'],['任务进度','已完成处理单元÷任务总处理单元×100%。','采集调度与解析任务队列','任务运行时实时更新']],interactions:[['新增数据源','选择网页采集、文件上传或API对接。','根据方式进入配置页或打开本地文件选择窗口。'],['查看采集详情','点击任务名称或查看详情。','进入任务详情，展示网页列表、采集批次、错误与AI摘要。'],['异常重试','点击失败任务的重试。','保留原配置创建新执行批次，不覆盖历史日志。']]},monitor:{title:'产业情报监控',fields:[['风险评分','按事件影响范围、发生概率、紧迫度和供应链暴露加权计算。','新闻舆情、供应商物料关系、风险评分模型','事件更新时重算'],['影响企业与物料','将事件地区和风险类别与供应商、产地、物料关系匹配。','供应商—物料—产地关系、风险事件实体','每次监控触发计算']],interactions:[['任务切换','左右滑动或点击监控任务。','事件列表与AI分析同步刷新。'],['查看事件','点击事件卡片。','动态流式输出量化影响、传播链和行动建议。']]},labels:{title:'标签中心',fields:[['标签命中数','满足标签分类或抽取规则的文件和实体数量。','标签规则、AI打标结果、人工审核记录','每日任务完成后更新']],interactions:[['创建标签组','点击添加标签组。','弹窗配置类型、规则、示例文件与生效范围。'],['启用调试','点击标签组的启用调试。','先运行样本验证，确认后进入每日自动打标。']]},system:{title:'系统管理',fields:[['行政区域范围','按市、区县、园区和街道限定企业、政策与项目数据。','行政区划、组织机构与用户授权关系','权限变更后实时生效'],['产业链范围','从全国通用热门产业链目录选择用户可查看和分析的产业链。','产业链标准目录、角色与用户授权','权限变更后实时生效'],['招商评分模型','五个维度权重合计必须为100%，每个维度保留专业提示词和版本。','系统配置、模型版本与测试记录','发布新版本后生效']],interactions:[['角色与菜单授权','选择角色后配置菜单查看、使用和管理权限。','保存后刷新角色权限缓存并写入审计日志。'],['数据范围授权','创建或编辑行政区域、产业链范围规则。','规则保存后影响企业、政策、项目与产业链查询范围。'],['提示词与模型发布','试运行通过后保存并发布配置。','生成新版本，支持回滚；权重不等于100%时禁止发布。']]}};
+
+var logicAnnotationMode='field';
+
+function getActiveLogicView(){
+  var active=document.querySelector('.view.show');
+  return active&&active.id?active.id:'dashboard';
+}
+
+function escapeLogicHtml(value){
+  return String(value==null?'':value)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/\"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function renderLogicAnnotations(){
+  var view=getActiveLogicView();
+  var data=prototypeLogicAnnotations[view]||prototypeLogicAnnotations.dashboard;
+  var page=document.getElementById('logicAnnotationPage');
+  var tip=document.getElementById('logicAnnotationTip');
+  var list=document.getElementById('logicAnnotationList');
+  var fieldTab=document.getElementById('logicFieldTab');
+  var interactionTab=document.getElementById('logicInteractionTab');
+  if(!page||!tip||!list||!fieldTab||!interactionTab)return;
+  page.textContent='当前页面：'+data.title;
+  fieldTab.classList.toggle('active',logicAnnotationMode==='field');
+  interactionTab.classList.toggle('active',logicAnnotationMode==='interaction');
+  var items=logicAnnotationMode==='field'?data.fields:data.interactions;
+  tip.textContent=logicAnnotationMode==='field'
+    ?'字段口径包含计算规则、数据来源与更新频率，便于数据对接和验收。'
+    :'交互口径包含触发条件与系统反馈，便于原型评审和研发实现。';
+  if(!items||!items.length){
+    list.innerHTML='<div class="logic-annotation-empty">当前页面暂无此类批注</div>';
+    return;
+  }
+  list.innerHTML=items.map(function(item){
+    if(logicAnnotationMode==='field'){
+      return '<article class="logic-note-card"><header><b>'+escapeLogicHtml(item[0])+'</b><em>字段取数</em></header><p>'+escapeLogicHtml(item[1])+'</p><div class="logic-note-meta"><span><b>数据来源</b>'+escapeLogicHtml(item[2])+'</span><span><b>更新频率</b>'+escapeLogicHtml(item[3])+'</span></div></article>';
+    }
+    return '<article class="logic-note-card interaction"><header><b>'+escapeLogicHtml(item[0])+'</b><em>交互逻辑</em></header><p>'+escapeLogicHtml(item[1])+'</p><div class="logic-note-meta"><span><b>系统反馈</b>'+escapeLogicHtml(item[2])+'</span></div></article>';
+  }).join('');
+}
+
+function setLogicAnnotationMode(mode){
+  logicAnnotationMode=mode==='interaction'?'interaction':'field';
+  renderLogicAnnotations();
+}
+
+function toggleLogicAnnotations(forceOpen){
+  var drawer=document.getElementById('logicAnnotationDrawer');
+  var launcher=document.getElementById('logicAnnotationLauncher');
+  if(!drawer||!launcher)return;
+  var shouldOpen=typeof forceOpen==='boolean'?forceOpen:!drawer.classList.contains('open');
+  drawer.classList.toggle('open',shouldOpen);
+  drawer.setAttribute('aria-hidden',String(!shouldOpen));
+  launcher.setAttribute('aria-expanded',String(shouldOpen));
+  if(shouldOpen)renderLogicAnnotations();
+}
+
+window.toggleLogicAnnotations=toggleLogicAnnotations;
+window.setLogicAnnotationMode=setLogicAnnotationMode;
+window.renderLogicAnnotations=renderLogicAnnotations;
+
+var logicLauncher=document.getElementById('logicAnnotationLauncher');
+var logicClose=document.querySelector('.logic-annotation-close');
+var logicField=document.getElementById('logicFieldTab');
+var logicInteraction=document.getElementById('logicInteractionTab');
+if(logicLauncher)logicLauncher.onclick=function(){toggleLogicAnnotations();};
+if(logicClose)logicClose.onclick=function(){toggleLogicAnnotations(false);};
+if(logicField)logicField.onclick=function(){setLogicAnnotationMode('field');};
+if(logicInteraction)logicInteraction.onclick=function(){setLogicAnnotationMode('interaction');};
+
+var originalPrototypeShow=window.show;
+if(typeof originalPrototypeShow==='function'){
+  window.show=function(view){
+    originalPrototypeShow(view);
+    var drawer=document.getElementById('logicAnnotationDrawer');
+    if(drawer&&drawer.classList.contains('open'))renderLogicAnnotations();
+  };
+}
+document.addEventListener('keydown',function(event){if(event.key==='Escape')toggleLogicAnnotations(false);});
+renderLogicAnnotations();
+</script>
+<style>
+.kb-list-toolbar .kb-region-select{min-width:122px}
+.kb-list-toolbar select:disabled{color:#aab4c2;background:#f5f7fa;cursor:not-allowed}
+</style>
+<script>
+// knowledge-filter-ranking-annotation-v28
+(function enhanceKnowledgeWorkbench(){
+  var originalOpenKnowledgeBase=window.openKnowledgeBase;
+  var regionTree={
+    '江苏省':{'海州市':['经开区','高新区','临港区','化工园区','科创园','软件园'],'南京市':['玄武区','江宁区'],'苏州市':['工业园区','吴中区']},
+    '浙江省':{'杭州市':['滨江区','余杭区'],'宁波市':['鄞州区','北仑区']},
+    '安徽省':{'合肥市':['高新区','经开区'],'芜湖市':['鸠江区','弋江区']}
+  };
+
+  function optionHtml(label,values){return '<option value="all">'+label+'</option>'+values.map(function(value){return '<option>'+value+'</option>'}).join('')}
+  function getOrCreateRegionSelect(id,after){
+    var select=document.getElementById(id);
+    if(!select){select=document.createElement('select');select.id=id;select.className='kb-region-select';select.onchange=function(){updateCompanyRegionFilters(id);filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    return select;
+  }
+  window.updateCompanyRegionFilters=function(sourceId){
+    var province=document.getElementById('kbLevelFilter'),city=document.getElementById('kbCityFilter'),district=document.getElementById('kbDistrictFilter');
+    if(!province||!city||!district)return;
+    if(sourceId==='kbLevelFilter'){
+      var cities=province.value==='all'?[]:Object.keys(regionTree[province.value]||{});
+      city.innerHTML=optionHtml('全部城市',cities);city.disabled=province.value==='all';
+    }
+    if(sourceId==='kbLevelFilter'||sourceId==='kbCityFilter'){
+      var districts=(province.value!=='all'&&city.value!=='all'&&regionTree[province.value])?(regionTree[province.value][city.value]||[]):[];
+      district.innerHTML=optionHtml('全部区县',districts);district.disabled=city.value==='all';
+    }
+  };
+  function configureKnowledgeFilters(type){
+    var keyword=document.getElementById('kbKeyword'),level=document.getElementById('kbLevelFilter'),category=document.getElementById('kbCategoryFilter');
+    if(!keyword||!level||!category)return;
+    var city=getOrCreateRegionSelect('kbCityFilter',level),district=getOrCreateRegionSelect('kbDistrictFilter',city);
+    level.style.display='';category.style.display='';city.style.display='none';district.style.display='none';
+    level.disabled=false;category.disabled=false;
+    keyword.placeholder='输入标题、企业或关键词搜索';
+    if(type==='company'){
+      keyword.placeholder='输入企业名称或关键词搜索';
+      level.innerHTML=optionHtml('全部省份',Object.keys(regionTree));level.value='all';
+      level.onchange=function(){updateCompanyRegionFilters('kbLevelFilter');filterKnowledgeList()};
+      city.style.display='';district.style.display='';city.innerHTML=optionHtml('全部城市',[]);district.innerHTML=optionHtml('全部区县',[]);city.disabled=true;district.disabled=true;
+      var first=category.options[0];if(first)first.textContent='行业分类';
+    }else{
+      level.onchange=function(){filterKnowledgeList()};
+      level.innerHTML='<option value="all">全部级别</option><option>国家级</option><option>省级</option><option>市级</option><option>区级</option>';level.value='all';
+      if(type==='chain'){keyword.placeholder='输入产业链主题或关键词搜索';level.style.display='none';category.style.display='none'}
+      if(type==='project')keyword.placeholder='输入项目名称或关键词搜索';
+      if(type==='news'){keyword.placeholder='输入新闻标题或关键词搜索';level.style.display='none'}
+    }
+  }
+
+  window.openKnowledgeBase=function(type){
+    configureKnowledgeFilters(type);
+    originalOpenKnowledgeBase(type);
+    configureKnowledgeFilters(type);
+    renderKnowledgeList();
+  };
+  window.renderKnowledgeList=function(){
+    var cfg=knowledgeBaseConfigs[activeKnowledgeType];if(!cfg)return;
+    var keyword=document.getElementById('kbKeyword'),levelControl=document.getElementById('kbLevelFilter'),categoryControl=document.getElementById('kbCategoryFilter');
+    var q=keyword.value.trim().toLowerCase(),level=levelControl.value,category=categoryControl.value;
+    var province=document.getElementById('kbLevelFilter'),city=document.getElementById('kbCityFilter'),district=document.getElementById('kbDistrictFilter');
+    activeKnowledgeRows=cfg.rows.map(function(row,index){return {row:row,index:index}}).filter(function(item){
+      var row=item.row,base=(!q||JSON.stringify(row).toLowerCase().includes(q))&&(category==='all'||activeKnowledgeType==='chain'||row.category===category);
+      if(!base)return false;
+      if(activeKnowledgeType==='company'){
+        return (province.value==='all'||row.region.indexOf(province.value)>-1)&&(city.value==='all'||row.region.indexOf(city.value)>-1)&&(district.value==='all'||row.region.indexOf(district.value)>-1);
+      }
+      return activeKnowledgeType==='chain'||activeKnowledgeType==='news'||level==='all'||row.level===level;
+    });
+    document.getElementById('kbTableHead').innerHTML='<tr>'+cfg.columns.map(function(x){return '<th>'+x+'</th>'}).join('')+'<th>操作</th></tr>';
+    var body=document.getElementById('kbTableBody');
+    if(!activeKnowledgeRows.length){body.innerHTML='<tr><td colspan="8"><div class="kb-empty"><b>暂无符合筛选条件的数据</b><span>请调整关键词或筛选条件后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    body.innerHTML=activeKnowledgeRows.map(function(item){var r=item.row,cells=[];if(activeKnowledgeType==='policy')cells=[r.category,r.level,r.org,r.date,r.industry];else if(activeKnowledgeType==='company')cells=[r.code,r.category,r.region,r.capital,r.honor];else if(activeKnowledgeType==='chain')cells=[r.category,r.nodes,r.companies,r.rate,r.weak];else if(activeKnowledgeType==='project')cells=[r.category,r.level,r.org,r.amount,r.deadline];else cells=[r.date,r.org,r.region,r.product,r.sentiment];return '<tr onclick="openKnowledgeDetail('+item.index+')"><td><div class="kb-title-cell"><i>'+cfg.icon+'</i><div><b>'+r.title+'</b><span>'+r.sub+'</span></div></div></td>'+cells.map(function(cell,i){var cls=((activeKnowledgeType==='news'&&i===4)||(activeKnowledgeType==='policy'&&i===0))?' class="green"':'';return '<td><em'+cls+'>'+cell+'</em></td>'}).join('')+'<td><button class="kb-row-action" onclick="event.stopPropagation();openKnowledgeDetail('+item.index+')">查看详情 →</button></td></tr>'}).join('');
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+
+  var innovationCard=Array.from(document.querySelectorAll('.dashboard-bottom-rankings .ranking-card')).find(function(card){return card.querySelector('h2')&&card.querySelector('h2').textContent.indexOf('创新榜单')>-1});
+  if(innovationCard){
+    innovationCard.querySelector('h2').textContent='科创企业榜单';innovationCard.querySelector('.card-title p').textContent='近三月新增专利数量 · 单位：项';
+    var patentCounts=[['68','发明专利 39 项'],['54','发明专利 31 项'],['41','发明专利 24 项'],['33','发明专利 18 项'],['27','发明专利 16 项']];
+    innovationCard.querySelectorAll('.rank-row strong').forEach(function(node,index){node.innerHTML=patentCounts[index][0]+'<em>'+patentCounts[index][1]+'</em>'});
+  }
+  prototypeLogicAnnotations.dashboard.fields=prototypeLogicAnnotations.dashboard.fields.map(function(field){return field[0]==='纳税与科技创新榜'?['纳税与科创企业榜','纳税榜按本年度累计实缴税额降序；科创企业榜按近三月新增专利数量降序，同值时依次比较新增发明专利数、专利授权率。','税务汇总、国家知识产权数据、企业统一社会信用代码','专利数据每日增量，榜单月度固化']:field});
+  prototypeLogicAnnotations.chain.fields=[
+    ['链上企业','统计本地正常经营且与任一产业链节点关系强度达到配置阈值（默认≥60%）的企业，按统一社会信用代码去重；同一企业挂靠多个节点只计1家。','企业主数据、企业产品、产业链节点挂靠关系、经营状态','企业或节点关系更新后重算'],
+    ['链条完备度','Σ已覆盖必备节点权重÷Σ全部必备节点权重×100%。节点存在至少1家有效链上企业即视为覆盖，关键节点权重可在模型中配置。','产业链标准节点库、本地企业节点挂靠关系、节点权重配置','产业家底透视时计算，月度校准'],
+    ['本地配套率','Σmin（本地有效供给量，本地需求量）×参考价÷Σ本地关键投入品需求金额×100%；缺失真实产能时采用企业规模和产品产能区间估算并标注置信度。','企业采购需求、产品供给、供应关系、产能与参考价格','月度更新，重大项目落地后重算'],
+    ['关键薄弱点','先识别未覆盖节点、供需缺口超阈值节点及外部依赖度高的节点，再按“节点关键性×供需缺口×外部依赖度×风险暴露”排序，超过薄弱阈值的节点计入数量。','产业链节点权重、供需缺口、外地采购依赖、风险事件','产业家底透视时计算，业务人员复核']
+  ];
+  prototypeLogicAnnotations.investment.fields=prototypeLogicAnnotations.chain.fields.concat(prototypeLogicAnnotations.investment.fields);
+  renderLogicAnnotations();
+})();
+</script>
+<style>
+.kb-list-toolbar .kb-date-filter{height:42px;display:none;align-items:center;gap:7px;padding:0 10px;border:1px solid #dce4ef;border-radius:7px;background:#fff;color:#718096;font-size:9px;white-space:nowrap}
+.kb-list-toolbar .kb-date-filter input{height:38px!important;border:0!important;padding:0!important;min-width:118px;background:transparent;color:#34465d}
+</style>
+<script>
+// policy-news-time-filters-v29
+(function enhanceKnowledgeTimeFilters(){
+  var policyCreatedTimes=['2026-07-20 09:16','2026-07-18 14:32','2026-07-17 17:08','2026-07-15 10:26','2026-07-12 16:45','2026-07-10 11:20'];
+  var newsCreatedTimes=['2026-07-24 08:36','2026-07-23 16:28','2026-07-23 11:12','2026-07-22 20:18','2026-07-21 09:07','2026-07-20 14:48'];
+  knowledgeBaseConfigs.policy.rows.forEach(function(row,index){row.createdAt=policyCreatedTimes[index]||row.date+' 09:00'});
+  knowledgeBaseConfigs.news.rows.forEach(function(row,index){row.createdAt=newsCreatedTimes[index]||String(row.date).slice(0,10)+' 09:00'});
+
+  function ensureDateFilter(id,labelText,after){
+    var wrap=document.getElementById(id+'Wrap');
+    if(!wrap){
+      wrap=document.createElement('label');wrap.id=id+'Wrap';wrap.className='kb-date-filter';
+      var label=document.createElement('span');label.textContent=labelText;
+      var input=document.createElement('input');input.type='date';input.id=id;input.setAttribute('aria-label',labelText);input.onchange=function(){filterKnowledgeList()};
+      wrap.appendChild(label);wrap.appendChild(input);after.insertAdjacentElement('afterend',wrap);
+    }
+    return wrap;
+  }
+  function configureTimeFilters(type){
+    var category=document.getElementById('kbCategoryFilter');if(!category)return;
+    var publishWrap=ensureDateFilter('kbPublishDateFilter','发布时间',category);
+    var createWrap=ensureDateFilter('kbCreateDateFilter','创建时间',publishWrap);
+    var enabled=type==='policy'||type==='news';
+    publishWrap.style.display=enabled?'inline-flex':'none';createWrap.style.display=enabled?'inline-flex':'none';
+    document.getElementById('kbPublishDateFilter').value='';document.getElementById('kbCreateDateFilter').value='';
+  }
+  var previousOpenKnowledgeBase=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenKnowledgeBase(type);configureTimeFilters(type);renderKnowledgeList()};
+
+  var previousRenderKnowledgeList=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderKnowledgeList();
+    if(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='news')return;
+    var publishInput=document.getElementById('kbPublishDateFilter'),createInput=document.getElementById('kbCreateDateFilter');
+    var publishDate=publishInput?publishInput.value:'',createDate=createInput?createInput.value:'';
+    var beforeRows=activeKnowledgeRows.slice();
+    var headRow=document.querySelector('#kbTableHead tr');
+    if(headRow&&headRow.children.length){var createdHead=document.createElement('th');createdHead.textContent='入库创建时间';headRow.insertBefore(createdHead,headRow.lastElementChild)}
+    var renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    beforeRows.forEach(function(item,index){
+      var row=item.row,tr=renderedRows[index];if(!tr)return;
+      var createdCell=document.createElement('td');createdCell.innerHTML='<em>'+row.createdAt+'</em>';tr.insertBefore(createdCell,tr.lastElementChild);
+      var matchesPublish=!publishDate||String(row.date).slice(0,10)===publishDate;
+      var matchesCreate=!createDate||String(row.createdAt).slice(0,10)===createDate;
+      if(!matchesPublish||!matchesCreate)tr.remove();
+    });
+    activeKnowledgeRows=beforeRows.filter(function(item){return (!publishDate||String(item.row.date).slice(0,10)===publishDate)&&(!createDate||String(item.row.createdAt).slice(0,10)===createDate)});
+    if(!activeKnowledgeRows.length){document.getElementById('kbTableBody').innerHTML='<tr><td colspan="9"><div class="kb-empty"><b>暂无符合双时间条件的数据</b><span>请调整发布时间或创建时间后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.fields.push(['入库创建时间','数据完成采集、解析、去重并首次写入对应精品知识库的时间；后续内容更新不覆盖首次入库时间。','采集任务日志、知识入库流水、数据血缘记录','首次入库时写入']);
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['双时间筛选','政策库和新闻舆情库可分别选择发布时间、创建时间。','两个条件同时填写时按交集筛选；清空任一条件后立即恢复对应范围。']);
+  renderLogicAnnotations();
+})();
+</script>
+<style>
+.kb-list-toolbar>div:first-child{flex-wrap:wrap}
+.kb-list-toolbar .kb-date-filter.range{gap:6px;padding-right:8px}
+.kb-list-toolbar .kb-date-filter.range input{min-width:104px!important;width:104px}
+.kb-list-toolbar .kb-date-filter.range em{font-style:normal;color:#a2adba;font-size:8px}
+.kb-list-toolbar #kbRegionFilter{min-width:138px}
+</style>
+<script>
+// knowledge-range-region-filters-v30
+(function enhanceRangeAndRegionFilters(){
+  var policyRegions=['江苏省','江苏省 / 海州市','江苏省','全国','江苏省 / 海州市 / 海州高新区','江苏省 / 海州市'];
+  var projectRegions=['江苏省','江苏省 / 海州市','江苏省 / 海州市','江苏省','江苏省 / 海州市','全国'];
+  knowledgeBaseConfigs.policy.rows.forEach(function(row,index){row.region=policyRegions[index]||'江苏省'});
+  knowledgeBaseConfigs.project.rows.forEach(function(row,index){row.region=projectRegions[index]||'海州市'});
+
+  function ensureRangeInputs(wrapId,inputPrefix){
+    var wrap=document.getElementById(wrapId);if(!wrap)return;
+    wrap.classList.add('range');
+    var legacy=wrap.querySelector('input[id$="DateFilter"]');if(legacy)legacy.style.display='none';
+    if(document.getElementById(inputPrefix+'Start'))return;
+    var start=document.createElement('input');start.type='date';start.id=inputPrefix+'Start';start.setAttribute('aria-label',wrap.querySelector('span').textContent+'开始日期');
+    var separator=document.createElement('em');separator.textContent='至';
+    var end=document.createElement('input');end.type='date';end.id=inputPrefix+'End';end.setAttribute('aria-label',wrap.querySelector('span').textContent+'结束日期');
+    start.onchange=end.onchange=function(){filterKnowledgeList()};wrap.appendChild(start);wrap.appendChild(separator);wrap.appendChild(end);
+  }
+  function ensureRegionFilter(after){
+    var select=document.getElementById('kbRegionFilter');
+    if(!select){select=document.createElement('select');select.id='kbRegionFilter';select.onchange=function(){filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    return select;
+  }
+  function configureRangeRegionFilters(type){
+    ensureRangeInputs('kbPublishDateFilterWrap','kbPublishRange');ensureRangeInputs('kbCreateDateFilterWrap','kbCreateRange');
+    ['kbPublishRangeStart','kbPublishRangeEnd','kbCreateRangeStart','kbCreateRangeEnd'].forEach(function(id){var input=document.getElementById(id);if(input)input.value=''});
+    var category=document.getElementById('kbCategoryFilter'),region=ensureRegionFilter(category),enabled=type==='policy'||type==='project';
+    region.style.display=enabled?'block':'none';region.value='all';
+    if(enabled){
+      var options=type==='policy'?['全国','江苏省','海州市','海州高新区']:['全国','江苏省','海州市'];
+      region.innerHTML='<option value="all">全部地区</option>'+options.map(function(value){return '<option>'+value+'</option>'}).join('');
+    }
+  }
+  var previousOpenWithTime=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenWithTime(type);configureRangeRegionFilters(type);renderKnowledgeList()};
+
+  function inDateRange(value,start,end){var date=String(value||'').slice(0,10);return (!start||date>=start)&&(!end||date<=end)}
+  var previousRenderWithTime=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderWithTime();
+    var publishStart=document.getElementById('kbPublishRangeStart')?.value||'',publishEnd=document.getElementById('kbPublishRangeEnd')?.value||'';
+    var createStart=document.getElementById('kbCreateRangeStart')?.value||'',createEnd=document.getElementById('kbCreateRangeEnd')?.value||'';
+    var regionControl=document.getElementById('kbRegionFilter'),region=regionControl&&regionControl.style.display!=='none'?regionControl.value:'all';
+    var beforeRows=activeKnowledgeRows.slice(),renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    activeKnowledgeRows=beforeRows.filter(function(item){
+      var row=item.row,timeMatch=(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='news')||(inDateRange(row.date,publishStart,publishEnd)&&inDateRange(row.createdAt,createStart,createEnd));
+      var regionMatch=(activeKnowledgeType!=='policy'&&activeKnowledgeType!=='project')||region==='all'||String(row.region||'').indexOf(region)>-1;
+      return timeMatch&&regionMatch;
+    });
+    beforeRows.forEach(function(item,index){if(activeKnowledgeRows.indexOf(item)===-1&&renderedRows[index])renderedRows[index].remove()});
+    if(!activeKnowledgeRows.length){var columns=document.querySelectorAll('#kbTableHead th').length||8;document.getElementById('kbTableBody').innerHTML='<tr><td colspan="'+columns+'"><div class="kb-empty"><b>暂无符合筛选条件的数据</b><span>请调整时间区间或地区条件后重新查看</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.interactions=prototypeLogicAnnotations.knowledgeList.interactions.map(function(item){return item[0]==='双时间筛选'?['双时间区间筛选','政策库和新闻舆情库可分别设置发布时间起止、入库创建时间起止。','起止边界日期均计入；两个时间区间同时设置时按交集过滤，任一端为空表示不限制该方向。']:item});
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['地区筛选','政策库和项目库可选择全国、省级或本地城市/园区地区条件。','地区与关键词、级别、分类及时间条件联动，列表数量同步刷新。']);
+  renderLogicAnnotations();
+})();
+</script>
+<style>
+.governance-scope-note{margin-top:12px;padding:10px 12px;border-radius:8px;background:#edf5ff;color:#3972bd;font-size:8px;line-height:1.6}
+.kb-list-toolbar #kbMatchFilter{min-width:132px}
+.kb-match-switch{position:relative;width:37px;height:20px;border:0;border-radius:12px;background:#cbd4df;margin-right:7px;vertical-align:middle;transition:.2s}
+.kb-match-switch:after{content:'';position:absolute;width:16px;height:16px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(20,45,75,.25);transition:.2s}
+.kb-match-switch.on{background:#2878e8}.kb-match-switch.on:after{transform:translateX(17px)}
+.kb-match-status{font-size:8px;color:#76869a;margin-right:8px;vertical-align:middle}
+</style>
+<script>
+// governance-and-project-match-v31
+(function enhanceGovernanceAndProjectMatching(){
+  var configPanel=document.querySelector('[data-system-panel="config"]');
+  if(configPanel){
+    var governanceCard=Array.from(configPanel.querySelectorAll('.config-card')).find(function(card){return card.querySelector('h3')?.textContent.trim()==='数据治理策略'});
+    if(governanceCard){
+      governanceCard.querySelector('p').textContent='面向政策、新闻数据执行自动去重与敏感数据过滤。';
+      Array.from(governanceCard.querySelectorAll('.config-item')).forEach(function(item){item.remove()});
+      governanceCard.insertAdjacentHTML('beforeend','<div class="config-item"><div><b>自动去重</b><span>按标题、主体、来源与内容指纹识别重复数据</span></div><button class="system-switch on" aria-pressed="true" onclick="toggleSystemSwitch(this)"></button></div><div class="config-item"><div><b>敏感数据过滤</b><span>自动识别并过滤个人隐私及敏感字段</span></div><button class="system-switch on" aria-pressed="true" onclick="toggleSystemSwitch(this)"></button></div><div class="governance-scope-note">默认开启 · 仅对政策库、新闻舆情库的新增与更新数据生效</div>');
+    }
+  }
+
+  var defaultMatchStates=[true,true,true,false,true,false];
+  knowledgeBaseConfigs.project.rows.forEach(function(row,index){if(typeof row.participates!=='boolean')row.participates=defaultMatchStates[index]!==false});
+  function ensureMatchFilter(after){
+    var select=document.getElementById('kbMatchFilter');
+    if(!select){select=document.createElement('select');select.id='kbMatchFilter';select.onchange=function(){filterKnowledgeList()};after.insertAdjacentElement('afterend',select)}
+    select.innerHTML='<option value="all">是否参与匹配</option><option value="yes">参与匹配</option><option value="no">不参与匹配</option>';return select;
+  }
+  function configureMatchFilter(type){
+    var anchor=document.getElementById('kbRegionFilter')||document.getElementById('kbCategoryFilter'),filter=ensureMatchFilter(anchor);
+    filter.style.display=type==='project'?'block':'none';filter.value='all';
+  }
+  window.toggleProjectMatch=function(index,button,event){
+    if(event){event.preventDefault();event.stopPropagation()}
+    var row=knowledgeBaseConfigs.project.rows[index];if(!row)return;row.participates=!row.participates;
+    button.classList.toggle('on',row.participates);button.setAttribute('aria-checked',String(row.participates));
+    var label=button.nextElementSibling;if(label)label.textContent=row.participates?'参与':'不参与';
+    toast(row.title+(row.participates?' 已加入政策匹配范围':' 已从政策匹配范围移除'));
+    var filter=document.getElementById('kbMatchFilter');if(filter&&filter.value!=='all')renderKnowledgeList();
+  };
+  var previousOpenWithRange=window.openKnowledgeBase;
+  window.openKnowledgeBase=function(type){previousOpenWithRange(type);configureMatchFilter(type);renderKnowledgeList()};
+  var previousRenderWithRange=window.renderKnowledgeList;
+  window.renderKnowledgeList=function(){
+    previousRenderWithRange();if(activeKnowledgeType!=='project')return;
+    var matchFilter=document.getElementById('kbMatchFilter'),matchValue=matchFilter?matchFilter.value:'all';
+    var beforeRows=activeKnowledgeRows.slice(),renderedRows=Array.from(document.querySelectorAll('#kbTableBody > tr'));
+    beforeRows.forEach(function(item,index){
+      var tr=renderedRows[index],row=item.row;if(!tr||!tr.lastElementChild)return;
+      var checked=row.participates!==false,label=checked?'参与':'不参与';
+      tr.lastElementChild.insertAdjacentHTML('afterbegin','<button type="button" role="switch" aria-label="参与匹配" aria-checked="'+checked+'" class="kb-match-switch'+(checked?' on':'')+'" onclick="toggleProjectMatch('+item.index+',this,event)"></button><span class="kb-match-status">'+label+'</span>');
+    });
+    activeKnowledgeRows=beforeRows.filter(function(item){return matchValue==='all'||(matchValue==='yes'&&item.row.participates!==false)||(matchValue==='no'&&item.row.participates===false)});
+    beforeRows.forEach(function(item,index){if(activeKnowledgeRows.indexOf(item)===-1&&renderedRows[index])renderedRows[index].remove()});
+    if(!activeKnowledgeRows.length){var columns=document.querySelectorAll('#kbTableHead th').length||7;document.getElementById('kbTableBody').innerHTML='<tr><td colspan="'+columns+'"><div class="kb-empty"><b>暂无符合参与匹配条件的项目</b><span>请切换筛选条件或调整项目参与状态</span></div></td></tr>';document.getElementById('kbResultCount').textContent='共 0 条数据';return}
+    document.getElementById('kbResultCount').textContent='共 '+activeKnowledgeRows.length+' 条数据 · 已展示第 1 页';
+  };
+  prototypeLogicAnnotations.knowledgeList.fields.push(['参与匹配','控制项目是否进入企业政策匹配与政策精准扶持的候选项目集；关闭后项目仍保留在项目库，但不参与召回和排序。','项目库匹配状态、操作审计日志','开关变更后实时生效']);
+  prototypeLogicAnnotations.knowledgeList.interactions.push(['项目匹配开关','项目库列表可逐条开启或关闭“参与匹配”，并可按参与状态筛选。','开关更新后同步刷新筛选结果；操作不删除项目数据并保留审计记录。']);
+  prototypeLogicAnnotations.system.fields.push(['数据治理策略','自动去重与敏感数据过滤默认开启，仅作用于政策、新闻新增及更新数据。','政策库、新闻舆情库、采集与治理任务日志','入库前实时执行']);
+  renderLogicAnnotations();
+})();
+</script>
+<style id="qa-network-toggle-style">
+#qa .qa-context-input .qa-network-btn{margin-left:auto;margin-right:8px;width:auto;height:36px;border:1px solid #bfd6f4;border-radius:10px;background:#edf5ff;color:#216ed8;padding:0 10px;display:flex;align-items:center;gap:6px;font-size:8px;font-weight:700;box-shadow:none;transition:.18s ease}
+#qa .qa-context-input .qa-network-btn:hover{border-color:#6da4e9;background:#e6f1ff}
+#qa .qa-context-input .qa-network-btn i{position:relative;width:20px;height:20px;border:1.5px solid currentColor;border-radius:50%;display:block;font-style:normal;overflow:hidden}
+#qa .qa-context-input .qa-network-btn i:before{content:"";position:absolute;left:3px;right:3px;top:8px;border-top:1px solid currentColor;box-shadow:0 -4px 0 -0.4px currentColor,0 4px 0 -0.4px currentColor}
+#qa .qa-context-input .qa-network-btn i:after{content:"";position:absolute;top:2px;bottom:2px;left:6px;right:6px;border-left:1px solid currentColor;border-right:1px solid currentColor;border-radius:50%}
+#qa .qa-context-input .qa-network-btn i s{display:none;position:absolute;left:1px;right:1px;top:8px;z-index:2;border-top:2px solid currentColor;transform:rotate(45deg);box-shadow:0 0 0 1px #fff;text-decoration:none}
+#qa .qa-context-input .qa-network-btn.off{border-color:#d8e2ee;background:#fff;color:#758397;font-weight:500}
+#qa .qa-context-input .qa-network-btn.off i s{display:block}
+#qa .qa-context-input .qa-voice-btn{margin-left:0}
+#qa .qa-context-summary.network-on{background:#edf5ff;color:#216ed8}
+#qa .qa-context-summary.network-off{background:#f3f5f8;color:#6f7e91}
+@media(max-width:720px){#qa .qa-context-input .qa-network-btn{margin-left:auto;padding:0 8px}#qa .qa-network-btn em{display:none}}
+</style>
+<script id="qa-network-toggle-script">
+(function(){
+  var qaNetworkEnabled=true;
+  var actionBar=document.querySelector('#qa .qa-input-actions');
+  var voiceButton=document.getElementById('qaVoiceBtn');
+  if(!actionBar||!voiceButton)return;
+
+  var networkButton=document.createElement('button');
+  networkButton.type='button';
+  networkButton.id='qaNetworkToggle';
+  networkButton.className='qa-network-btn';
+  networkButton.setAttribute('role','switch');
+  networkButton.innerHTML='<i aria-hidden="true"><s></s></i><em>联网</em>';
+  networkButton.onclick=function(){setQaNetworkEnabled(!qaNetworkEnabled,true)};
+  actionBar.insertBefore(networkButton,voiceButton);
+
+  function updateReasoningScope(){
+    var selected=typeof getSelectedQaKnowledge==='function'?getSelectedQaKnowledge():[];
+    var searchStep=document.querySelector('.reasoning-steps [data-step="1"]');
+    var verifyStep=document.querySelector('.reasoning-steps [data-step="2"]');
+    if(searchStep){
+      searchStep.querySelector('b').textContent=qaNetworkEnabled?'检索知识库与公开网络':'检索已选知识库';
+      searchStep.querySelector('span').textContent=qaNetworkEnabled?'检索 '+selected.join('、')+' 及权威公开网络信源':'仅检索 '+selected.join('、')+'，不访问互联网';
+    }
+    if(verifyStep){
+      verifyStep.querySelector('b').textContent=qaNetworkEnabled?'交叉验证网络与本地信源':'校验知识库内部信源';
+      verifyStep.querySelector('span').textContent=qaNetworkEnabled?'比对权威政务、行业与新闻来源':'基于已选知识库完成多源一致性核验';
+    }
+  }
+
+  function updateQaNetworkUi(){
+    networkButton.classList.toggle('off',!qaNetworkEnabled);
+    networkButton.setAttribute('aria-checked',String(qaNetworkEnabled));
+    networkButton.setAttribute('aria-label',qaNetworkEnabled?'关闭联网检索':'开启联网检索');
+    networkButton.title=qaNetworkEnabled?'联网检索已开启，点击关闭':'当前仅检索知识库，点击开启联网';
+    networkButton.querySelector('em').textContent=qaNetworkEnabled?'联网':'离线';
+    var summary=document.getElementById('qaContextSummary');
+    var count=document.getElementById('qaKnowledgeCount');
+    if(summary){
+      summary.textContent='已关联 '+(count?count.textContent:'0')+' 个知识库 · '+(qaNetworkEnabled?'联网检索':'仅知识库');
+      summary.classList.toggle('network-on',qaNetworkEnabled);
+      summary.classList.toggle('network-off',!qaNetworkEnabled);
+    }
+    var hint=document.getElementById('qaInputHint');
+    if(hint&&!voiceButton.classList.contains('listening'))hint.textContent=qaNetworkEnabled?'联网检索已开启 · 知识库检索 · 语音输入':'仅检索已选知识库 · 语音输入';
+    document.getElementById('qa').setAttribute('data-network-enabled',String(qaNetworkEnabled));
+    updateReasoningScope();
+  }
+
+  function setQaNetworkEnabled(enabled,notify){
+    qaNetworkEnabled=!!enabled;
+    updateQaNetworkUi();
+    if(notify&&typeof toast==='function')toast(qaNetworkEnabled?'联网检索已开启，将联合检索权威公开信源':'联网检索已关闭，仅使用已选知识库');
+  }
+  window.setQaNetworkEnabled=setQaNetworkEnabled;
+  window.isQaNetworkEnabled=function(){return qaNetworkEnabled};
+
+  var previousUpdateQaContext=window.updateQaContext;
+  if(typeof previousUpdateQaContext==='function'){
+    window.updateQaContext=function(){previousUpdateQaContext.apply(this,arguments);updateQaNetworkUi()};
+  }
+
+  var previousSyncQaEvidence=window.syncQaEvidence;
+  if(typeof previousSyncQaEvidence==='function'){
+    window.syncQaEvidence=function(question){
+      previousSyncQaEvidence(question);
+      if(qaNetworkEnabled)return;
+      var nav=document.querySelector('.qa-source-drawer>nav');
+      var localButton=nav&&nav.querySelector('button:nth-child(3)');
+      var match=localButton&&localButton.textContent.match(/（(\d+)）/);
+      var localCount=match?match[1]:document.querySelectorAll('.qa-source-list article[data-source-kind="本地"]').length;
+      var localArticles=[].slice.call(document.querySelectorAll('.qa-source-list article[data-source-kind="本地"]'));
+      var cards=document.querySelector('.qa-source-cards');
+      if(cards){
+        cards.innerHTML=localArticles.slice(0,3).map(function(article,index){
+          var title=article.querySelector('b'),desc=article.querySelector('p'),meta=article.querySelector('span');
+          var metaClone=meta?meta.cloneNode(true):document.createElement('span');
+          var kind=metaClone.querySelector('small');if(kind)kind.remove();
+          return '<article onclick="openQaSources()"><b>'+(index+1)+'. '+(title?title.textContent.replace(/^\d+\.\s*/, ''):'知识库资料')+'</b><p>'+(desc?desc.textContent:'')+'</p><span>'+metaClone.innerHTML+'</span></article>';
+        }).join('')+'<button onclick="openQaSources()"><span>查看全部</span><b>'+localCount+'</b><i>☰</i></button>';
+      }
+      var summary=document.querySelector('.qa-reference-summary>div:first-child b');
+      if(summary)summary.textContent='引用 '+localCount+' 篇已选知识库资料作为参考 · 未访问互联网';
+      if(nav)nav.innerHTML='<button class="active">知识库（'+localCount+'）</button>';
+      document.querySelectorAll('.qa-source-list article').forEach(function(article){article.style.display=article.getAttribute('data-source-kind')==='本地'?'block':'none'});
+      var reopen=document.getElementById('qaSourceReopen');if(reopen)reopen.textContent='知识库来源 '+localCount;
+    };
+  }
+
+  var previousBuildQaAnswer=window.buildQaAnswer;
+  if(typeof previousBuildQaAnswer==='function'){
+    window.buildQaAnswer=function(question){
+      var answer=previousBuildQaAnswer(question);
+      if(!qaNetworkEnabled){var source=document.getElementById('answerSource');if(source)source.textContent='参考范围：已选知识库（联网检索已关闭）'}
+      return answer;
+    };
+  }
+
+  var voiceObserver=new MutationObserver(function(){if(!voiceButton.classList.contains('listening'))updateQaNetworkUi()});
+  voiceObserver.observe(voiceButton,{attributes:true,attributeFilter:['class']});
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.qa){
+    prototypeLogicAnnotations.qa.fields.push(['联网检索状态','开启后联合检索权威公开网络与已选知识库；关闭后仅在已选知识库内检索，结果页同步标识“未访问互联网”。','用户开关状态、知识库范围、网络信源白名单','每次问答读取']);
+    prototypeLogicAnnotations.qa.interactions.push(['联网检索开关','点击输入框右侧“联网/离线”按钮。','状态立即切换，并同步更新输入提示、推理步骤、参考信源范围与可追溯标识。']);
+  }
+  setQaNetworkEnabled(true,false);
+})();
+</script>
+<style id="project-match-column-style">
+#knowledgeList #kbTableHead th.kb-match-head{min-width:108px;text-align:center;white-space:nowrap}
+#knowledgeList #kbTableBody td.kb-match-cell{min-width:108px;text-align:center;white-space:nowrap}
+#knowledgeList #kbTableBody td.kb-match-cell .kb-match-switch{vertical-align:middle}
+#knowledgeList #kbTableBody td.kb-match-cell .kb-match-status{display:inline-block;min-width:30px;margin:0 0 0 7px;text-align:left}
+</style>
+<script id="project-match-column-script">
+// project-match-dedicated-column-v33
+(function addProjectMatchDedicatedColumn(){
+  var previousRenderProjectMatchColumn=window.renderKnowledgeList;
+  if(typeof previousRenderProjectMatchColumn!=='function')return;
+  window.renderKnowledgeList=function(){
+    previousRenderProjectMatchColumn.apply(this,arguments);
+    if(activeKnowledgeType!=='project')return;
+    var headRow=document.querySelector('#kbTableHead tr');
+    if(!headRow)return;
+    var actionHead=headRow.lastElementChild;
+    var matchHead=headRow.querySelector('.kb-match-head');
+    if(!matchHead){
+      matchHead=document.createElement('th');
+      matchHead.className='kb-match-head';
+      matchHead.textContent='是否参与匹配';
+      headRow.insertBefore(matchHead,actionHead);
+    }
+    Array.from(document.querySelectorAll('#kbTableBody > tr')).forEach(function(row){
+      var actionCell=row.lastElementChild;
+      var toggle=actionCell&&actionCell.querySelector('.kb-match-switch');
+      var status=actionCell&&actionCell.querySelector('.kb-match-status');
+      if(!toggle||!status)return;
+      var matchCell=document.createElement('td');
+      matchCell.className='kb-match-cell';
+      matchCell.appendChild(toggle);
+      matchCell.appendChild(status);
+      row.insertBefore(matchCell,actionCell);
+    });
+    var emptyCell=document.querySelector('#kbTableBody .kb-empty');
+    if(emptyCell&&emptyCell.closest('td'))emptyCell.closest('td').colSpan=headRow.children.length;
+  };
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledgeList){
+    prototypeLogicAnnotations.knowledgeList.fields=prototypeLogicAnnotations.knowledgeList.fields.map(function(item){
+      return item[0]==='参与匹配'?['是否参与匹配',item[1],item[2],item[3]]:item;
+    });
+  }
+})();
+</script>
+<style id="due-diligence-kpis-priority-style">
+#dueDiligence .due-kpis{grid-template-columns:repeat(3,1fr)}
+#dueReport #dueAddTargetBtn.priority-followed{background:#eaf8f2;color:#15855f;border-color:#bfe8d7;box-shadow:none}
+@media(max-width:900px){#dueDiligence .due-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){#dueDiligence .due-kpis{grid-template-columns:1fr}}
+</style>
+<script id="due-diligence-kpis-priority-script">
+// due-diligence-kpis-and-priority-v34
+(function refineDueDiligenceMetricsAndPriority(){
+  var kpis=document.querySelector('#dueDiligence .due-kpis');
+  if(kpis){
+    kpis.innerHTML='<article class="card"><span>招商关注的企业</span><b>128 家</b><em>本月新增 +18</em></article>'+
+      '<article class="card"><span>已完成尽调的</span><b>68 家</b><em>本月完成 +12</em></article>'+
+      '<article class="card"><span>重点跟进的</span><b>23 家</b><em>高适配企业 11 家</em></article>';
+  }
+
+  var targetButton=document.getElementById('dueAddTargetBtn');
+  function findFollowedCompany(name){
+    return typeof followedInvestmentCompanies!=='undefined'?followedInvestmentCompanies.find(function(item){return item.name===name}):null;
+  }
+  function syncPriorityButton(name){
+    if(!targetButton)return;
+    var item=findFollowedCompany(name);
+    var followed=!!(item&&item.priorityFollowed);
+    targetButton.textContent=followed?'✓ 已重点跟进':'＋ 重点跟进';
+    targetButton.classList.toggle('priority-followed',followed);
+    targetButton.disabled=followed;
+    targetButton.setAttribute('aria-pressed',String(followed));
+  }
+  window.markDueCompanyPriority=function(name){
+    name=name||currentDueCompany;
+    var item=findFollowedCompany(name);
+    if(!item&&typeof followedInvestmentCompanies!=='undefined'){
+      item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};
+      followedInvestmentCompanies.unshift(item);
+    }
+    if(item){item.priorityFollowed=true;item.status='report'}
+    if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncPriorityButton(name);
+    if(typeof toast==='function')toast('“'+name+'”已标记为重点跟进企业');
+  };
+  if(targetButton){
+    targetButton.textContent='＋ 重点跟进';
+    targetButton.setAttribute('aria-label','标记当前企业为重点跟进');
+    targetButton.onclick=function(){markDueCompanyPriority(currentDueCompany)};
+  }
+
+  var previousOpenDueReportPriority=window.openDueReport;
+  if(typeof previousOpenDueReportPriority==='function'){
+    window.openDueReport=function(name){
+      previousOpenDueReportPriority.apply(this,arguments);
+      syncPriorityButton(name||currentDueCompany);
+    };
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['首页业务统计','招商关注企业统计进入关注池的企业数；已完成尽调统计已生成有效报告的企业数；重点跟进统计被人工标记为重点推进的企业数。','招商关注名单、尽调报告版本、重点跟进状态','实时更新']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['重点跟进','在尽调报告右上角点击“重点跟进”。','将当前企业标记为重点跟进并写入招商跟进状态；重复操作不重复计数。']);
+  }
+  syncPriorityButton(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+})();
+</script>
+<style id="due-risk-filter-style">
+#dueDiligence .due-kpis{grid-template-columns:repeat(4,1fr)}
+#dueDiligence .due-kpis article{position:relative;cursor:pointer;transition:.18s ease;outline:none}
+#dueDiligence .due-kpis article:hover{border-color:#9fc1ed;transform:translateY(-1px);box-shadow:0 9px 22px rgba(23,74,133,.09)}
+#dueDiligence .due-kpis article.active{border-color:#4289e8;background:linear-gradient(135deg,#edf5ff,#fff);box-shadow:0 8px 22px rgba(31,105,202,.12)}
+#dueDiligence .due-kpis article.active:after{content:"";position:absolute;left:16px;right:16px;bottom:-1px;height:3px;border-radius:3px;background:#2676e8}
+#dueDiligence .due-kpis article[data-due-filter="risk"] em{color:#dc7726}
+#dueDiligence .due-list-status.risk{background:#fff3e4;color:#d97923}
+#dueReport #dueRiskPendingBtn.risk-pending{background:#fff3e4;color:#c66d20;border-color:#f1d1ac;box-shadow:none}
+@media(max-width:900px){#dueDiligence .due-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){#dueDiligence .due-kpis{grid-template-columns:1fr}}
+</style>
+<script id="due-risk-filter-script">
+// due-risk-filter-and-report-action-v35
+(function addDueRiskFilterAndReportAction(){
+  var dueListFilter='all';
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  followedInvestmentCompanies.forEach(function(item,index){
+    if(typeof item.priorityFollowed!=='boolean')item.priorityFollowed=index===3;
+    if(typeof item.riskPending!=='boolean')item.riskPending=index===1||index===2;
+  });
+
+  function renderDueKpis(){
+    var mount=document.querySelector('#dueDiligence .due-kpis');
+    if(!mount)return;
+    mount.innerHTML=[
+      ['all','招商关注的企业','128 家','本月新增 +18'],
+      ['report','已完成尽调的','68 家','本月完成 +12'],
+      ['priority','重点跟进的','23 家','高适配企业 11 家'],
+      ['risk','风险待核验','7 家','本周新增 2 家']
+    ].map(function(item){
+      return '<article class="card'+(dueListFilter===item[0]?' active':'')+'" data-due-filter="'+item[0]+'" role="button" tabindex="0" aria-pressed="'+(dueListFilter===item[0])+'" onclick="setDueListFilter(\''+item[0]+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();setDueListFilter(\''+item[0]+'\')}"><span>'+item[1]+'</span><b>'+item[2]+'</b><em>'+item[3]+'</em></article>';
+    }).join('');
+  }
+
+  function filteredDueCompanies(){
+    if(dueListFilter==='report')return followedInvestmentCompanies.filter(function(item){return item.status==='report'});
+    if(dueListFilter==='priority')return followedInvestmentCompanies.filter(function(item){return item.priorityFollowed});
+    if(dueListFilter==='risk')return followedInvestmentCompanies.filter(function(item){return item.riskPending});
+    return followedInvestmentCompanies.slice();
+  }
+
+  window.renderFollowedInvestmentList=function(){
+    var rows=document.getElementById('followedInvestmentRows');
+    if(!rows)return;
+    var filtered=filteredDueCompanies();
+    if(!filtered.length){
+      rows.innerHTML='<tr><td colspan="7"><div class="kb-empty"><b>暂无符合当前状态的企业</b><span>可切换上方统计指标查看其他企业名单</span></div></td></tr>';
+    }else{
+      rows.innerHTML=filtered.map(function(item){
+        var hasReport=item.status==='report';
+        var action=hasReport?"openDueReport('"+item.name+"')":"startDueFromFollowed('"+item.name+"')";
+        var statusText=item.riskPending?'风险待核验':hasReport?'已生成报告':'待尽调';
+        var statusClass=item.riskPending?'risk':hasReport?'report':'pending';
+        var identity=item.priorityFollowed?'重点跟进企业':'重点招商关注企业';
+        return '<tr><td><b>'+item.name+'</b><span>'+identity+'</span></td><td>'+item.track+'</td><td>'+item.location+'</td><td><b class="follow-fit">'+item.fit+'%</b></td><td>2026-07-'+(hasReport?'22':'26')+'</td><td><span class="due-list-status '+statusClass+'">'+statusText+'</span></td><td><button class="'+(hasReport?'report':'start')+'" onclick="'+action+'">'+(hasReport?'查看报告':'去尽调')+'</button></td></tr>';
+      }).join('');
+    }
+    var count=document.getElementById('followedInvestmentCount');
+    if(count){
+      var labels={all:'家招商关注',report:'家已完成尽调',priority:'家重点跟进',risk:'家风险待核验'};
+      count.textContent=filtered.length+' '+labels[dueListFilter];
+    }
+  };
+
+  window.setDueListFilter=function(filter){
+    dueListFilter=filter||'all';
+    renderDueKpis();
+    renderFollowedInvestmentList();
+  };
+
+  var reportActions=document.querySelector('#dueReport .due-report-head>div:last-child');
+  var priorityButton=document.getElementById('dueAddTargetBtn');
+  var riskButton=document.getElementById('dueRiskPendingBtn');
+  if(reportActions&&!riskButton){
+    riskButton=document.createElement('button');
+    riskButton.type='button';
+    riskButton.className='secondary';
+    riskButton.id='dueRiskPendingBtn';
+    riskButton.textContent='⚠ 风险待定';
+    riskButton.setAttribute('aria-label','标记当前企业为风险待定');
+    riskButton.onclick=function(){markDueCompanyRiskPending(currentDueCompany)};
+    reportActions.insertBefore(riskButton,priorityButton||null);
+  }
+
+  function syncDueRiskButton(name){
+    if(!riskButton)return;
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    var pending=!!(item&&item.riskPending);
+    riskButton.textContent=pending?'✓ 已标记风险待定':'⚠ 风险待定';
+    riskButton.classList.toggle('risk-pending',pending);
+    riskButton.disabled=pending;
+    riskButton.setAttribute('aria-pressed',String(pending));
+  }
+
+  window.markDueCompanyRiskPending=function(name){
+    name=name||currentDueCompany;
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    if(!item){item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};followedInvestmentCompanies.unshift(item)}
+    item.riskPending=true;
+    renderFollowedInvestmentList();
+    syncDueRiskButton(name);
+    if(typeof toast==='function')toast('“'+name+'”已加入风险待核验名单');
+  };
+
+  var previousOpenDueReportRisk=window.openDueReport;
+  if(typeof previousOpenDueReportRisk==='function'){
+    window.openDueReport=function(name){previousOpenDueReportRisk.apply(this,arguments);syncDueRiskButton(name||currentDueCompany)};
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['风险待核验','统计尽调过程中存在数据冲突、重要字段缺失或风险结论需要人工确认的企业数。','尽调任务、风险规则命中、人工复核状态','实时更新']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['统计指标联动','点击招商关注、已完成尽调、重点跟进或风险待核验统计卡。','下方企业名单和样本数量按对应状态即时刷新。']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['标记风险待定','在尽调报告右上角点击“风险待定”。','企业进入风险待核验名单，按钮变为已标记状态并防止重复提交。']);
+  }
+  renderDueKpis();
+  renderFollowedInvestmentList();
+  syncDueRiskButton(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+})();
+</script>
+<style id="due-flat-list-style">
+#dueDiligence .due-recent{display:none!important}
+#dueDiligence .followed-investments{margin-top:14px}
+#dueDiligence .followed-investments table{min-width:1060px}
+#dueDiligence .due-list-status.priority{background:#eef0ff;color:#6555c8}
+#dueDiligence .followed-investments td:nth-child(5),#dueDiligence .followed-investments td:nth-child(7){color:#66768b}
+</style>
+<script id="due-flat-list-script">
+// due-diligence-single-flat-list-v36
+(function consolidateDueDiligenceLists(){
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  var dueFlatFilter='all';
+  var sampleDates=[
+    {followed:'2026-07-22 09:16',due:'2026-07-22 10:08'},
+    {followed:'2026-07-23 16:40',due:'2026-07-24 09:26'},
+    {followed:'2026-07-26 11:18',due:'2026-07-27 15:36'},
+    {followed:'2026-07-28 14:05',due:''}
+  ];
+  followedInvestmentCompanies.forEach(function(item,index){
+    item.status=index<3?'report':'pending';
+    item.riskPending=index===1;
+    item.priorityFollowed=index===2;
+    item.followedAt=item.followedAt||(sampleDates[index]?sampleDates[index].followed:'2026-08-10 09:30');
+    item.dueAt=item.dueAt||(sampleDates[index]?sampleDates[index].due:'');
+  });
+
+  var listSection=document.querySelector('#dueDiligence .followed-investments');
+  if(listSection){
+    var title=listSection.querySelector('.card-title h2');
+    var description=listSection.querySelector('.card-title p');
+    var head=listSection.querySelector('thead tr');
+    if(title)title.textContent='招商企业名单';
+    if(description)description.textContent='点击上方统计指标，按尽调进度与跟进状态刷新企业名单';
+    if(head)head.innerHTML='<th>关注企业</th><th>重点赛道</th><th>企业所在地</th><th>本地适配度</th><th>纳入关注时间</th><th>尽调状态</th><th>尽调时间</th><th>操作</th>';
+  }
+
+  function renderFlatDueKpis(){
+    var mount=document.querySelector('#dueDiligence .due-kpis');
+    if(!mount)return;
+    var items=[
+      ['all','招商关注的企业','128 家','本月新增 +18'],
+      ['report','已完成尽调的','68 家','本月完成 +12'],
+      ['priority','重点跟进的','23 家','高适配企业 11 家'],
+      ['risk','风险待核验','7 家','本周新增 2 家']
+    ];
+    mount.innerHTML=items.map(function(item){
+      return '<article class="card'+(dueFlatFilter===item[0]?' active':'')+'" data-due-filter="'+item[0]+'" role="button" tabindex="0" aria-pressed="'+(dueFlatFilter===item[0])+'" onclick="setDueListFilter(\''+item[0]+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();setDueListFilter(\''+item[0]+'\')}"><span>'+item[1]+'</span><b>'+item[2]+'</b><em>'+item[3]+'</em></article>';
+    }).join('');
+  }
+
+  function currentDueRows(){
+    if(dueFlatFilter==='report')return followedInvestmentCompanies.filter(function(item){return item.status==='report'});
+    if(dueFlatFilter==='priority')return followedInvestmentCompanies.filter(function(item){return item.priorityFollowed});
+    if(dueFlatFilter==='risk')return followedInvestmentCompanies.filter(function(item){return item.riskPending});
+    return followedInvestmentCompanies.slice();
+  }
+
+  function resolveDueState(item){
+    if(item.riskPending)return {label:'风险待核验',className:'risk'};
+    if(item.priorityFollowed)return {label:'纳入重点跟进',className:'priority'};
+    if(item.status==='report')return {label:'已生成尽调报告',className:'report'};
+    return {label:'待尽调',className:'pending'};
+  }
+
+  window.renderFollowedInvestmentList=function(){
+    var mount=document.getElementById('followedInvestmentRows');
+    if(!mount)return;
+    var rows=currentDueRows();
+    rows.forEach(function(item){
+      if(!item.followedAt)item.followedAt='2026-08-10 09:30';
+      if(item.status==='report'&&!item.dueAt)item.dueAt='2026-08-10 10:32';
+    });
+    if(!rows.length){
+      mount.innerHTML='<tr><td colspan="8"><div class="kb-empty"><b>暂无符合当前状态的企业</b><span>可切换上方统计指标查看其他企业名单</span></div></td></tr>';
+    }else{
+      mount.innerHTML=rows.map(function(item){
+        var state=resolveDueState(item);
+        var hasReport=item.status==='report';
+        var action=hasReport?"openDueReport('"+item.name+"')":"startDueFromFollowed('"+item.name+"')";
+        return '<tr><td><b>'+item.name+'</b><span>招商关注企业</span></td><td>'+item.track+'</td><td>'+item.location+'</td><td><b class="follow-fit">'+item.fit+'%</b></td><td>'+item.followedAt+'</td><td><span class="due-list-status '+state.className+'">'+state.label+'</span></td><td>'+(item.dueAt||'—')+'</td><td><button class="'+(hasReport?'report':'start')+'" onclick="'+action+'">'+(hasReport?'查看报告':'去尽调')+'</button></td></tr>';
+      }).join('');
+    }
+    var count=document.getElementById('followedInvestmentCount');
+    if(count){var labels={all:'家招商关注',report:'家已完成尽调',priority:'家重点跟进',risk:'家风险待核验'};count.textContent=rows.length+' '+labels[dueFlatFilter]}
+  };
+
+  window.setDueListFilter=function(filter){
+    dueFlatFilter=filter||'all';
+    renderFlatDueKpis();
+    renderFollowedInvestmentList();
+  };
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['统一企业名单','首页仅保留一张招商企业名单，通过统计卡切换全部关注、已完成尽调、重点跟进和风险待核验数据。','招商关注名单、尽调任务、报告版本、跟进及风险状态','实时更新']);
+    prototypeLogicAnnotations.dueDiligence.fields.push(['尽调时间','企业完成首版尽调报告的时间；待尽调企业为空，重点跟进和风险待核验企业保留最近一次有效尽调时间。','尽调任务完成时间、报告版本记录','报告生成时写入']);
+  }
+  renderFlatDueKpis();
+  renderFollowedInvestmentList();
+})();
+</script>
+<style id="due-list-counts-pagination-style">
+#dueDiligence .due-flat-pagination{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid #edf1f5;background:#fafbfd;color:#728096;font-size:8px}
+#dueDiligence .due-flat-pagination>div{display:flex;align-items:center;gap:8px}
+#dueDiligence .due-flat-pagination button{border:1px solid #d7e0ec;background:#fff;color:#52647a;border-radius:7px;padding:6px 10px;font-size:8px}
+#dueDiligence .due-flat-pagination button:not(:disabled):hover{border-color:#6ea2e6;color:#176bd9}
+#dueDiligence .due-flat-pagination button:disabled{opacity:.45;cursor:not-allowed}
+#dueDiligence .due-flat-pagination em{font-style:normal;min-width:76px;text-align:center;color:#43556e}
+</style>
+<script id="due-list-counts-pagination-script">
+// due-list-counts-pagination-v37
+(function alignDueListWithKpiCounts(){
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  var activeFilter='all';
+  var currentPage=1;
+  var pageSize=10;
+  var tracks=['车规级芯片','自动驾驶芯片','功率半导体','智能座舱','动力电池','高端装备','工业软件','新材料'];
+  var locations=['江苏·海州','上海·浦东','广东·深圳','浙江·杭州','安徽·合肥','湖北·武汉','四川·成都','山东·青岛'];
+  var prefixes=['华芯','远景','安驰','锐科','星海','博创','恒川','德新','云擎','领航','中科','鼎盛'];
+  var industries=['微电子','智能装备','新能源','新材料','工业软件','精密制造','生物科技','汽车电子'];
+  var forms=['科技','制造','技术','产业','创新'];
+  var seedNames=['芯源微电子科技股份有限公司','智驾半导体有限公司','华锐功率器件有限公司','联创智能座舱科技有限公司','新源固态电池有限公司','云创工业软件有限公司','恒泰高端装备制造有限公司','蓝海生物医药科技有限公司'];
+  var statePool=[];
+  for(var stateIndex=0;stateIndex<68;stateIndex++)statePool.push('report');
+  for(var priorityIndex=0;priorityIndex<23;priorityIndex++)statePool.push('priority');
+  for(var riskIndex=0;riskIndex<7;riskIndex++)statePool.push('risk');
+  for(var pendingIndex=0;pendingIndex<30;pendingIndex++)statePool.push('pending');
+
+  function pad(value){return String(value).padStart(2,'0')}
+  function buildCompanyName(index){
+    if(seedNames[index])return seedNames[index];
+    var value=index-seedNames.length;
+    return prefixes[value%prefixes.length]+industries[Math.floor(value/prefixes.length)%industries.length]+forms[Math.floor(value/(prefixes.length*industries.length))%forms.length]+'有限公司';
+  }
+  var completeCompanies=[];
+  for(var index=0;index<128;index++){
+    var state=statePool[(index*37)%128];
+    var month=index<78?'07':'08';
+    var day=pad(index%28+1);
+    var followedHour=pad(8+(index%9));
+    var dueHour=pad(10+(index%8));
+    completeCompanies.push({
+      name:buildCompanyName(index),track:tracks[index%tracks.length],location:locations[index%locations.length],fit:Math.max(78,95-index%17),
+      status:state==='pending'?'pending':'report',priorityFollowed:state==='priority',riskPending:state==='risk',
+      followedAt:'2026-'+month+'-'+day+' '+followedHour+':'+pad(index*7%60),
+      dueAt:state==='pending'?'':'2026-'+month+'-'+day+' '+dueHour+':'+pad(index*11%60)
+    });
+  }
+  followedInvestmentCompanies.splice.apply(followedInvestmentCompanies,[0,followedInvestmentCompanies.length].concat(completeCompanies));
+
+  function stateOf(item){
+    if(item.riskPending)return 'risk';
+    if(item.priorityFollowed)return 'priority';
+    if(item.status==='report')return 'report';
+    return 'pending';
+  }
+  function countOf(state){return followedInvestmentCompanies.filter(function(item){return stateOf(item)===state}).length}
+  function filteredRows(){return activeFilter==='all'?followedInvestmentCompanies.slice():followedInvestmentCompanies.filter(function(item){return stateOf(item)===activeFilter})}
+  function renderCountAlignedKpis(){
+    var mount=document.querySelector('#dueDiligence .due-kpis');
+    if(!mount)return;
+    var items=[
+      ['all','招商关注的企业',followedInvestmentCompanies.length+' 家','全部关注企业'],
+      ['report','已完成尽调的',countOf('report')+' 家','已生成有效报告'],
+      ['priority','重点跟进的',countOf('priority')+' 家','纳入重点推进'],
+      ['risk','风险待核验',countOf('risk')+' 家','等待人工核验']
+    ];
+    mount.innerHTML=items.map(function(item){
+      return '<article class="card'+(activeFilter===item[0]?' active':'')+'" role="button" tabindex="0" aria-pressed="'+(activeFilter===item[0])+'" onclick="setDueListFilter(\''+item[0]+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();setDueListFilter(\''+item[0]+'\')}"><span>'+item[1]+'</span><b>'+item[2]+'</b><em>'+item[3]+'</em></article>';
+    }).join('');
+  }
+
+  function ensurePagination(){
+    var section=document.querySelector('#dueDiligence .followed-investments');
+    if(!section)return null;
+    var pagination=document.getElementById('dueFlatPagination');
+    if(!pagination){pagination=document.createElement('div');pagination.id='dueFlatPagination';pagination.className='due-flat-pagination';section.appendChild(pagination)}
+    return pagination;
+  }
+
+  window.renderFollowedInvestmentList=function(){
+    var mount=document.getElementById('followedInvestmentRows');
+    if(!mount)return;
+    var filtered=filteredRows();
+    var totalPages=Math.max(1,Math.ceil(filtered.length/pageSize));
+    if(currentPage>totalPages)currentPage=totalPages;
+    var pageRows=filtered.slice((currentPage-1)*pageSize,currentPage*pageSize);
+    mount.innerHTML=pageRows.map(function(item){
+      var state=stateOf(item);
+      var labels={pending:'待尽调',report:'已生成尽调报告',risk:'风险待核验',priority:'纳入重点跟进'};
+      var hasReport=state!=='pending';
+      var action=hasReport?"openDueReport('"+item.name+"')":"startDueFromFollowed('"+item.name+"')";
+      return '<tr><td><b>'+item.name+'</b><span>招商关注企业</span></td><td>'+item.track+'</td><td>'+item.location+'</td><td><b class="follow-fit">'+item.fit+'%</b></td><td>'+item.followedAt+'</td><td><span class="due-list-status '+state+'">'+labels[state]+'</span></td><td>'+(item.dueAt||'—')+'</td><td><button class="'+(hasReport?'report':'start')+'" onclick="'+action+'">'+(hasReport?'查看报告':'去尽调')+'</button></td></tr>';
+    }).join('');
+    var count=document.getElementById('followedInvestmentCount');
+    var filterLabels={all:'家招商关注',report:'家已完成尽调',priority:'家重点跟进',risk:'家风险待核验'};
+    if(count)count.textContent=filtered.length+' '+filterLabels[activeFilter]+' · 第 '+currentPage+'/'+totalPages+' 页';
+    var pagination=ensurePagination();
+    if(pagination)pagination.innerHTML='<span>共 '+filtered.length+' 条，每页 '+pageSize+' 条</span><div><button type="button" onclick="setDueFlatPage('+(currentPage-1)+')"'+(currentPage===1?' disabled':'')+'>上一页</button><em>第 '+currentPage+' / '+totalPages+' 页</em><button type="button" onclick="setDueFlatPage('+(currentPage+1)+')"'+(currentPage===totalPages?' disabled':'')+'>下一页</button></div>';
+  };
+
+  window.setDueFlatPage=function(page){
+    var totalPages=Math.max(1,Math.ceil(filteredRows().length/pageSize));
+    currentPage=Math.min(totalPages,Math.max(1,page));
+    renderFollowedInvestmentList();
+  };
+  window.setDueListFilter=function(filter){
+    activeFilter=filter||'all';currentPage=1;renderCountAlignedKpis();renderFollowedInvestmentList();
+  };
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['统计与名单一致性','统计卡数量由统一企业名单按当前状态实时汇总：128家关注企业由68家已生成报告、23家重点跟进、7家风险待核验和30家待尽调组成。','招商企业名单、尽调状态、重点跟进与风险核验状态','状态变化后实时重算']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['名单分页','统计筛选结果每页展示10家企业。','上一页、下一页切换不改变当前统计筛选条件，页码与筛选总数同步更新。']);
+  }
+  renderCountAlignedKpis();
+  renderFollowedInvestmentList();
+})();
+</script>
+<style id="enterprise-policy-actions-cleanup-style">
+#enterprisePolicy .project-actions{justify-content:flex-start}
+#enterprisePolicy .project-actions>span{flex:1}
+</style>
+<script id="enterprise-policy-actions-cleanup-script">
+// enterprise-policy-result-actions-cleanup-v38
+(function removeEnterprisePolicyApplicationActions(){
+  var removed=0;
+  document.querySelectorAll('#enterprisePolicy .project-actions button').forEach(function(button){
+    var label=button.textContent.trim();
+    if(label==='加入对比'||label==='我要申报'){button.remove();removed++}
+  });
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.interactions=prototypeLogicAnnotations.enterprisePolicy.interactions.filter(function(item){
+      return item[0]!=='加入对比'&&item[0]!=='我要申报';
+    });
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['结果卡片操作','点击政策项目卡片展开或收起申报条件诊断。','结果页不提供加入对比和直接申报入口，重点呈现匹配度、条件差距与补充材料建议。']);
+  }
+  document.getElementById('enterprisePolicy').setAttribute('data-removed-policy-actions',String(removed));
+})();
+</script>
+<style id="enterprise-policy-followed-list-style">
+#enterprisePolicy .ep-followed-company-list{max-width:1100px;margin:0 auto 28px;overflow:hidden}
+#enterprisePolicy.matched .ep-followed-company-list{display:none}
+#enterprisePolicy .ep-followed-company-list .card-title{padding:17px 19px}
+#enterprisePolicy .ep-followed-company-list .card-title h2{font-size:13px}
+#enterprisePolicy .ep-followed-company-list .card-title p{font-size:8px;color:#7d899c;margin:4px 0 0}
+#enterprisePolicy .ep-followed-company-list table{width:100%;border-collapse:collapse}
+#enterprisePolicy .ep-followed-company-list th,#enterprisePolicy .ep-followed-company-list td{padding:12px 14px;border-bottom:1px solid #edf1f5;text-align:left;font-size:8px;white-space:nowrap}
+#enterprisePolicy .ep-followed-company-list th{background:#f7f9fc;color:#758397;font-weight:600}
+#enterprisePolicy .ep-followed-company-list td:first-child{white-space:normal;min-width:190px}
+#enterprisePolicy .ep-followed-company-list td:first-child b,#enterprisePolicy .ep-followed-company-list td:first-child span{display:block}
+#enterprisePolicy .ep-followed-company-list td:first-child b{font-size:9px;color:#26364d}
+#enterprisePolicy .ep-followed-company-list td:first-child span{font-size:7px;color:#8a97a8;margin-top:4px}
+#enterprisePolicy .ep-report-status{display:inline-flex;padding:5px 8px;border-radius:10px;font-size:7px;font-style:normal}
+#enterprisePolicy .ep-report-status.generated{background:#eaf8f2;color:#16865f}
+#enterprisePolicy .ep-report-status.pending{background:#fff3e4;color:#d57a28}
+#enterprisePolicy .ep-followed-action{border:0;border-radius:7px;padding:7px 10px;font-size:8px;font-weight:700}
+#enterprisePolicy .ep-followed-action.report-ready{background:#edf5ff;color:#1c6fda}
+#enterprisePolicy .ep-followed-action.generate{background:#176ce2;color:#fff;box-shadow:0 5px 12px rgba(23,108,226,.18)}
+@media(max-width:900px){#enterprisePolicy .ep-followed-company-list{overflow-x:auto}#enterprisePolicy .ep-followed-company-list table{min-width:900px}}
+</style>
+<script id="enterprise-policy-followed-list-script">
+// enterprise-policy-followed-companies-v39
+(function addEnterprisePolicyFollowedCompanies(){
+  var inputCard=document.querySelector('#enterprisePolicy .enterprise-input-card');
+  if(!inputCard)return;
+  var followedCompanies=[
+    {name:'海州智造科技有限公司',track:'新能源汽车零部件',region:'海州经开区',followedAt:'2026-07-18 09:26',status:'generated',reportTime:'2026-07-18 10:05'},
+    {name:'海州精工智能装备有限公司',track:'高端装备制造',region:'海州高新区',followedAt:'2026-07-21 14:12',status:'pending',reportTime:'—'},
+    {name:'华芯微电子（海州）有限公司',track:'车规级芯片',region:'临港产业园',followedAt:'2026-07-22 16:40',status:'generated',reportTime:'2026-07-23 09:18'},
+    {name:'联创智能座舱科技有限公司',track:'智能座舱',region:'软件产业园',followedAt:'2026-07-25 11:08',status:'pending',reportTime:'—'},
+    {name:'新源固态电池有限公司',track:'动力电池',region:'新能源产业园',followedAt:'2026-07-26 15:32',status:'generated',reportTime:'2026-07-27 10:46'},
+    {name:'云创工业软件有限公司',track:'工业软件',region:'海州高新区',followedAt:'2026-07-28 09:55',status:'pending',reportTime:'—'}
+  ];
+  var section=document.createElement('section');
+  section.className='card ep-followed-company-list';
+  section.id='epFollowedCompanyList';
+  section.innerHTML='<div class="card-title"><div><h2>我重点跟进的企业</h2><p>集中查看重点企业的政策匹配报告生成进度，并可直接进入报告或发起生成</p></div><span class="status run" id="epFollowedSummary"></span></div><table><thead><tr><th>企业名称</th><th>重点赛道</th><th>所在地区</th><th>纳入跟进时间</th><th>匹配报告生成状态</th><th>报告更新时间</th><th>操作</th></tr></thead><tbody id="epFollowedCompanyRows"></tbody></table>';
+  inputCard.insertAdjacentElement('afterend',section);
+
+  function renderFollowedPolicyCompanies(){
+    var rows=document.getElementById('epFollowedCompanyRows');
+    rows.innerHTML=followedCompanies.map(function(item,index){
+      var generated=item.status==='generated';
+      return '<tr><td><b>'+item.name+'</b><span>重点跟进企业</span></td><td>'+item.track+'</td><td>'+item.region+'</td><td>'+item.followedAt+'</td><td><em class="ep-report-status '+(generated?'generated':'pending')+'">'+(generated?'已经生成':'待生成')+'</em></td><td>'+item.reportTime+'</td><td><button type="button" class="ep-followed-action '+(generated?'report-ready':'generate')+'" onclick="openTrackedPolicyReport('+index+')">'+(generated?'查看匹配报告':'生成匹配报告')+'</button></td></tr>';
+    }).join('');
+    var generatedCount=followedCompanies.filter(function(item){return item.status==='generated'}).length;
+    document.getElementById('epFollowedSummary').textContent=generatedCount+' 份已生成 · '+(followedCompanies.length-generatedCount)+' 份待生成';
+  }
+
+  function showExistingPolicyReport(item){
+    document.getElementById('epSearch').value=item.name;
+    document.querySelector('#enterprisePolicy .ep-company h2').textContent=item.name;
+    document.getElementById('enterprisePolicy').classList.add('matched');
+    document.getElementById('enterpriseMatchBtn').textContent='✦ 重新匹配政策';
+    document.querySelector('#enterprisePolicy .ep-overview-grid').scrollIntoView({behavior:'smooth',block:'start'});
+    if(typeof toast==='function')toast('已打开“'+item.name+'”政策匹配报告');
+  }
+  window.openTrackedPolicyReport=function(index){
+    var item=followedCompanies[index];if(!item)return;
+    document.getElementById('epSearch').value=item.name;
+    if(item.status==='generated'){showExistingPolicyReport(item);return}
+    item.status='generated';item.reportTime='刚刚';renderFollowedPolicyCompanies();runEnterprisePolicyMatch();
+  };
+
+  var previousRunEnterprisePolicyMatch=window.runEnterprisePolicyMatch;
+  if(typeof previousRunEnterprisePolicyMatch==='function'){
+    window.runEnterprisePolicyMatch=function(){
+      var name=document.getElementById('epSearch').value.trim();
+      var tracked=followedCompanies.find(function(item){return item.name===name});
+      if(tracked&&tracked.status!=='generated'){tracked.status='generated';tracked.reportTime='刚刚';renderFollowedPolicyCompanies()}
+      return previousRunEnterprisePolicyMatch.apply(this,arguments);
+    };
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.fields.push(['匹配报告生成状态','重点跟进企业的匹配报告分为已经生成和待生成；已经生成记录报告最新更新时间。','重点跟进企业名单、政策匹配任务、报告版本','任务完成后实时更新']);
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['重点企业报告操作','已经生成的企业点击查看匹配报告，待生成企业点击生成匹配报告。','操作与企业输入框联动，生成完成后进入对应企业政策匹配结果页。']);
+  }
+  renderFollowedPolicyCompanies();
+})();
+</script>
+<style id="policy-due-report-refinement-style">
+/* policy-and-due-report-refinement-v40 */
+#enterprisePolicy .ep-company>.company-logo,#enterprisePolicy .ep-company>.company-profile-actions{display:none!important}
+#enterprisePolicy .ep-company{padding:20px 22px;gap:0}
+#enterprisePolicy .ep-company>div:nth-child(2){min-width:0}
+#dueReport .due-report-head>div:last-child{align-items:center;flex-wrap:wrap;justify-content:flex-end}
+#dueReport .due-report-company-switch{display:flex;align-items:center;gap:7px;padding:6px 8px 6px 10px;border:1px solid #d7e0ec;border-radius:8px;background:#fff}
+#dueReport .due-report-company-switch span{font-size:8px;color:#758398;white-space:nowrap}
+#dueReport .due-report-company-switch select{width:250px;border:0;outline:0;background:transparent;color:#33445d;font-size:9px}
+#dueReport .due-report-guidance{margin-top:14px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;background:linear-gradient(120deg,#eef5ff,#fff 72%);border-color:#cfe0f5}
+#dueReport .due-report-guidance-copy{display:grid;grid-template-columns:40px 1fr;gap:2px 12px;align-items:center}
+#dueReport .due-report-guidance-copy>i{grid-row:1/3;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#2676e8,#745de0);color:#fff;font-size:16px;font-style:normal}
+#dueReport .due-report-guidance-copy h2{font-size:13px;margin:0 0 4px}
+#dueReport .due-report-guidance-copy p{font-size:8px;color:#77869a;margin:0}
+#dueReport .due-report-guidance-actions{display:flex;align-items:center;gap:9px}
+#dueReport .due-report-guidance-actions button{min-width:132px;padding:10px 15px}
+#dueReport #dueRiskPendingBtn.flagged{background:#fff3e4;color:#c66d20;border-color:#efca9e}
+#dueReport #dueAddTargetBtn.flagged{background:#eaf8f2;color:#14835e;border:1px solid #bce5d3;box-shadow:none}
+@media(max-width:900px){#dueReport .due-report-guidance{align-items:flex-start;flex-direction:column}#dueReport .due-report-company-switch select{width:190px}}
+@media(max-width:620px){#dueReport .due-report-guidance-actions{width:100%;flex-direction:column}#dueReport .due-report-guidance-actions button{width:100%}}
+</style>
+<script id="policy-due-report-refinement-script">
+(function refinePolicyAndDueReport(){
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  var report=document.getElementById('dueReport');
+  var headActions=report&&report.querySelector('.due-report-head>div:last-child');
+  var downloadButton=headActions&&headActions.querySelector('button[onclick*="downloadDueReport"]');
+  var companySwitch=document.createElement('label');
+  companySwitch.className='due-report-company-switch';
+  companySwitch.innerHTML='<span>切换企业</span><select id="dueReportCompanySwitch" aria-label="切换尽调企业"></select>';
+  if(headActions)headActions.insertBefore(companySwitch,downloadButton||headActions.firstChild);
+  var switchSelect=document.getElementById('dueReportCompanySwitch');
+
+  function reportableCompanies(){
+    var seen={};
+    return followedInvestmentCompanies.filter(function(item){
+      if(item.status!=='report'||seen[item.name])return false;
+      seen[item.name]=true;return true;
+    });
+  }
+  function renderCompanySwitch(name){
+    if(!switchSelect)return;
+    var companies=reportableCompanies();
+    switchSelect.innerHTML=companies.map(function(item){return '<option value="'+item.name.replace(/"/g,'&quot;')+'">'+item.name+'</option>'}).join('');
+    if(name&&companies.some(function(item){return item.name===name}))switchSelect.value=name;
+  }
+  if(switchSelect)switchSelect.onchange=function(){openDueReport(this.value)};
+
+  var actionPlan=report&&report.querySelector('.due-action-plan');
+  var guidance=document.createElement('section');
+  guidance.className='card due-report-guidance';
+  guidance.innerHTML='<div class="due-report-guidance-copy"><i>✓</i><h2>报告研判完成，更新招商跟进状态</h2><p>根据尽调结论标记风险待核验或纳入重点跟进，后续可随时取消标记。</p></div><div class="due-report-guidance-actions" id="dueReportGuidanceActions"></div>';
+  if(actionPlan)actionPlan.insertAdjacentElement('afterend',guidance);
+  var guidanceActions=document.getElementById('dueReportGuidanceActions');
+  var priorityButton=document.getElementById('dueAddTargetBtn');
+  var riskButton=document.getElementById('dueRiskPendingBtn');
+  if(!riskButton){
+    riskButton=document.createElement('button');riskButton.type='button';riskButton.id='dueRiskPendingBtn';riskButton.className='secondary';
+  }
+  if(guidanceActions){guidanceActions.appendChild(riskButton);if(priorityButton)guidanceActions.appendChild(priorityButton)}
+
+  function findOrCreateCompany(name){
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    if(!item){
+      item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report',followedAt:'2026-08-10 10:32',dueAt:'2026-08-10 10:35',priorityFollowed:false,riskPending:false};
+      followedInvestmentCompanies.unshift(item);renderCompanySwitch(name);
+    }
+    return item;
+  }
+  function syncDueReportActions(name){
+    var item=findOrCreateCompany(name);
+    var risk=!!item.riskPending,priority=!!item.priorityFollowed;
+    riskButton.disabled=false;
+    riskButton.className='secondary'+(risk?' flagged':'');
+    riskButton.textContent=risk?'取消标记风险':'⚠ 标记风险';
+    riskButton.setAttribute('aria-pressed',String(risk));
+    riskButton.setAttribute('aria-label',risk?'取消当前企业风险标记':'标记当前企业存在风险待核验');
+    if(priorityButton){
+      priorityButton.disabled=false;
+      priorityButton.className='primary'+(priority?' flagged':'');
+      priorityButton.textContent=priority?'取消重点跟进':'★ 标记重点跟进';
+      priorityButton.setAttribute('aria-pressed',String(priority));
+      priorityButton.setAttribute('aria-label',priority?'取消当前企业重点跟进':'标记当前企业为重点跟进');
+    }
+  }
+  window.toggleDueCompanyRisk=function(){
+    var item=findOrCreateCompany(currentDueCompany);item.riskPending=!item.riskPending;
+    if(typeof setDueListFilter==='function')setDueListFilter('all');else if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncDueReportActions(currentDueCompany);
+    if(typeof toast==='function')toast(item.riskPending?'已标记“'+currentDueCompany+'”为风险待核验':'已取消“'+currentDueCompany+'”的风险标记');
+  };
+  window.toggleDueCompanyPriority=function(){
+    var item=findOrCreateCompany(currentDueCompany);item.priorityFollowed=!item.priorityFollowed;
+    if(typeof setDueListFilter==='function')setDueListFilter('all');else if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncDueReportActions(currentDueCompany);
+    if(typeof toast==='function')toast(item.priorityFollowed?'已将“'+currentDueCompany+'”标记为重点跟进':'已取消“'+currentDueCompany+'”的重点跟进标记');
+  };
+  riskButton.onclick=toggleDueCompanyRisk;
+  if(priorityButton)priorityButton.onclick=toggleDueCompanyPriority;
+
+  function syncDueCompanyContent(name){
+    ['dueSummaryCompany','dueProfileCompany','dueBaseCompanyV2'].forEach(function(id){var node=document.getElementById(id);if(node)node.textContent=name});
+    var base=document.getElementById('dueBaseCompany');if(base&&base.childNodes.length)base.childNodes[0].nodeValue=name+' ';
+    var logo=document.querySelector('#dueReport .enterprise-identity-logo');if(logo)logo.textContent=name.slice(0,1);
+    renderCompanySwitch(name);syncDueReportActions(name);
+  }
+  var previousOpenDueReport=window.openDueReport;
+  if(typeof previousOpenDueReport==='function')window.openDueReport=function(name){
+    previousOpenDueReport.apply(this,arguments);syncDueCompanyContent(name||currentDueCompany);
+  };
+  renderCompanySwitch(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+  syncDueCompanyContent(typeof currentDueCompany!=='undefined'?currentDueCompany:reportableCompanies()[0].name);
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueReport){
+    prototypeLogicAnnotations.dueReport.interactions.push(['切换尽调企业','在报告页顶部选择已生成尽调报告的企业。','保持报告视图，切换当前企业上下文、报告标题、企业摘要和状态按钮。']);
+    prototypeLogicAnnotations.dueReport.interactions.push(['报告底部状态引导','在报告底部点击标记风险或标记重点跟进。','按钮支持标记与取消，操作后同步更新企业尽调助手统计和企业名单。']);
+  }
+})();
+</script>
+<style id="enterprise-profile-modal-v41-style">
+/* enterprise-profile-modal-fields-v41 */
+#profileModal .profile-modal{width:min(1120px,97vw)}
+#profileModal .profile-modal>header{padding:22px 26px 18px}
+#profileModal .profile-modal>header p{display:none}
+#profileModal .profile-modal-body{padding:0 26px}
+#profileModal .profile-section{padding:20px 0}
+#profileModal .profile-grid{column-gap:64px;row-gap:16px}
+#profileModal .profile-grid label{grid-template-columns:155px minmax(0,1fr)}
+#profileModal .profile-grid label>span{font-size:10px;color:#566274}
+#profileModal .profile-grid input,#profileModal .profile-grid select{height:42px;font-size:10px}
+#profileModal .unit-input b{height:42px;font-size:10px}
+#profileModal .chip-input{min-height:42px;background:#fff}
+#profileModal .chip-input em{font-size:8px;padding:7px 9px}
+#profileModal .chip-input em.more{color:#7c899b;background:#f4f5f7;border:1px solid #e1e5eb}
+#profileModal .profile-modal>footer{padding:15px 26px}
+#profileModal .profile-modal>footer p{font-size:9px}
+@media(max-width:850px){#profileModal .profile-grid{column-gap:20px}#profileModal .profile-grid label{grid-template-columns:120px minmax(0,1fr)}}
+</style>
+<script id="enterprise-profile-modal-v41-script">
+(function rebuildEnterpriseProfileModal(){
+  var modal=document.getElementById('profileModal');
+  if(!modal)return;
+  var title=document.getElementById('profileModalTitle');
+  if(title)title.textContent='完善企业信息';
+  var body=modal.querySelector('.profile-modal-body');
+  body.innerHTML='\
+    <div class="profile-grid profile-section first">\
+      <label><span><i>*</i> 所属行业</span><select id="profileIndustry" required><option value="">选择行业</option><option>制造业 / 汽车零部件及配件制造</option><option>制造业 / 计算机、通信和其他电子设备制造业</option><option>信息传输、软件和信息技术服务业</option><option>科学研究和技术服务业</option></select></label>\
+      <label><span>主营产品</span><div class="chip-input"><em>讯飞智能办公本 ×</em><em class="more">＋4</em><input aria-label="添加主营产品" placeholder="＋ 添加产品"></div></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span><i>*</i> 上年度营业收入</span><select id="profileRevenue" required><option value="">请选择</option><option>1000万以下</option><option>1000万～2000万</option><option>2000万～5000万</option><option>5000万～1亿</option><option>1亿～2亿</option><option>2亿～4亿</option><option>4亿～10亿</option><option>10亿～20亿</option><option>20亿以上</option></select></label>\
+      <label><span>上年度营收增长率</span><div class="unit-input"><input id="profileRevenueGrowth" inputmode="decimal" placeholder="请输入"><b>%</b></div></label>\
+      <label><span>上年度研发费用总额</span><div class="unit-input"><input id="profileRdExpense" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度利润总额</span><div class="unit-input"><input id="profileTotalProfit" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度净利润</span><div class="unit-input"><input id="profileNetProfit" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度纳税总额</span><div class="unit-input"><input id="profileTaxTotal" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span>当前职工总数</span><input id="profileEmployeeCount" inputmode="numeric" placeholder="请输入"></label>\
+      <label><span>当前研发人员数量</span><input id="profileRdEmployeeCount" inputmode="numeric" placeholder="请输入"></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span>上年度资产总额</span><div class="unit-input"><input id="profileTotalAssets" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度资产负债率</span><div class="unit-input"><input id="profileAssetLiabilityRatio" inputmode="decimal" placeholder="请输入"><b>%</b></div></label>\
+      <label><span>上年度固定资产总额</span><div class="unit-input"><input id="profileFixedAssets" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度累计设备原值</span><div class="unit-input"><input id="profileEquipmentOriginalValue" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+    </div>';
+  var footer=modal.querySelector('.profile-modal>footer');
+  footer.innerHTML='<p>我们将采集您填写的信息，以及官方公开公示数据进行评估，匹配结果仅供参考</p><button class="secondary" type="button" onclick="closeEnterpriseProfile()">取消</button><button class="primary" type="button" onclick="saveEnterpriseProfile()">确定</button>';
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.fields.push(['完善企业信息','人工补充所属行业、主营产品、年度经营、人员与资产数据，用于弥补公开数据缺口。','企业人工填报、官方公开公示、企业主数据','确认后重新计算']);
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['确认企业信息','校验所属行业和上年度营业收入两个必填字段后保存。','保存成功后关闭弹窗，并重新计算政策匹配度及申报条件诊断。']);
+  }
+})();
+</script>
+<script id="enterprise-profile-validation-v41-script">
+(function addEnterpriseProfileValidation(){
+  var previousSaveEnterpriseProfile=window.saveEnterpriseProfile;
+  window.saveEnterpriseProfile=function(){
+    var industry=document.getElementById('profileIndustry');
+    var revenue=document.getElementById('profileRevenue');
+    if(!industry.value){
+      if(typeof toast==='function')toast('请选择所属行业');industry.focus();return;
+    }
+    if(!revenue.value){
+      if(typeof toast==='function')toast('请选择上年度营业收入');revenue.focus();return;
+    }
+    return previousSaveEnterpriseProfile.apply(this,arguments);
+  };
+})();
+</script>
+<style id="support-policy-multi-source-v42-style">
+/* support-policy-multi-source-v42 */
+#support .support-search-autocomplete{position:relative;min-width:0;text-align:left}
+#support .support-search-autocomplete>input{display:block;width:100%;box-sizing:border-box}
+#support .support-project-suggestions{position:absolute;z-index:80;top:48px;left:0;right:0;display:none;max-height:330px;overflow:auto;padding:7px;background:#fff;border:1px solid #cfdaea;border-radius:10px;box-shadow:0 16px 40px #173a681f}
+#support .support-project-suggestions.open{display:block}
+#support .support-project-suggestion{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:8px;background:#fff;text-align:left;color:#26364c;cursor:pointer}
+#support .support-project-suggestion:hover,#support .support-project-suggestion.active{background:#f1f6ff}
+#support .support-project-suggestion b,#support .support-project-suggestion small{display:block}
+#support .support-project-suggestion b{font-size:10px;line-height:1.45}
+#support .support-project-suggestion small{margin-top:4px;font-size:8px;color:#7d899a}
+#support .support-project-suggestion em{align-self:center;padding:4px 7px;border-radius:10px;background:#e9f7f0;color:#18845f;font-size:7px;font-style:normal;white-space:nowrap}
+#support .support-project-empty{padding:18px 12px;text-align:center;font-size:8px;color:#8794a6}
+#support .support-policy-source-tools{display:flex;align-items:center;justify-content:center;gap:8px;max-width:700px;margin:0 auto 10px}
+#support .support-policy-source-tools>span{font-size:8px;color:#8794a6;margin-right:2px}
+#support .support-source-button{display:inline-flex;align-items:center;gap:5px;height:31px;padding:0 10px;border:1px solid #d9e2ee;border-radius:7px;background:#fff;color:#536278;font-size:8px;cursor:pointer}
+#support .support-source-button:hover,#support .support-source-button.active{border-color:#8eb7ed;background:#eef5ff;color:#2673df}
+#support .support-source-button i{font-size:11px;font-style:normal}
+#support .support-policy-source-status{display:flex;align-items:center;justify-content:center;gap:7px;max-width:700px;min-height:28px;margin:0 auto 10px;padding:6px 10px;border:1px solid #e1e9f3;border-radius:7px;background:#f8fbff;color:#68778c;font-size:8px}
+#support .support-policy-source-status i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#e7f1ff;color:#2673df;font-style:normal}
+#support .support-policy-source-status strong{color:#31425b;font-weight:600}
+#support .support-policy-source-status button{margin-left:auto;border:0;background:transparent;color:#2673df;font-size:8px;cursor:pointer}
+#support .support-fulltext-panel{display:none;max-width:700px;margin:0 auto 12px;padding:12px;border:1px solid #dbe5f1;border-radius:9px;background:#fbfdff;text-align:left}
+#support .support-fulltext-panel.open{display:block}
+#support .support-fulltext-panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#support .support-fulltext-panel header b{font-size:9px;color:#31425b}
+#support .support-fulltext-panel header button{border:0;background:transparent;color:#7c899b;cursor:pointer}
+#support .support-fulltext-panel textarea{display:block;width:100%;height:118px;resize:vertical;box-sizing:border-box;padding:10px 12px;border:1px solid #cfdaea;border-radius:7px;background:#fff;color:#324159;font-size:9px;line-height:1.65;outline:none}
+#support .support-fulltext-panel textarea:focus{border-color:#6e9fe4;box-shadow:0 0 0 3px #2673df12}
+#support .support-fulltext-panel footer{display:flex;justify-content:space-between;margin-top:7px;color:#8a96a7;font-size:7px}
+#support.matched .support-policy-source-tools,#support.matched .support-policy-source-status,#support.matched .support-fulltext-panel{display:none!important}
+@media(max-width:720px){#support .support-policy-source-tools{flex-wrap:wrap}#support .support-policy-source-tools>span{width:100%}#support .support-policy-input{grid-template-columns:1fr}#support .support-project-suggestions{top:45px}}
+</style>
+<script id="support-policy-multi-source-v42-script">
+(function upgradeSupportPolicyInput(){
+  var input=document.getElementById('supportPolicyInput');
+  var inputRow=input&&input.closest('.support-policy-input');
+  if(!input||!inputRow||document.getElementById('supportProjectSuggestions'))return;
+
+  var sourceMode='project';
+  var selectedProject=null;
+  var selectedFile=null;
+  var currentSuggestions=[];
+  var highlightedIndex=-1;
+  var wrapper=document.createElement('div');
+  wrapper.className='support-search-autocomplete';
+  inputRow.insertBefore(wrapper,input);
+  wrapper.appendChild(input);
+  input.placeholder='输入政策或项目名称，联想范围为项目库中“参与匹配”的项目';
+  input.setAttribute('autocomplete','off');
+  input.setAttribute('role','combobox');
+  input.setAttribute('aria-autocomplete','list');
+  input.setAttribute('aria-expanded','false');
+  input.setAttribute('aria-controls','supportProjectSuggestions');
+  wrapper.insertAdjacentHTML('beforeend','<div class="support-project-suggestions" id="supportProjectSuggestions" role="listbox" aria-label="参与匹配的政策项目"></div>');
+  inputRow.insertAdjacentHTML('afterend','\
+    <div class="support-policy-source-tools" id="supportPolicySourceTools">\
+      <span>政策输入方式</span>\
+      <button class="support-source-button active" id="supportProjectModeBtn" type="button"><i>⌕</i>项目库联想</button>\
+      <button class="support-source-button" id="supportUploadModeBtn" type="button"><i>⇧</i>上传政策文件</button>\
+      <button class="support-source-button" id="supportFullTextModeBtn" type="button"><i>文</i>直接输入政策全文</button>\
+      <input id="supportPolicyFileInput" type="file" accept=".pdf,.doc,.docx,.txt,.md" hidden>\
+    </div>\
+    <div class="support-policy-source-status" id="supportPolicySourceStatus"><i>库</i><span>联想搜索仅包含项目库中<strong>参与匹配</strong>的项目</span></div>\
+    <div class="support-fulltext-panel" id="supportPolicyFullTextPanel">\
+      <header><b>输入政策全文</b><button type="button" id="supportFullTextClose" aria-label="收起政策全文">×</button></header>\
+      <textarea id="supportPolicyFullText" maxlength="20000" placeholder="可粘贴政策正文、申报条件、支持范围、奖补标准等内容，AI 将自动解析匹配条件"></textarea>\
+      <footer><span>支持最多 20,000 字，内容仅用于本次匹配分析</span><span id="supportPolicyFullTextCount">0 / 20,000</span></footer>\
+    </div>');
+
+  var suggestionBox=document.getElementById('supportProjectSuggestions');
+  var status=document.getElementById('supportPolicySourceStatus');
+  var fileInput=document.getElementById('supportPolicyFileInput');
+  var fullTextPanel=document.getElementById('supportPolicyFullTextPanel');
+  var fullText=document.getElementById('supportPolicyFullText');
+  var fullTextCount=document.getElementById('supportPolicyFullTextCount');
+  var modeButtons={
+    project:document.getElementById('supportProjectModeBtn'),
+    file:document.getElementById('supportUploadModeBtn'),
+    text:document.getElementById('supportFullTextModeBtn')
+  };
+
+  function escapeSupportHtml(value){return String(value==null?'':value).replace(/[&<>\"]/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]})}
+  function participatingProjects(){
+    if(typeof knowledgeBaseConfigs==='undefined'||!knowledgeBaseConfigs.project)return [];
+    return knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false});
+  }
+  function setSourceStatus(icon,html,action){
+    status.innerHTML='<i>'+icon+'</i><span>'+html+'</span>'+(action?'<button type="button" id="supportSourceStatusAction">'+action.label+'</button>':'');
+    if(action){var actionButton=document.getElementById('supportSourceStatusAction');if(actionButton)actionButton.onclick=action.click}
+  }
+  function setMode(mode){
+    sourceMode=mode;
+    Object.keys(modeButtons).forEach(function(key){modeButtons[key].classList.toggle('active',key===mode)});
+    fullTextPanel.classList.toggle('open',mode==='text');
+    closeSuggestions();
+    if(mode==='project'){
+      setSourceStatus('库','联想搜索仅包含项目库中<strong>参与匹配</strong>的项目');
+      input.focus();
+    }else if(mode==='file'){
+      if(selectedFile){setSourceStatus('件','已选择文件：<strong>'+escapeSupportHtml(selectedFile.name)+'</strong>',{label:'重新选择',click:function(){fileInput.click()}})}
+      else setSourceStatus('件','支持 PDF、Word、TXT、Markdown 政策文件，AI 将自动解析申报条件');
+    }else{
+      updateFullTextStatus();
+      setTimeout(function(){fullText.focus()},0);
+    }
+  }
+  function closeSuggestions(){suggestionBox.classList.remove('open');input.setAttribute('aria-expanded','false');highlightedIndex=-1}
+  function renderSuggestions(query){
+    var keyword=(query||'').trim().toLowerCase();
+    currentSuggestions=participatingProjects().filter(function(row){
+      var haystack=[row.title,row.sub,row.category,row.org,row.level,row.condition].join(' ').toLowerCase();
+      return !keyword||haystack.indexOf(keyword)>-1;
+    }).slice(0,8);
+    highlightedIndex=-1;
+    if(!currentSuggestions.length){
+      suggestionBox.innerHTML='<div class="support-project-empty">未找到参与匹配的项目，可上传政策文件或直接输入政策全文</div>';
+    }else{
+      suggestionBox.innerHTML=currentSuggestions.map(function(row,index){
+        return '<button type="button" class="support-project-suggestion" role="option" data-support-suggestion-index="'+index+'"><span><b>'+escapeSupportHtml(row.title)+'</b><small>'+escapeSupportHtml([row.level,row.org,row.deadline].filter(Boolean).join(' · '))+'</small></span><em>参与匹配</em></button>';
+      }).join('');
+      suggestionBox.querySelectorAll('[data-support-suggestion-index]').forEach(function(button){button.onclick=function(){selectSuggestion(Number(this.dataset.supportSuggestionIndex))}});
+    }
+    suggestionBox.classList.add('open');input.setAttribute('aria-expanded','true');
+  }
+  function selectSuggestion(index){
+    var row=currentSuggestions[index];if(!row)return;
+    selectedProject=row;sourceMode='project';
+    Object.keys(modeButtons).forEach(function(key){modeButtons[key].classList.toggle('active',key==='project')});
+    fullTextPanel.classList.remove('open');input.value=row.title;closeSuggestions();
+    setSourceStatus('项','已选参与匹配项目：<strong>'+escapeSupportHtml(row.title)+'</strong>',{label:'更换项目',click:function(){input.focus();renderSuggestions(input.value)}});
+  }
+  function updateHighlight(next){
+    var buttons=suggestionBox.querySelectorAll('[data-support-suggestion-index]');if(!buttons.length)return;
+    highlightedIndex=(next+buttons.length)%buttons.length;
+    buttons.forEach(function(button,index){button.classList.toggle('active',index===highlightedIndex);button.setAttribute('aria-selected',String(index===highlightedIndex))});
+    buttons[highlightedIndex].scrollIntoView({block:'nearest'});
+  }
+  function updateFullTextStatus(){
+    var length=fullText.value.trim().length;
+    fullTextCount.textContent=fullText.value.length.toLocaleString()+' / 20,000';
+    setSourceStatus('文',length?'已输入政策全文：<strong>'+length.toLocaleString()+' 字</strong>':'请粘贴政策全文，AI 将自动抽取申报对象、条件与奖补标准');
+  }
+
+  input.addEventListener('focus',function(){if(sourceMode!=='project')setMode('project');renderSuggestions(input.value)});
+  input.addEventListener('input',function(){selectedProject=null;if(sourceMode!=='project')setMode('project');renderSuggestions(input.value)});
+  input.addEventListener('keydown',function(event){
+    if(event.key==='ArrowDown'){event.preventDefault();if(!suggestionBox.classList.contains('open'))renderSuggestions(input.value);else updateHighlight(highlightedIndex+1)}
+    else if(event.key==='ArrowUp'){event.preventDefault();updateHighlight(highlightedIndex-1)}
+    else if(event.key==='Enter'&&highlightedIndex>-1){event.preventDefault();selectSuggestion(highlightedIndex)}
+    else if(event.key==='Escape')closeSuggestions();
+  });
+  document.addEventListener('click',function(event){if(!wrapper.contains(event.target)&&!modeButtons.project.contains(event.target))closeSuggestions()});
+  modeButtons.project.onclick=function(){setMode('project');renderSuggestions(input.value)};
+  modeButtons.file.onclick=function(){setMode('file');fileInput.click()};
+  modeButtons.text.onclick=function(){setMode('text')};
+  document.getElementById('supportFullTextClose').onclick=function(){setMode('project')};
+  fullText.addEventListener('input',updateFullTextStatus);
+  fileInput.addEventListener('change',function(){
+    selectedFile=this.files&&this.files[0];if(!selectedFile)return;
+    setMode('file');input.value=selectedFile.name;
+    setSourceStatus('件','已选择文件：<strong>'+escapeSupportHtml(selectedFile.name)+'</strong>',{label:'重新选择',click:function(){fileInput.click()}});
+    if(typeof toast==='function')toast('已选择政策文件，点击一键匹配企业开始解析');
+  });
+
+  var originalRunSupportMatch=window.runSupportMatch;
+  if(typeof originalRunSupportMatch==='function')window.runSupportMatch=function(){
+    var originalValue=input.value;
+    if(sourceMode==='file'){
+      if(!selectedFile){if(typeof toast==='function')toast('请先选择需要解析的政策文件');fileInput.click();return}
+      input.value=selectedFile.name+'（上传政策文件）';
+    }else if(sourceMode==='text'){
+      var textValue=fullText.value.trim();
+      if(!textValue){if(typeof toast==='function')toast('请输入政策全文');fullText.focus();return}
+      input.value='自定义政策全文（'+textValue.length.toLocaleString()+'字）';
+    }else if(!input.value.trim()){
+      if(typeof toast==='function')toast('请输入项目名称，或选择上传政策文件/输入政策全文');input.focus();return;
+    }
+    closeSuggestions();
+    var result=originalRunSupportMatch.apply(this,arguments);
+    if(sourceMode==='file'||sourceMode==='text')setTimeout(function(){input.value=originalValue||input.value},0);
+    return result;
+  };
+  var originalChooseSupportPolicy=window.chooseSupportPolicy;
+  if(typeof originalChooseSupportPolicy==='function')window.chooseSupportPolicy=function(button){setMode('project');var result=originalChooseSupportPolicy.apply(this,arguments);selectedProject=participatingProjects().find(function(row){return row.title===input.value})||null;return result};
+  var originalChooseSupportNotice=window.chooseSupportNotice;
+  if(typeof originalChooseSupportNotice==='function')window.chooseSupportNotice=function(name){setMode('project');return originalChooseSupportNotice.apply(this,arguments)};
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.fields.push(['政策输入来源','支持项目库联想、政策文件上传和政策全文输入三种来源；项目联想值域仅包含“参与匹配”的项目。','项目库参与匹配状态、用户上传文件、用户输入正文','每次发起匹配时读取']);
+    prototypeLogicAnnotations.support.interactions.push(['项目库联想搜索','输入政策或项目关键词，支持键盘上下选择与回车确认。','候选项实时读取项目库参与匹配状态，关闭参与匹配的项目不进入联想结果。']);
+    prototypeLogicAnnotations.support.interactions.push(['上传或输入政策','选择 PDF/Word/TXT/Markdown 文件，或粘贴政策全文后点击一键匹配。','AI 先解析政策对象、申报条件和奖补标准，再进入企业召回、诊断和排序流程。']);
+  }
+})();
+</script>
+<style id="support-home-workbench-v43-style">
+/* support-home-workbench-v43 */
+#support .pending-support-section{max-width:1180px;margin:16px auto}
+#support .pending-support-head,#support .support-feed-head-v43{display:flex;align-items:center;justify-content:space-between;gap:18px}
+#support .pending-support-head>div:first-child h2,#support .support-feed-head-v43 h3{margin:0 0 5px;font-size:13px}
+#support .pending-support-head p,#support .support-feed-head-v43 p{margin:0;color:#7d899a;font-size:8px}
+#support .pending-support-actions{display:flex;align-items:center;gap:9px}
+#support .pending-support-actions span{font-size:8px;color:#64748a}
+#support .pending-support-actions b{color:#2673df;font-size:14px}
+#support .pending-support-table-wrap{overflow:auto;margin-top:13px;border:1px solid #e3e9f1;border-radius:9px}
+#support .pending-support-table{width:100%;min-width:900px;border-collapse:collapse}
+#support .pending-support-table th,#support .pending-support-table td{padding:11px 12px;border-bottom:1px solid #edf1f5;text-align:left;font-size:8px}
+#support .pending-support-table th{background:#f5f8fc;color:#647187;font-weight:600}
+#support .pending-support-table tr:last-child td{border-bottom:0}
+#support .pending-company-cell{display:flex;align-items:center;gap:9px}
+#support .pending-company-cell i{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#eaf3ff;color:#2673df;font-style:normal;font-weight:700}
+#support .pending-company-cell b,#support .pending-company-cell span{display:block}
+#support .pending-company-cell b{font-size:9px;color:#2e3d53}
+#support .pending-company-cell span{margin-top:3px;color:#8793a4;font-size:7px}
+#support .pending-match-score{color:#15966a;font-weight:700}
+#support .pending-unclaimed{display:inline-block;padding:4px 7px;border-radius:10px;background:#fff0ee;color:#dc5962;font-style:normal}
+#support .pending-project-count{display:inline-block;padding:4px 7px;border-radius:10px;background:#edf5ff;color:#2673df;font-style:normal}
+#support .pending-row-actions{display:flex;gap:9px}
+#support .pending-row-actions button{border:0;background:transparent;color:#2673df;font-size:8px;cursor:pointer}
+#support .support-info-panels{max-width:1180px;margin-left:auto;margin-right:auto}
+#support .support-feed-card-v43{min-width:0}
+#support .support-feed-list-v43{max-height:500px;overflow-y:auto;margin-top:12px;padding-right:5px;scrollbar-width:thin}
+#support .support-feed-item-v43{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;width:100%;padding:12px 9px;border:0;border-bottom:1px solid #edf1f5;background:#fff;text-align:left;cursor:pointer}
+#support .support-feed-item-v43:hover{background:#f7faff}
+#support .support-feed-icon-v43{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#eaf3ff;color:#2673df;font-size:8px;font-style:normal}
+#support .support-feed-icon-v43.publication{background:#f0edff;color:#765fd8}
+#support .support-feed-copy-v43 b,#support .support-feed-copy-v43 span{display:block}
+#support .support-feed-copy-v43 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#2c3b50;font-size:9px}
+#support .support-feed-copy-v43 span{margin-top:5px;color:#7d899a;font-size:7px}
+#support .support-feed-tags-v43{display:flex;gap:5px;margin-top:6px}
+#support .support-feed-tags-v43 i{padding:3px 6px;border-radius:9px;background:#f1f4f8;color:#6c798c;font-size:6px;font-style:normal}
+#support .support-feed-date-v43{align-self:center;color:#8a96a7;font-size:7px;font-style:normal}
+#support .support-feed-load-state{padding:11px;text-align:center;color:#8793a4;font-size:7px}
+#support .support-feed-load-state.loading{color:#2673df}
+#support.matched .pending-support-section{display:none!important}
+.support-detail-backdrop-v43{position:fixed;inset:0;z-index:1700;display:none;align-items:center;justify-content:center;padding:20px;background:#0a172b80}
+.support-detail-backdrop-v43.open{display:flex}
+.support-detail-modal-v43{display:flex;flex-direction:column;width:min(900px,96vw);max-height:90vh;overflow:hidden;border-radius:13px;background:#fff;box-shadow:0 25px 80px #07162955}
+.support-detail-modal-v43>header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 21px;border-bottom:1px solid #e5eaf1}
+.support-detail-modal-v43>header label{color:#2673df;font-size:7px;letter-spacing:1.4px}
+.support-detail-modal-v43>header h2{margin:5px 0 0;font-size:16px}
+.support-detail-modal-v43>header button{border:0;background:transparent;color:#7d899a;font-size:21px;cursor:pointer}
+.support-detail-body-v43{overflow:auto;padding:18px 21px}
+.support-detail-meta-v43{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.support-detail-meta-v43 span{padding:5px 8px;border-radius:11px;background:#f1f5fa;color:#627086;font-size:7px}
+.support-detail-section-v43{margin-top:14px;padding-top:14px;border-top:1px solid #edf1f5}
+.support-detail-section-v43 h3{margin:0 0 8px;font-size:10px}
+.support-detail-section-v43 p{margin:0;color:#5d6c82;font-size:9px;line-height:1.85}
+.support-project-list-v43{display:grid;gap:9px}
+.support-project-item-v43{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:12px;padding:13px;border:1px solid #e1e7ef;border-radius:9px}
+.support-project-item-v43 b,.support-project-item-v43 span{display:block}
+.support-project-item-v43 b{font-size:10px;color:#2d3b50}
+.support-project-item-v43 span{margin-top:5px;color:#778499;font-size:7px;line-height:1.6}
+.support-project-item-v43 aside{text-align:right}
+.support-project-item-v43 aside strong{display:block;color:#2673df;font-size:16px}
+.support-project-item-v43 aside em{font-size:7px;color:#15966a;font-style:normal}
+.support-detail-modal-v43>footer{display:flex;justify-content:flex-end;gap:8px;padding:13px 21px;border-top:1px solid #e5eaf1}
+@media(max-width:800px){#support .pending-support-head{align-items:flex-start;flex-direction:column}#support .support-info-panels{grid-template-columns:1fr}.support-project-item-v43{grid-template-columns:1fr}#support .support-feed-list-v43{max-height:420px}}
+</style>
+<script id="support-home-workbench-v43-script">
+(function buildSupportHomeWorkbench(){
+  var support=document.getElementById('support');
+  var infoPanels=support&&support.querySelector('.support-info-panels');
+  if(!support||!infoPanels||document.getElementById('pendingSupportSection'))return;
+
+  var pendingCompanies=[
+    {name:'海州智造科技有限公司',industry:'汽车零部件 · 经开区',match:96,unclaimed:4,contact:'王敏',projects:4},
+    {name:'华芯微电子（海州）有限公司',industry:'功率半导体 · 高新区',match:94,unclaimed:3,contact:'李睿',projects:5},
+    {name:'恒泰高端装备制造有限公司',industry:'工业母机 · 临港区',match:93,unclaimed:3,contact:'周宁',projects:4},
+    {name:'云创工业软件有限公司',industry:'工业软件 · 软件园',match:91,unclaimed:2,contact:'陈航',projects:3},
+    {name:'新源固态电池有限公司',industry:'新能源材料 · 高新区',match:90,unclaimed:4,contact:'赵雪',projects:5},
+    {name:'海州精密传感科技有限公司',industry:'智能传感器 · 经开区',match:89,unclaimed:2,contact:'孙悦',projects:3},
+    {name:'智航机器人科技有限公司',industry:'具身智能 · 科创园',match:88,unclaimed:3,contact:'林峰',projects:4},
+    {name:'海州生物医药股份有限公司',industry:'创新药 · 生物医药园',match:87,unclaimed:2,contact:'吴桐',projects:3},
+    {name:'东岳动力科技有限公司',industry:'动力电池 · 经开区',match:86,unclaimed:3,contact:'蒋晨',projects:4},
+    {name:'绿能循环材料有限公司',industry:'资源循环 · 临港区',match:85,unclaimed:2,contact:'许岩',projects:3}
+  ];
+  var pendingSection=document.createElement('section');
+  pendingSection.id='pendingSupportSection';
+  pendingSection.className='card pending-support-section';
+  pendingSection.innerHTML='<div class="pending-support-head"><div><h2>待扶持企业名单</h2><p>AI 识别高匹配且存在应享未享政策的企业，可查看每家企业可申报项目</p></div><div class="pending-support-actions"><span>待跟进 <b>23</b> 家 · 可报项目 <b>68</b> 项</span><button class="secondary" type="button" onclick="exportPendingSupportList()">⇩ 导出待扶持名单</button></div></div><div class="pending-support-table-wrap"><table class="pending-support-table"><thead><tr><th>企业名称</th><th>政策匹配度</th><th>应享未享</th><th>可申报项目</th><th>跟进负责人</th><th>操作</th></tr></thead><tbody id="pendingSupportRows"></tbody></table></div>';
+  infoPanels.parentNode.insertBefore(pendingSection,infoPanels);
+
+  function renderPendingRows(){
+    document.getElementById('pendingSupportRows').innerHTML=pendingCompanies.map(function(item,index){
+      return '<tr><td><div class="pending-company-cell"><i>'+item.name.slice(0,1)+'</i><div><b>'+item.name+'</b><span>'+item.industry+'</span></div></div></td><td><span class="pending-match-score">'+item.match+'%</span></td><td><em class="pending-unclaimed">'+item.unclaimed+' 项</em></td><td><em class="pending-project-count">'+item.projects+' 个可报项目</em></td><td>'+item.contact+'</td><td><div class="pending-row-actions"><button type="button" onclick="openPendingCompanyProjects('+index+')">查看可报项目 →</button></div></td></tr>';
+    }).join('');
+  }
+  renderPendingRows();
+
+  var noticeSeeds=[
+    ['国家重点研发计划“智能制造与机器人”重点专项申报通知','工业和信息化部','国家级','智能制造','2026-07-20','申报截止 08-30'],
+    ['2026年度省级专精特新中小企业培育项目申报通知','省工业和信息化厅','省级','专精特新','2026-07-18','申报截止 08-18'],
+    ['海州市制造业数字化转型扶持计划申报指南','海州市工业和信息化局','市级','数字化转型','2026-07-16','申报截止 08-12'],
+    ['绿色工厂梯度培育及奖励项目申报工作通知','省发展改革委','省级','绿色制造','2026-07-14','申报截止 09-05']
+  ];
+  var publicationSeeds=[
+    ['2026年第一批高新技术企业认定公示名单','省科技厅','省级','高新技术','2026-07-19','共386家企业'],
+    ['省级专精特新中小企业拟认定名单（第二批）','省工业和信息化厅','省级','专精特新','2026-07-17','共218家企业'],
+    ['海州市制造业数字化改造奖补项目拟支持名单','海州市工业和信息化局','市级','数字化','2026-07-15','共74个项目'],
+    ['2026年度绿色制造体系示范单位公示名单','省发展改革委','省级','绿色工厂','2026-07-12','共96家企业']
+  ];
+  function makeFeed(seeds,type){
+    var rows=seeds.map(function(x){return {title:x[0],org:x[1],level:x[2],tag:x[3],date:x[4],meta:x[5],type:type}});
+    var themes=type==='notice'?['科技成果转化专项资金','智能工厂梯度培育','首台套重大技术装备认定','中小企业数字化赋能','绿色低碳技术改造','人才创新创业支持']:['科技计划拟立项项目','制造业单项冠军拟认定企业','数字经济示范项目','绿色工厂评价结果','人才项目拟资助名单','工业设计中心认定名单'];
+    for(var i=rows.length;i<60;i++){
+      var n=i+1,theme=themes[i%themes.length];
+      rows.push({title:'2026年度'+theme+(type==='notice'?'申报通知（第'+n+'批）':'公示名单（第'+n+'批）'),org:i%3===0?'省工业和信息化厅':i%3===1?'海州市科技局':'海州市发展改革委',level:i%3===0?'省级':'市级',tag:theme,date:'2026-'+String(7-Math.floor(i/28)).padStart(2,'0')+'-'+String(28-i%28).padStart(2,'0'),meta:type==='notice'?'申报截止 '+String(8+i%3).padStart(2,'0')+'-'+String(10+i%18).padStart(2,'0'):'共'+(36+i*3)+'家企业',type:type});
+    }
+    return rows;
+  }
+  var feeds={notice:makeFeed(noticeSeeds,'notice'),publication:makeFeed(publicationSeeds,'publication')};
+  var loaded={notice:20,publication:20};
+  infoPanels.innerHTML='<section class="card support-feed-card-v43"><div class="support-feed-head-v43"><div><h3>申报通知</h3><p>最新国家、省级、市级项目申报通知 · 上滑加载更多</p></div><span class="status ok">每批20条</span></div><div class="support-feed-list-v43" id="supportNoticeFeed"></div></section><section class="card support-feed-card-v43"><div class="support-feed-head-v43"><div><h3>最新公示</h3><p>近期发布的政策项目公示名单文件 · 上滑加载更多</p></div><span class="status ok">每批20条</span></div><div class="support-feed-list-v43" id="supportPublicationFeed"></div></section>';
+
+  function renderFeed(type){
+    var box=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+    var rows=feeds[type].slice(0,loaded[type]);
+    box.innerHTML=rows.map(function(item,index){
+      return '<button type="button" class="support-feed-item-v43" onclick="openSupportFeedDetail(\''+type+'\','+index+')"><i class="support-feed-icon-v43 '+(type==='publication'?'publication':'')+'">'+(type==='notice'?item.level.slice(0,1):'PDF')+'</i><span class="support-feed-copy-v43"><b>'+item.title+'</b><span>'+item.org+' · '+item.meta+'</span><span class="support-feed-tags-v43"><i>'+item.level+'</i><i>'+item.tag+'</i></span></span><em class="support-feed-date-v43">'+item.date.slice(5)+'</em></button>';
+    }).join('')+'<div class="support-feed-load-state" id="'+type+'LoadState">'+(loaded[type]<feeds[type].length?'继续上滑加载下一批20条':'已加载全部 '+feeds[type].length+' 条')+'</div>';
+  }
+  function bindInfinite(type){
+    var box=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+    box.addEventListener('scroll',function(){
+      if(box.scrollTop+box.clientHeight<box.scrollHeight-28||loaded[type]>=feeds[type].length)return;
+      loaded[type]=Math.min(loaded[type]+20,feeds[type].length);
+      renderFeed(type);
+      var nextBox=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+      nextBox.scrollTop=Math.max(0,nextBox.scrollHeight-nextBox.clientHeight-70);
+      bindInfinite(type);
+      if(typeof toast==='function')toast('已加载下一批20条'+(type==='notice'?'申报通知':'公示文件'));
+    },{once:true});
+  }
+  renderFeed('notice');renderFeed('publication');bindInfinite('notice');bindInfinite('publication');
+
+  document.body.insertAdjacentHTML('beforeend','<div class="support-detail-backdrop-v43" id="supportDetailBackdropV43" aria-hidden="true"><section class="support-detail-modal-v43" role="dialog" aria-modal="true" aria-labelledby="supportDetailTitleV43"><header><div><label id="supportDetailEyebrowV43">POLICY DETAIL</label><h2 id="supportDetailTitleV43"></h2></div><button type="button" onclick="closeSupportDetailV43()" aria-label="关闭">×</button></header><div class="support-detail-body-v43" id="supportDetailBodyV43"></div><footer><button class="secondary" type="button" onclick="closeSupportDetailV43()">关闭</button></footer></section></div>');
+
+  window.closeSupportDetailV43=function(){var modal=document.getElementById('supportDetailBackdropV43');modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow=''};
+  function openDetail(title,eyebrow,body){
+    document.getElementById('supportDetailTitleV43').textContent=title;
+    document.getElementById('supportDetailEyebrowV43').textContent=eyebrow;
+    document.getElementById('supportDetailBodyV43').innerHTML=body;
+    var modal=document.getElementById('supportDetailBackdropV43');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+  }
+  window.openPendingCompanyProjects=function(index){
+    var company=pendingCompanies[index];if(!company)return;
+    var projects=(typeof knowledgeBaseConfigs!=='undefined'?knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false}):[]).slice(0,company.projects);
+    if(projects.length<company.projects&&typeof knowledgeBaseConfigs!=='undefined')projects=knowledgeBaseConfigs.project.rows.slice(0,company.projects);
+    var body='<div class="support-detail-meta-v43"><span>政策匹配度 '+company.match+'%</span><span>应享未享 '+company.unclaimed+' 项</span><span>负责人 '+company.contact+'</span></div><div class="support-project-list-v43">'+projects.map(function(project,i){return '<article class="support-project-item-v43"><div><b>'+project.title+'</b><span>'+project.level+' · '+project.org+' · '+project.category+'</span><span>申报条件诊断：核心条件基本符合，建议补充项目备案及上年度经营材料。</span></div><aside><strong>'+(company.match-i*2)+'%</strong><em>可申报</em></aside></article>'}).join('')+'</div>';
+    openDetail(company.name+' · 可申报政策项目','PENDING SUPPORT PROJECTS',body);
+  };
+  window.openSupportFeedDetail=function(type,index){
+    var item=feeds[type]&&feeds[type][index];if(!item)return;
+    var isNotice=type==='notice';
+    var body='<div class="support-detail-meta-v43"><span>'+item.level+'</span><span>'+item.org+'</span><span>发布时间 '+item.date+'</span><span>'+item.meta+'</span></div><section class="support-detail-section-v43"><h3>'+(isNotice?'申报对象与支持方向':'公示内容')+'</h3><p>'+(isNotice?'面向依法登记、经营正常且符合产业方向的企业，重点支持技术改造、研发创新、数字化转型和绿色低碳项目。系统已同步拆解申报对象、资格条件、材料要求与奖补标准。':'本次公示已完成主管部门审核与专家评审程序，名单包含企业名称、所属地区、申报项目及拟支持金额等信息，公示期内接受社会监督。')+'</p></section><section class="support-detail-section-v43"><h3>'+(isNotice?'关键申报条件':'附件与公示期')+'</h3><p>'+(isNotice?'企业需具备独立法人资格、近三年无重大失信记录，并按要求提交经营、研发、投入及项目备案材料。':'附件：'+item.title+'.pdf；公示期：发布之日起5个工作日；异议可向'+item.org+'提交书面材料。')+'</p></section><section class="support-detail-section-v43"><h3>原文与数据来源</h3><p>'+item.org+'官方发布渠道 · 原文已归档至精品知识库，可追溯采集时间、附件与数据血缘。</p></section>';
+    openDetail(item.title,isNotice?'APPLICATION NOTICE DETAIL':'PUBLICATION DETAIL',body);
+  };
+  window.exportPendingSupportList=function(){
+    var csv='企业名称,所属行业,政策匹配度,应享未享项目数,可申报项目数,跟进负责人\n'+pendingCompanies.map(function(item){return [item.name,item.industry,item.match+'%',item.unclaimed,item.projects,item.contact].join(',')}).join('\n');
+    var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='政策精准扶持-待扶持企业名单.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},500);if(typeof toast==='function')toast('待扶持企业名单已导出');
+  };
+  document.getElementById('supportDetailBackdropV43').addEventListener('click',function(event){if(event.target===this)closeSupportDetailV43()});
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示匹配度、未享项目数、可报项目数和跟进负责人。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
+    prototypeLogicAnnotations.support.interactions.push(['查看可报项目','点击待扶持企业操作列的“查看可报项目”。','下钻展示该企业可申报项目、单项匹配度和条件诊断摘要。']);
+    prototypeLogicAnnotations.support.interactions.push(['通知与公示上滑加载','申报通知和最新公示列表每次加载20条，滚动至列表底部自动加载下一批。','点击单条进入详情，不再设置“查看全部”入口。']);
+  }
+})();
+</script>
+<style id="support-result-three-tabs-v44-style">
+/* support-result-three-tabs-v44 */
+#support .support-filter-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){#support .support-filter-tabs{grid-template-columns:1fr}}
+</style>
+<script id="support-result-three-tabs-v44-script">
+(function refineSupportResultFilters(){
+  var highButton=document.querySelector('#support [data-support-filter="high"]');
+  if(highButton)highButton.remove();
+  var labels={all:'匹配企业',unenjoyed:'应享未享',enjoyed:'已享受政策'};
+  document.querySelectorAll('#support [data-support-filter]').forEach(function(button){
+    var label=button.querySelector('span');
+    if(label&&labels[button.dataset.supportFilter])label.textContent=labels[button.dataset.supportFilter];
+  });
+  var previousGetSupportCompanies=window.getSupportCompanies;
+  window.getSupportCompanies=function(){
+    var list=previousGetSupportCompanies.apply(this,arguments);
+    return list.sort(function(a,b){return b.c.s-a.c.s});
+  };
+  var previousRenderCompanies=window.renderCompanies;
+  window.renderCompanies=function(){
+    var list=getSupportCompanies();
+    var pages=Math.max(1,Math.ceil(list.length/supportPageSize));
+    supportPage=Math.min(Math.max(1,supportPage),pages);
+    var pageRows=list.slice((supportPage-1)*supportPageSize,supportPage*supportPageSize);
+    if(pageRows.length&&!pageRows.some(function(item){return item.index===ci}))ci=pageRows[0].index;
+    return previousRenderCompanies.apply(this,arguments);
+  };
+  if(supportFilter==='high')supportFilter='all';
+  document.querySelectorAll('#support [data-support-filter]').forEach(function(button){button.classList.toggle('active',button.dataset.supportFilter===supportFilter)});
+  renderCompanies();
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.interactions.push(['结果筛选与排序','结果页保留匹配企业、应享未享、已享受政策三个筛选项。','各筛选结果均按照政策匹配度从高到低排序，翻页不改变排序规则。']);
+  }
+})();
+</script>
+<style id="support-home-layout-v45-style">
+/* support-home-layout-v45 */
+#support .support-input-hero{max-width:1180px;padding:34px 42px 28px;background:linear-gradient(135deg,#f0f7ff,#fff 58%,#f4f1ff)}
+#support .support-policy-input{grid-template-columns:minmax(0,1fr) 54px auto;align-items:end;gap:10px;max-width:940px;margin-top:22px}
+#support .support-search-autocomplete,#support .support-policy-source-tools,#support .support-policy-source-status,#support .support-fulltext-panel{display:none!important}
+#support .support-composer-field-v45{position:relative;min-width:0}
+#support .support-composer-text-v45{display:block;width:100%;height:118px;box-sizing:border-box;resize:none;padding:16px 18px 44px;border:1px solid #c8d8eb;border-radius:14px;background:#fff;color:#2f3f55;font:10px/1.7 inherit;outline:none;box-shadow:0 10px 28px #1a538b0d}
+#support .support-composer-text-v45:focus{border-color:#6b9fe6;box-shadow:0 0 0 3px #2673df12,0 12px 32px #1a538b12}
+#support .support-composer-hint-v45{position:absolute;left:18px;bottom:13px;display:flex;align-items:center;gap:7px;color:#8794a6;font-size:7px;pointer-events:none}
+#support .support-composer-hint-v45 i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#eaf3ff;color:#2673df;font-style:normal}
+#support .support-composer-suggestions-v45{position:absolute;z-index:90;top:126px;left:0;right:0;display:none;max-height:270px;overflow:auto;padding:6px;border:1px solid #d2ddeb;border-radius:10px;background:#fff;box-shadow:0 18px 44px #15376124;text-align:left}
+#support .support-composer-suggestions-v45.open{display:block}
+#support .support-composer-suggestions-v45 button{display:block;width:100%;padding:10px 11px;border:0;border-radius:7px;background:#fff;text-align:left;cursor:pointer}
+#support .support-composer-suggestions-v45 button:hover{background:#f1f6ff}
+#support .support-composer-suggestions-v45 b,#support .support-composer-suggestions-v45 span{display:block}
+#support .support-composer-suggestions-v45 b{font-size:9px;color:#2e3e54}
+#support .support-composer-suggestions-v45 span{margin-top:4px;color:#8491a3;font-size:7px}
+#support .support-composer-file-v45{display:none;position:absolute;right:12px;bottom:10px;max-width:250px;padding:6px 25px 6px 8px;border-radius:7px;background:#edf5ff;color:#2673df;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#support .support-composer-file-v45.show{display:block}
+#support .support-composer-file-v45 button{position:absolute;right:5px;top:4px;border:0;background:transparent;color:#6c7b8f;cursor:pointer}
+#support .support-upload-compact-v45{display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid #cbd9ea;border-radius:13px;background:#fff;color:#315375;font-size:21px;cursor:pointer;box-shadow:0 8px 20px #1a4d8210}
+#support .support-upload-compact-v45:hover{border-color:#7ca9e6;background:#f3f8ff;color:#2673df}
+#support .support-policy-input>#supportMatchBtn{height:54px;padding:0 21px;border-radius:12px;font-size:9px}
+#support .support-home-grid-v45{display:grid;grid-template-columns:1.08fr 1fr 1fr;gap:12px;max-width:1180px;margin:16px auto;align-items:stretch}
+#support .support-home-grid-v45>.card{min-width:0;margin:0;max-width:none}
+#support .support-home-grid-v45 .pending-support-section{padding:17px}
+#support .support-home-grid-v45 .pending-support-head{align-items:flex-start}
+#support .support-home-grid-v45 .pending-support-head h2{font-size:12px}
+#support .pending-compact-export-v45{width:30px;height:30px;border:1px solid #d8e2ee;border-radius:8px;background:#fff;color:#2673df;cursor:pointer}
+#support .support-home-grid-v45 .pending-support-table-wrap{max-height:500px;margin-top:12px;overflow:auto}
+#support .support-home-grid-v45 .pending-support-table{min-width:0}
+#support .support-home-grid-v45 .pending-support-table th,#support .support-home-grid-v45 .pending-support-table td{padding:10px 8px}
+#support .support-home-grid-v45 .pending-company-cell{gap:7px}
+#support .support-home-grid-v45 .pending-company-cell i{width:27px;height:27px;flex:0 0 27px}
+#support .support-home-grid-v45 .pending-company-cell b{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#support .pending-project-button-v45{border:0;border-radius:10px;background:#edf5ff;color:#2673df;padding:5px 7px;font-size:7px;white-space:nowrap;cursor:pointer}
+#support .support-home-grid-v45 .support-feed-list-v43{height:500px;max-height:500px}
+#support .support-home-grid-v45 .support-feed-card-v43{padding:17px}
+#support .support-home-grid-v45 .support-feed-copy-v43 b{max-width:230px}
+#support.matched .support-home-grid-v45{display:none!important}
+#support.matched .support-input-hero{padding:12px 16px!important}
+#support.matched .support-composer-text-v45{height:46px;padding:12px 14px;white-space:nowrap;overflow:hidden}
+#support.matched .support-composer-hint-v45,#support.matched .support-composer-file-v45{display:none!important}
+#support.matched .support-policy-input{grid-template-columns:minmax(0,1fr) 46px auto!important}
+#support.matched .support-upload-compact-v45,#support.matched .support-policy-input>#supportMatchBtn{height:46px!important}
+#support.matched .support-upload-compact-v45{width:46px}
+@media(max-width:1100px){#support .support-home-grid-v45{grid-template-columns:1fr 1fr}#support .support-home-grid-v45 .pending-support-section{grid-column:1/-1}}
+@media(max-width:760px){#support .support-input-hero{padding:25px 18px}#support .support-policy-input{grid-template-columns:minmax(0,1fr) 50px}#support .support-policy-input>#supportMatchBtn{grid-column:1/-1;width:100%}#support .support-home-grid-v45{grid-template-columns:1fr}#support .support-home-grid-v45 .pending-support-section{grid-column:auto}}
+</style>
+<script id="support-home-layout-v45-script">
+(function simplifySupportHome(){
+  var support=document.getElementById('support');
+  var inputRow=support&&support.querySelector('.support-policy-input');
+  var hiddenInput=document.getElementById('supportPolicyInput');
+  var matchButton=document.getElementById('supportMatchBtn');
+  if(!support||!inputRow||!hiddenInput||!matchButton||document.getElementById('supportPolicyComposerV45'))return;
+
+  var composer=document.createElement('div');
+  composer.className='support-composer-field-v45';
+  composer.innerHTML='<textarea class="support-composer-text-v45" id="supportPolicyComposerV45" placeholder="请输入政策名称，或直接粘贴政策全文，AI 将自动解析申报对象、条件与奖补标准"></textarea><div class="support-composer-hint-v45"><i>AI</i><span>支持政策项目联想 · 政策全文智能解析</span></div><div class="support-composer-file-v45" id="supportComposerFileV45"><span></span><button type="button" aria-label="移除附件">×</button></div><div class="support-composer-suggestions-v45" id="supportComposerSuggestionsV45"></div>';
+  inputRow.insertBefore(composer,hiddenInput.closest('.support-search-autocomplete')||hiddenInput);
+  var upload=document.createElement('button');
+  upload.type='button';upload.id='supportUploadCompactV45';upload.className='support-upload-compact-v45';upload.title='上传政策附件';upload.setAttribute('aria-label','上传政策附件');upload.textContent='📎';
+  inputRow.insertBefore(upload,matchButton);
+  var textarea=document.getElementById('supportPolicyComposerV45');
+  var suggestionBox=document.getElementById('supportComposerSuggestionsV45');
+  var fileChip=document.getElementById('supportComposerFileV45');
+  var fileInput=document.getElementById('supportPolicyFileInput');
+  var projectMode=document.getElementById('supportProjectModeBtn');
+
+  function participatingProjectsV45(){
+    if(typeof knowledgeBaseConfigs==='undefined'||!knowledgeBaseConfigs.project)return [];
+    return knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false});
+  }
+  function escV45(value){return String(value||'').replace(/[&<>\"]/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]})}
+  function closeSuggestionsV45(){suggestionBox.classList.remove('open')}
+  function renderSuggestionsV45(value){
+    var keyword=value.trim().toLowerCase();
+    if(!keyword||keyword.length>50||/[\r\n]/.test(value)){closeSuggestionsV45();return}
+    var rows=participatingProjectsV45().filter(function(row){return [row.title,row.category,row.org,row.industry].join(' ').toLowerCase().indexOf(keyword)>-1}).slice(0,6);
+    if(!rows.length){closeSuggestionsV45();return}
+    suggestionBox.innerHTML=rows.map(function(row,index){return '<button type="button" data-composer-project="'+index+'"><b>'+escV45(row.title)+'</b><span>'+escV45(row.level+' · '+row.org+' · '+row.category)+'</span></button>'}).join('');
+    suggestionBox.querySelectorAll('[data-composer-project]').forEach(function(button){button.onclick=function(){var row=rows[Number(this.dataset.composerProject)];textarea.value=row.title;hiddenInput.value=row.title;closeSuggestionsV45();textarea.focus()}});
+    suggestionBox.classList.add('open');
+  }
+  textarea.addEventListener('input',function(){
+    if(projectMode&&!projectMode.classList.contains('active'))projectMode.click();
+    hiddenInput.value=textarea.value;
+    fileChip.classList.remove('show');
+    renderSuggestionsV45(textarea.value);
+    textarea.focus();
+  });
+  textarea.addEventListener('keydown',function(event){if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();runSupportMatch()}else if(event.key==='Escape')closeSuggestionsV45()});
+  textarea.addEventListener('blur',function(){setTimeout(closeSuggestionsV45,160)});
+  upload.onclick=function(){if(fileInput)fileInput.click()};
+  if(fileInput)fileInput.addEventListener('change',function(){
+    var file=this.files&&this.files[0];if(!file)return;
+    fileChip.querySelector('span').textContent=file.name;fileChip.classList.add('show');textarea.placeholder='已选择附件，可继续补充政策名称或说明';
+  });
+  fileChip.querySelector('button').onclick=function(){
+    if(fileInput)fileInput.value='';
+    fileChip.classList.remove('show');textarea.placeholder='请输入政策名称，或直接粘贴政策全文，AI 将自动解析申报对象、条件与奖补标准';
+    if(projectMode)projectMode.click();textarea.focus();
+  };
+  var previousRunV45=window.runSupportMatch;
+  window.runSupportMatch=function(){
+    var value=textarea.value.trim();
+    var hasFile=fileInput&&fileInput.files&&fileInput.files.length;
+    if(!value&&!hasFile){if(typeof toast==='function')toast('请输入政策名称、粘贴政策全文或上传政策附件');textarea.focus();return}
+    if(value){
+      if(projectMode&&!projectMode.classList.contains('active'))projectMode.click();
+      hiddenInput.value=value.length>55||/[\r\n]/.test(value)?'自定义政策全文（'+value.length+'字）':value;
+    }
+    closeSuggestionsV45();
+    return previousRunV45.apply(this,arguments);
+  };
+  var previousChooseV45=window.chooseSupportPolicy;
+  if(typeof previousChooseV45==='function')window.chooseSupportPolicy=function(button){var result=previousChooseV45.apply(this,arguments);textarea.value=hiddenInput.value;return result};
+  var previousNoticeV45=window.chooseSupportNotice;
+  if(typeof previousNoticeV45==='function')window.chooseSupportNotice=function(name){var result=previousNoticeV45.apply(this,arguments);textarea.value=hiddenInput.value;return result};
+
+  var pending=document.getElementById('pendingSupportSection');
+  var panels=support.querySelector('.support-info-panels');
+  if(pending&&panels){
+    var grid=document.createElement('div');grid.className='support-home-grid-v45';grid.id='supportHomeGridV45';
+    pending.parentNode.insertBefore(grid,pending);grid.appendChild(pending);
+    Array.from(panels.children).forEach(function(card){grid.appendChild(card)});
+    panels.remove();
+    pending.querySelector('.pending-support-head').innerHTML='<div><h2>待扶持企业名单</h2><p>高匹配且存在可申报项目的重点企业</p></div><button class="pending-compact-export-v45" type="button" onclick="exportPendingSupportList()" title="导出待扶持名单">⇩</button>';
+    pending.querySelector('thead').innerHTML='<tr><th>企业名称</th><th>可申报政策项目</th><th>跟进负责人</th></tr>';
+    var compactRows=[
+      ['海州智造科技有限公司','4个可报项目','王敏'],['华芯微电子（海州）有限公司','5个可报项目','李睿'],['恒泰高端装备制造有限公司','4个可报项目','周宁'],['云创工业软件有限公司','3个可报项目','陈航'],['新源固态电池有限公司','5个可报项目','赵雪'],['海州精密传感科技有限公司','3个可报项目','孙悦'],['智航机器人科技有限公司','4个可报项目','林峰'],['海州生物医药股份有限公司','3个可报项目','吴桐'],['东岳动力科技有限公司','4个可报项目','蒋晨'],['绿能循环材料有限公司','3个可报项目','许岩']
+    ];
+    document.getElementById('pendingSupportRows').innerHTML=compactRows.map(function(row,index){return '<tr><td><div class="pending-company-cell"><i>'+row[0].slice(0,1)+'</i><div><b title="'+row[0]+'">'+row[0]+'</b></div></div></td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+row[1]+' →</button></td><td>'+row[2]+'</td></tr>'}).join('');
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.interactions.push(['轻量政策输入','统一大输入框支持政策名称联想和政策全文粘贴，右侧附件按钮支持上传PDF、Word、TXT及Markdown。','用户输入、附件和项目库候选统一进入政策解析与企业匹配流程。']);
+    prototypeLogicAnnotations.support.interactions.push(['首页三列工作台','待扶持企业、申报通知、最新公示并排展示。','待扶持企业仅保留企业名称、可申报项目和负责人，点击项目数量下钻申报明细。']);
+  }
+})();
+</script>
+<style id="knowledge-source-task-v46-style">
+.source-task-multiselect-v46{position:relative;width:100%}.source-task-control-v46{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border:1px solid #d7e0ec;border-radius:9px;background:#fff;transition:.18s}.source-task-control-v46:focus-within{border-color:#4b8fe8;box-shadow:0 0 0 3px #3487ed12}.source-task-selected-v46{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.source-task-chip-v46{display:inline-flex;align-items:center;gap:5px;max-width:225px;padding:5px 7px;border-radius:7px;background:#edf5ff;color:#2673df;font-size:8px}.source-task-chip-v46 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.source-task-chip-v46 button{display:grid;place-items:center;width:16px;height:16px;padding:0;border:0;border-radius:5px;background:#dceaff;color:#58708f;cursor:pointer}.source-task-search-v46{flex:1;min-width:180px!important;padding:6px 2px!important;border:0!important;box-shadow:none!important;background:transparent!important}.source-task-arrow-v46{color:#7890ae;font-size:10px;pointer-events:none}
+.source-task-dropdown-v46{display:none;position:absolute;z-index:180;top:calc(100% + 7px);left:0;right:0;max-height:286px;overflow:auto;padding:6px;border:1px solid #d8e2ee;border-radius:11px;background:#fff;box-shadow:0 18px 46px #17365f26}.source-task-dropdown-v46.open{display:block}.source-task-option-v46{display:grid;width:100%;grid-template-columns:20px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px;border:0;border-radius:8px;background:#fff;text-align:left;cursor:pointer}.source-task-option-v46:hover,.source-task-option-v46.selected{background:#f1f6ff}.source-task-check-v46{display:grid;place-items:center;width:18px;height:18px;border:1px solid #c9d5e5;border-radius:5px;color:transparent;font-size:8px;font-style:normal}.source-task-option-v46.selected .source-task-check-v46{border-color:#2676e8;background:#2676e8;color:#fff}.source-task-copy-v46 b,.source-task-copy-v46 span{display:block}.source-task-copy-v46 b{color:#263b58;font-size:9px}.source-task-copy-v46 span{margin-top:3px;color:#8391a4;font-size:7px}.source-task-state-v46{padding:4px 7px;border-radius:10px;background:#eaf8f3;color:#168866;font-size:7px;font-style:normal;white-space:nowrap}.source-task-state-v46.running{background:#eef4ff;color:#2673df}.source-task-state-v46.error{background:#fff0f0;color:#d95757}.source-task-empty-v46{padding:24px;text-align:center;color:#8a98aa;font-size:8px}.source-task-help-v46{display:flex;justify-content:space-between;gap:10px;margin-top:6px;color:#8b98aa;font-size:7px}.source-task-help-v46 b{color:#2673df;font-weight:600}
+@media(max-width:620px){.source-task-control-v46{align-items:flex-start;flex-direction:column}.source-task-search-v46{width:100%}.source-task-option-v46{grid-template-columns:20px minmax(0,1fr)}.source-task-state-v46{display:none}}
+</style>
+<script id="knowledge-source-task-v46-script">
+(function(){
+  var modal=document.getElementById('knowledgeCreateModal'),legacy=modal&&modal.querySelector('.source-scope-options');
+  if(!modal||!legacy||document.getElementById('knowledgeSourceTaskSearchV46'))return;
+  var selected=new Set();
+  legacy.outerHTML='<div class="source-task-multiselect-v46" id="knowledgeSourceMultiV46"><div class="source-task-control-v46"><div class="source-task-selected-v46" id="knowledgeSourceSelectedV46"></div><input class="source-task-search-v46" id="knowledgeSourceTaskSearchV46" autocomplete="off" placeholder="输入采集任务名称、采集方式或入库知识库搜索"><span class="source-task-arrow-v46">⌄</span></div><div class="source-task-dropdown-v46" id="knowledgeSourceTaskDropdownV46" role="listbox" aria-multiselectable="true"></div><div class="source-task-help-v46"><span>数据来源：数据采集 / 采集任务列表</span><b id="knowledgeSourceCountV46">已选择 0 项</b></div></div>';
+  var root=document.getElementById('knowledgeSourceMultiV46'),input=document.getElementById('knowledgeSourceTaskSearchV46'),dropdown=document.getElementById('knowledgeSourceTaskDropdownV46'),selectedBox=document.getElementById('knowledgeSourceSelectedV46'),count=document.getElementById('knowledgeSourceCountV46');
+  function tasks(){return Array.from(document.querySelectorAll('#collectionTaskRows tr')).map(function(row,index){var cells=row.children;return{id:'task-'+index,name:(row.querySelector('.collection-task-name b')||{}).textContent||'未命名采集任务',method:(cells[1]||{}).textContent||'',status:(cells[2]||{}).textContent||'',target:(cells[4]||{}).textContent||'',frequency:(cells[5]||{}).textContent||''}})}
+  function esc(value){return String(value||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function matched(){var key=input.value.trim().toLowerCase();return tasks().filter(function(task){return !key||[task.name,task.method,task.status,task.target,task.frequency].join(' ').toLowerCase().indexOf(key)>-1})}
+  function renderSelected(){var map={};tasks().forEach(function(task){map[task.id]=task});selectedBox.innerHTML=Array.from(selected).map(function(id){var task=map[id];return task?'<span class="source-task-chip-v46" title="'+esc(task.name)+'"><span>'+esc(task.name)+'</span><button type="button" data-remove-source="'+id+'" aria-label="移除'+esc(task.name)+'">×</button></span>':''}).join('');selectedBox.querySelectorAll('[data-remove-source]').forEach(function(button){button.onclick=function(event){event.stopPropagation();selected.delete(this.dataset.removeSource);renderSelected();renderDropdown()}});count.textContent='已选择 '+selected.size+' 项'}
+  function renderDropdown(){var rows=matched();dropdown.innerHTML=rows.length?rows.map(function(task){var state=/异常/.test(task.status)?'error':/采集|解析/.test(task.status)?'running':'';return'<button type="button" class="source-task-option-v46'+(selected.has(task.id)?' selected':'')+'" data-source-task="'+task.id+'" role="option" aria-selected="'+selected.has(task.id)+'"><i class="source-task-check-v46">✓</i><span class="source-task-copy-v46"><b>'+esc(task.name)+'</b><span>'+esc(task.method+' · '+task.target+' · '+task.frequency)+'</span></span><em class="source-task-state-v46 '+state+'">'+esc(task.status.trim())+'</em></button>'}).join(''):'<div class="source-task-empty-v46">未找到匹配的采集任务</div>';dropdown.querySelectorAll('[data-source-task]').forEach(function(button){button.onclick=function(){var id=this.dataset.sourceTask;selected.has(id)?selected.delete(id):selected.add(id);input.value='';renderSelected();renderDropdown();input.focus()}})}
+  function open(){renderDropdown();dropdown.classList.add('open')}
+  input.addEventListener('focus',open);input.addEventListener('input',open);input.addEventListener('keydown',function(event){if(event.key==='Escape')dropdown.classList.remove('open');if(event.key==='Enter'){var first=dropdown.querySelector('[data-source-task]');if(first){event.preventDefault();first.click()}}});root.querySelector('.source-task-control-v46').addEventListener('click',function(){input.focus();open()});document.addEventListener('click',function(event){if(!root.contains(event.target))dropdown.classList.remove('open')});renderSelected();
+  var previousOpen=window.openKnowledgeCreateModal;window.openKnowledgeCreateModal=function(){var result=previousOpen.apply(this,arguments);setTimeout(renderDropdown,35);return result};
+  var previousCreate=window.createCuratedKnowledge;window.createCuratedKnowledge=function(){var name=document.getElementById('newKnowledgeName').value.trim(),rule=document.getElementById('newKnowledgeRule').value.trim();if(!name||!rule)return previousCreate.apply(this,arguments);if(!selected.size){toast('请从采集任务列表选择至少一个信源任务');input.focus();open();return}var sourceCount=selected.size,before=document.querySelectorAll('#curatedKnowledgeGrid .custom-kb').length,result=previousCreate.apply(this,arguments),cards=document.querySelectorAll('#curatedKnowledgeGrid .custom-kb');if(cards.length>before){var tags=cards[cards.length-1].querySelector('.kb-tags');if(tags)tags.insertAdjacentHTML('beforeend','<span>信源任务 '+sourceCount+' 个</span>')}selected.clear();input.value='';renderSelected();renderDropdown();return result};
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledge)prototypeLogicAnnotations.knowledge.interactions.push(['信源任务多选','在创建精品库弹窗输入任务名称、采集方式或目标知识库。','联想结果实时读取数据采集任务列表，支持多选、移除和创建校验。']);
+})();
+</script>
