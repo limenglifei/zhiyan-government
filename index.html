@@ -1511,3 +1511,48 @@ renderLogicAnnotations();
   setQaNetworkEnabled(true,false);
 })();
 </script>
+<style id="project-match-column-style">
+#knowledgeList #kbTableHead th.kb-match-head{min-width:108px;text-align:center;white-space:nowrap}
+#knowledgeList #kbTableBody td.kb-match-cell{min-width:108px;text-align:center;white-space:nowrap}
+#knowledgeList #kbTableBody td.kb-match-cell .kb-match-switch{vertical-align:middle}
+#knowledgeList #kbTableBody td.kb-match-cell .kb-match-status{display:inline-block;min-width:30px;margin:0 0 0 7px;text-align:left}
+</style>
+<script id="project-match-column-script">
+// project-match-dedicated-column-v33
+(function addProjectMatchDedicatedColumn(){
+  var previousRenderProjectMatchColumn=window.renderKnowledgeList;
+  if(typeof previousRenderProjectMatchColumn!=='function')return;
+  window.renderKnowledgeList=function(){
+    previousRenderProjectMatchColumn.apply(this,arguments);
+    if(activeKnowledgeType!=='project')return;
+    var headRow=document.querySelector('#kbTableHead tr');
+    if(!headRow)return;
+    var actionHead=headRow.lastElementChild;
+    var matchHead=headRow.querySelector('.kb-match-head');
+    if(!matchHead){
+      matchHead=document.createElement('th');
+      matchHead.className='kb-match-head';
+      matchHead.textContent='是否参与匹配';
+      headRow.insertBefore(matchHead,actionHead);
+    }
+    Array.from(document.querySelectorAll('#kbTableBody > tr')).forEach(function(row){
+      var actionCell=row.lastElementChild;
+      var toggle=actionCell&&actionCell.querySelector('.kb-match-switch');
+      var status=actionCell&&actionCell.querySelector('.kb-match-status');
+      if(!toggle||!status)return;
+      var matchCell=document.createElement('td');
+      matchCell.className='kb-match-cell';
+      matchCell.appendChild(toggle);
+      matchCell.appendChild(status);
+      row.insertBefore(matchCell,actionCell);
+    });
+    var emptyCell=document.querySelector('#kbTableBody .kb-empty');
+    if(emptyCell&&emptyCell.closest('td'))emptyCell.closest('td').colSpan=headRow.children.length;
+  };
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledgeList){
+    prototypeLogicAnnotations.knowledgeList.fields=prototypeLogicAnnotations.knowledgeList.fields.map(function(item){
+      return item[0]==='参与匹配'?['是否参与匹配',item[1],item[2],item[3]]:item;
+    });
+  }
+})();
+</script>
