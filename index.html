@@ -2652,3 +2652,168 @@ renderLogicAnnotations();
   }
 })();
 </script>
+<style id="support-home-layout-v45-style">
+/* support-home-layout-v45 */
+#support .support-input-hero{max-width:1180px;padding:34px 42px 28px;background:linear-gradient(135deg,#f0f7ff,#fff 58%,#f4f1ff)}
+#support .support-policy-input{grid-template-columns:minmax(0,1fr) 54px auto;align-items:end;gap:10px;max-width:940px;margin-top:22px}
+#support .support-search-autocomplete,#support .support-policy-source-tools,#support .support-policy-source-status,#support .support-fulltext-panel{display:none!important}
+#support .support-composer-field-v45{position:relative;min-width:0}
+#support .support-composer-text-v45{display:block;width:100%;height:118px;box-sizing:border-box;resize:none;padding:16px 18px 44px;border:1px solid #c8d8eb;border-radius:14px;background:#fff;color:#2f3f55;font:10px/1.7 inherit;outline:none;box-shadow:0 10px 28px #1a538b0d}
+#support .support-composer-text-v45:focus{border-color:#6b9fe6;box-shadow:0 0 0 3px #2673df12,0 12px 32px #1a538b12}
+#support .support-composer-hint-v45{position:absolute;left:18px;bottom:13px;display:flex;align-items:center;gap:7px;color:#8794a6;font-size:7px;pointer-events:none}
+#support .support-composer-hint-v45 i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#eaf3ff;color:#2673df;font-style:normal}
+#support .support-composer-suggestions-v45{position:absolute;z-index:90;top:126px;left:0;right:0;display:none;max-height:270px;overflow:auto;padding:6px;border:1px solid #d2ddeb;border-radius:10px;background:#fff;box-shadow:0 18px 44px #15376124;text-align:left}
+#support .support-composer-suggestions-v45.open{display:block}
+#support .support-composer-suggestions-v45 button{display:block;width:100%;padding:10px 11px;border:0;border-radius:7px;background:#fff;text-align:left;cursor:pointer}
+#support .support-composer-suggestions-v45 button:hover{background:#f1f6ff}
+#support .support-composer-suggestions-v45 b,#support .support-composer-suggestions-v45 span{display:block}
+#support .support-composer-suggestions-v45 b{font-size:9px;color:#2e3e54}
+#support .support-composer-suggestions-v45 span{margin-top:4px;color:#8491a3;font-size:7px}
+#support .support-composer-file-v45{display:none;position:absolute;right:12px;bottom:10px;max-width:250px;padding:6px 25px 6px 8px;border-radius:7px;background:#edf5ff;color:#2673df;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#support .support-composer-file-v45.show{display:block}
+#support .support-composer-file-v45 button{position:absolute;right:5px;top:4px;border:0;background:transparent;color:#6c7b8f;cursor:pointer}
+#support .support-upload-compact-v45{display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid #cbd9ea;border-radius:13px;background:#fff;color:#315375;font-size:21px;cursor:pointer;box-shadow:0 8px 20px #1a4d8210}
+#support .support-upload-compact-v45:hover{border-color:#7ca9e6;background:#f3f8ff;color:#2673df}
+#support .support-policy-input>#supportMatchBtn{height:54px;padding:0 21px;border-radius:12px;font-size:9px}
+#support .support-home-grid-v45{display:grid;grid-template-columns:1.08fr 1fr 1fr;gap:12px;max-width:1180px;margin:16px auto;align-items:stretch}
+#support .support-home-grid-v45>.card{min-width:0;margin:0;max-width:none}
+#support .support-home-grid-v45 .pending-support-section{padding:17px}
+#support .support-home-grid-v45 .pending-support-head{align-items:flex-start}
+#support .support-home-grid-v45 .pending-support-head h2{font-size:12px}
+#support .pending-compact-export-v45{width:30px;height:30px;border:1px solid #d8e2ee;border-radius:8px;background:#fff;color:#2673df;cursor:pointer}
+#support .support-home-grid-v45 .pending-support-table-wrap{max-height:500px;margin-top:12px;overflow:auto}
+#support .support-home-grid-v45 .pending-support-table{min-width:0}
+#support .support-home-grid-v45 .pending-support-table th,#support .support-home-grid-v45 .pending-support-table td{padding:10px 8px}
+#support .support-home-grid-v45 .pending-company-cell{gap:7px}
+#support .support-home-grid-v45 .pending-company-cell i{width:27px;height:27px;flex:0 0 27px}
+#support .support-home-grid-v45 .pending-company-cell b{max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#support .pending-project-button-v45{border:0;border-radius:10px;background:#edf5ff;color:#2673df;padding:5px 7px;font-size:7px;white-space:nowrap;cursor:pointer}
+#support .support-home-grid-v45 .support-feed-list-v43{height:500px;max-height:500px}
+#support .support-home-grid-v45 .support-feed-card-v43{padding:17px}
+#support .support-home-grid-v45 .support-feed-copy-v43 b{max-width:230px}
+#support.matched .support-home-grid-v45{display:none!important}
+#support.matched .support-input-hero{padding:12px 16px!important}
+#support.matched .support-composer-text-v45{height:46px;padding:12px 14px;white-space:nowrap;overflow:hidden}
+#support.matched .support-composer-hint-v45,#support.matched .support-composer-file-v45{display:none!important}
+#support.matched .support-policy-input{grid-template-columns:minmax(0,1fr) 46px auto!important}
+#support.matched .support-upload-compact-v45,#support.matched .support-policy-input>#supportMatchBtn{height:46px!important}
+#support.matched .support-upload-compact-v45{width:46px}
+@media(max-width:1100px){#support .support-home-grid-v45{grid-template-columns:1fr 1fr}#support .support-home-grid-v45 .pending-support-section{grid-column:1/-1}}
+@media(max-width:760px){#support .support-input-hero{padding:25px 18px}#support .support-policy-input{grid-template-columns:minmax(0,1fr) 50px}#support .support-policy-input>#supportMatchBtn{grid-column:1/-1;width:100%}#support .support-home-grid-v45{grid-template-columns:1fr}#support .support-home-grid-v45 .pending-support-section{grid-column:auto}}
+</style>
+<script id="support-home-layout-v45-script">
+(function simplifySupportHome(){
+  var support=document.getElementById('support');
+  var inputRow=support&&support.querySelector('.support-policy-input');
+  var hiddenInput=document.getElementById('supportPolicyInput');
+  var matchButton=document.getElementById('supportMatchBtn');
+  if(!support||!inputRow||!hiddenInput||!matchButton||document.getElementById('supportPolicyComposerV45'))return;
+
+  var composer=document.createElement('div');
+  composer.className='support-composer-field-v45';
+  composer.innerHTML='<textarea class="support-composer-text-v45" id="supportPolicyComposerV45" placeholder="请输入政策名称，或直接粘贴政策全文，AI 将自动解析申报对象、条件与奖补标准"></textarea><div class="support-composer-hint-v45"><i>AI</i><span>支持政策项目联想 · 政策全文智能解析</span></div><div class="support-composer-file-v45" id="supportComposerFileV45"><span></span><button type="button" aria-label="移除附件">×</button></div><div class="support-composer-suggestions-v45" id="supportComposerSuggestionsV45"></div>';
+  inputRow.insertBefore(composer,hiddenInput.closest('.support-search-autocomplete')||hiddenInput);
+  var upload=document.createElement('button');
+  upload.type='button';upload.id='supportUploadCompactV45';upload.className='support-upload-compact-v45';upload.title='上传政策附件';upload.setAttribute('aria-label','上传政策附件');upload.textContent='📎';
+  inputRow.insertBefore(upload,matchButton);
+  var textarea=document.getElementById('supportPolicyComposerV45');
+  var suggestionBox=document.getElementById('supportComposerSuggestionsV45');
+  var fileChip=document.getElementById('supportComposerFileV45');
+  var fileInput=document.getElementById('supportPolicyFileInput');
+  var projectMode=document.getElementById('supportProjectModeBtn');
+
+  function participatingProjectsV45(){
+    if(typeof knowledgeBaseConfigs==='undefined'||!knowledgeBaseConfigs.project)return [];
+    return knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false});
+  }
+  function escV45(value){return String(value||'').replace(/[&<>\"]/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]})}
+  function closeSuggestionsV45(){suggestionBox.classList.remove('open')}
+  function renderSuggestionsV45(value){
+    var keyword=value.trim().toLowerCase();
+    if(!keyword||keyword.length>50||/[\r\n]/.test(value)){closeSuggestionsV45();return}
+    var rows=participatingProjectsV45().filter(function(row){return [row.title,row.category,row.org,row.industry].join(' ').toLowerCase().indexOf(keyword)>-1}).slice(0,6);
+    if(!rows.length){closeSuggestionsV45();return}
+    suggestionBox.innerHTML=rows.map(function(row,index){return '<button type="button" data-composer-project="'+index+'"><b>'+escV45(row.title)+'</b><span>'+escV45(row.level+' · '+row.org+' · '+row.category)+'</span></button>'}).join('');
+    suggestionBox.querySelectorAll('[data-composer-project]').forEach(function(button){button.onclick=function(){var row=rows[Number(this.dataset.composerProject)];textarea.value=row.title;hiddenInput.value=row.title;closeSuggestionsV45();textarea.focus()}});
+    suggestionBox.classList.add('open');
+  }
+  textarea.addEventListener('input',function(){
+    if(projectMode&&!projectMode.classList.contains('active'))projectMode.click();
+    hiddenInput.value=textarea.value;
+    fileChip.classList.remove('show');
+    renderSuggestionsV45(textarea.value);
+    textarea.focus();
+  });
+  textarea.addEventListener('keydown',function(event){if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();runSupportMatch()}else if(event.key==='Escape')closeSuggestionsV45()});
+  textarea.addEventListener('blur',function(){setTimeout(closeSuggestionsV45,160)});
+  upload.onclick=function(){if(fileInput)fileInput.click()};
+  if(fileInput)fileInput.addEventListener('change',function(){
+    var file=this.files&&this.files[0];if(!file)return;
+    fileChip.querySelector('span').textContent=file.name;fileChip.classList.add('show');textarea.placeholder='已选择附件，可继续补充政策名称或说明';
+  });
+  fileChip.querySelector('button').onclick=function(){
+    if(fileInput)fileInput.value='';
+    fileChip.classList.remove('show');textarea.placeholder='请输入政策名称，或直接粘贴政策全文，AI 将自动解析申报对象、条件与奖补标准';
+    if(projectMode)projectMode.click();textarea.focus();
+  };
+  var previousRunV45=window.runSupportMatch;
+  window.runSupportMatch=function(){
+    var value=textarea.value.trim();
+    var hasFile=fileInput&&fileInput.files&&fileInput.files.length;
+    if(!value&&!hasFile){if(typeof toast==='function')toast('请输入政策名称、粘贴政策全文或上传政策附件');textarea.focus();return}
+    if(value){
+      if(projectMode&&!projectMode.classList.contains('active'))projectMode.click();
+      hiddenInput.value=value.length>55||/[\r\n]/.test(value)?'自定义政策全文（'+value.length+'字）':value;
+    }
+    closeSuggestionsV45();
+    return previousRunV45.apply(this,arguments);
+  };
+  var previousChooseV45=window.chooseSupportPolicy;
+  if(typeof previousChooseV45==='function')window.chooseSupportPolicy=function(button){var result=previousChooseV45.apply(this,arguments);textarea.value=hiddenInput.value;return result};
+  var previousNoticeV45=window.chooseSupportNotice;
+  if(typeof previousNoticeV45==='function')window.chooseSupportNotice=function(name){var result=previousNoticeV45.apply(this,arguments);textarea.value=hiddenInput.value;return result};
+
+  var pending=document.getElementById('pendingSupportSection');
+  var panels=support.querySelector('.support-info-panels');
+  if(pending&&panels){
+    var grid=document.createElement('div');grid.className='support-home-grid-v45';grid.id='supportHomeGridV45';
+    pending.parentNode.insertBefore(grid,pending);grid.appendChild(pending);
+    Array.from(panels.children).forEach(function(card){grid.appendChild(card)});
+    panels.remove();
+    pending.querySelector('.pending-support-head').innerHTML='<div><h2>待扶持企业名单</h2><p>高匹配且存在可申报项目的重点企业</p></div><button class="pending-compact-export-v45" type="button" onclick="exportPendingSupportList()" title="导出待扶持名单">⇩</button>';
+    pending.querySelector('thead').innerHTML='<tr><th>企业名称</th><th>可申报政策项目</th><th>跟进负责人</th></tr>';
+    var compactRows=[
+      ['海州智造科技有限公司','4个可报项目','王敏'],['华芯微电子（海州）有限公司','5个可报项目','李睿'],['恒泰高端装备制造有限公司','4个可报项目','周宁'],['云创工业软件有限公司','3个可报项目','陈航'],['新源固态电池有限公司','5个可报项目','赵雪'],['海州精密传感科技有限公司','3个可报项目','孙悦'],['智航机器人科技有限公司','4个可报项目','林峰'],['海州生物医药股份有限公司','3个可报项目','吴桐'],['东岳动力科技有限公司','4个可报项目','蒋晨'],['绿能循环材料有限公司','3个可报项目','许岩']
+    ];
+    document.getElementById('pendingSupportRows').innerHTML=compactRows.map(function(row,index){return '<tr><td><div class="pending-company-cell"><i>'+row[0].slice(0,1)+'</i><div><b title="'+row[0]+'">'+row[0]+'</b></div></div></td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+row[1]+' →</button></td><td>'+row[2]+'</td></tr>'}).join('');
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.interactions.push(['轻量政策输入','统一大输入框支持政策名称联想和政策全文粘贴，右侧附件按钮支持上传PDF、Word、TXT及Markdown。','用户输入、附件和项目库候选统一进入政策解析与企业匹配流程。']);
+    prototypeLogicAnnotations.support.interactions.push(['首页三列工作台','待扶持企业、申报通知、最新公示并排展示。','待扶持企业仅保留企业名称、可申报项目和负责人，点击项目数量下钻申报明细。']);
+  }
+})();
+</script>
+<style id="knowledge-source-task-v46-style">
+.source-task-multiselect-v46{position:relative;width:100%}.source-task-control-v46{display:flex;align-items:center;gap:8px;min-height:44px;padding:5px 10px;border:1px solid #d7e0ec;border-radius:9px;background:#fff;transition:.18s}.source-task-control-v46:focus-within{border-color:#4b8fe8;box-shadow:0 0 0 3px #3487ed12}.source-task-selected-v46{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.source-task-chip-v46{display:inline-flex;align-items:center;gap:5px;max-width:225px;padding:5px 7px;border-radius:7px;background:#edf5ff;color:#2673df;font-size:8px}.source-task-chip-v46 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.source-task-chip-v46 button{display:grid;place-items:center;width:16px;height:16px;padding:0;border:0;border-radius:5px;background:#dceaff;color:#58708f;cursor:pointer}.source-task-search-v46{flex:1;min-width:180px!important;padding:6px 2px!important;border:0!important;box-shadow:none!important;background:transparent!important}.source-task-arrow-v46{color:#7890ae;font-size:10px;pointer-events:none}
+.source-task-dropdown-v46{display:none;position:absolute;z-index:180;top:calc(100% + 7px);left:0;right:0;max-height:286px;overflow:auto;padding:6px;border:1px solid #d8e2ee;border-radius:11px;background:#fff;box-shadow:0 18px 46px #17365f26}.source-task-dropdown-v46.open{display:block}.source-task-option-v46{display:grid;width:100%;grid-template-columns:20px minmax(0,1fr) auto;gap:9px;align-items:center;padding:10px;border:0;border-radius:8px;background:#fff;text-align:left;cursor:pointer}.source-task-option-v46:hover,.source-task-option-v46.selected{background:#f1f6ff}.source-task-check-v46{display:grid;place-items:center;width:18px;height:18px;border:1px solid #c9d5e5;border-radius:5px;color:transparent;font-size:8px;font-style:normal}.source-task-option-v46.selected .source-task-check-v46{border-color:#2676e8;background:#2676e8;color:#fff}.source-task-copy-v46 b,.source-task-copy-v46 span{display:block}.source-task-copy-v46 b{color:#263b58;font-size:9px}.source-task-copy-v46 span{margin-top:3px;color:#8391a4;font-size:7px}.source-task-state-v46{padding:4px 7px;border-radius:10px;background:#eaf8f3;color:#168866;font-size:7px;font-style:normal;white-space:nowrap}.source-task-state-v46.running{background:#eef4ff;color:#2673df}.source-task-state-v46.error{background:#fff0f0;color:#d95757}.source-task-empty-v46{padding:24px;text-align:center;color:#8a98aa;font-size:8px}.source-task-help-v46{display:flex;justify-content:space-between;gap:10px;margin-top:6px;color:#8b98aa;font-size:7px}.source-task-help-v46 b{color:#2673df;font-weight:600}
+@media(max-width:620px){.source-task-control-v46{align-items:flex-start;flex-direction:column}.source-task-search-v46{width:100%}.source-task-option-v46{grid-template-columns:20px minmax(0,1fr)}.source-task-state-v46{display:none}}
+</style>
+<script id="knowledge-source-task-v46-script">
+(function(){
+  var modal=document.getElementById('knowledgeCreateModal'),legacy=modal&&modal.querySelector('.source-scope-options');
+  if(!modal||!legacy||document.getElementById('knowledgeSourceTaskSearchV46'))return;
+  var selected=new Set();
+  legacy.outerHTML='<div class="source-task-multiselect-v46" id="knowledgeSourceMultiV46"><div class="source-task-control-v46"><div class="source-task-selected-v46" id="knowledgeSourceSelectedV46"></div><input class="source-task-search-v46" id="knowledgeSourceTaskSearchV46" autocomplete="off" placeholder="输入采集任务名称、采集方式或入库知识库搜索"><span class="source-task-arrow-v46">⌄</span></div><div class="source-task-dropdown-v46" id="knowledgeSourceTaskDropdownV46" role="listbox" aria-multiselectable="true"></div><div class="source-task-help-v46"><span>数据来源：数据采集 / 采集任务列表</span><b id="knowledgeSourceCountV46">已选择 0 项</b></div></div>';
+  var root=document.getElementById('knowledgeSourceMultiV46'),input=document.getElementById('knowledgeSourceTaskSearchV46'),dropdown=document.getElementById('knowledgeSourceTaskDropdownV46'),selectedBox=document.getElementById('knowledgeSourceSelectedV46'),count=document.getElementById('knowledgeSourceCountV46');
+  function tasks(){return Array.from(document.querySelectorAll('#collectionTaskRows tr')).map(function(row,index){var cells=row.children;return{id:'task-'+index,name:(row.querySelector('.collection-task-name b')||{}).textContent||'未命名采集任务',method:(cells[1]||{}).textContent||'',status:(cells[2]||{}).textContent||'',target:(cells[4]||{}).textContent||'',frequency:(cells[5]||{}).textContent||''}})}
+  function esc(value){return String(value||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function matched(){var key=input.value.trim().toLowerCase();return tasks().filter(function(task){return !key||[task.name,task.method,task.status,task.target,task.frequency].join(' ').toLowerCase().indexOf(key)>-1})}
+  function renderSelected(){var map={};tasks().forEach(function(task){map[task.id]=task});selectedBox.innerHTML=Array.from(selected).map(function(id){var task=map[id];return task?'<span class="source-task-chip-v46" title="'+esc(task.name)+'"><span>'+esc(task.name)+'</span><button type="button" data-remove-source="'+id+'" aria-label="移除'+esc(task.name)+'">×</button></span>':''}).join('');selectedBox.querySelectorAll('[data-remove-source]').forEach(function(button){button.onclick=function(event){event.stopPropagation();selected.delete(this.dataset.removeSource);renderSelected();renderDropdown()}});count.textContent='已选择 '+selected.size+' 项'}
+  function renderDropdown(){var rows=matched();dropdown.innerHTML=rows.length?rows.map(function(task){var state=/异常/.test(task.status)?'error':/采集|解析/.test(task.status)?'running':'';return'<button type="button" class="source-task-option-v46'+(selected.has(task.id)?' selected':'')+'" data-source-task="'+task.id+'" role="option" aria-selected="'+selected.has(task.id)+'"><i class="source-task-check-v46">✓</i><span class="source-task-copy-v46"><b>'+esc(task.name)+'</b><span>'+esc(task.method+' · '+task.target+' · '+task.frequency)+'</span></span><em class="source-task-state-v46 '+state+'">'+esc(task.status.trim())+'</em></button>'}).join(''):'<div class="source-task-empty-v46">未找到匹配的采集任务</div>';dropdown.querySelectorAll('[data-source-task]').forEach(function(button){button.onclick=function(){var id=this.dataset.sourceTask;selected.has(id)?selected.delete(id):selected.add(id);input.value='';renderSelected();renderDropdown();input.focus()}})}
+  function open(){renderDropdown();dropdown.classList.add('open')}
+  input.addEventListener('focus',open);input.addEventListener('input',open);input.addEventListener('keydown',function(event){if(event.key==='Escape')dropdown.classList.remove('open');if(event.key==='Enter'){var first=dropdown.querySelector('[data-source-task]');if(first){event.preventDefault();first.click()}}});root.querySelector('.source-task-control-v46').addEventListener('click',function(){input.focus();open()});document.addEventListener('click',function(event){if(!root.contains(event.target))dropdown.classList.remove('open')});renderSelected();
+  var previousOpen=window.openKnowledgeCreateModal;window.openKnowledgeCreateModal=function(){var result=previousOpen.apply(this,arguments);setTimeout(renderDropdown,35);return result};
+  var previousCreate=window.createCuratedKnowledge;window.createCuratedKnowledge=function(){var name=document.getElementById('newKnowledgeName').value.trim(),rule=document.getElementById('newKnowledgeRule').value.trim();if(!name||!rule)return previousCreate.apply(this,arguments);if(!selected.size){toast('请从采集任务列表选择至少一个信源任务');input.focus();open();return}var sourceCount=selected.size,before=document.querySelectorAll('#curatedKnowledgeGrid .custom-kb').length,result=previousCreate.apply(this,arguments),cards=document.querySelectorAll('#curatedKnowledgeGrid .custom-kb');if(cards.length>before){var tags=cards[cards.length-1].querySelector('.kb-tags');if(tags)tags.insertAdjacentHTML('beforeend','<span>信源任务 '+sourceCount+' 个</span>')}selected.clear();input.value='';renderSelected();renderDropdown();return result};
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledge)prototypeLogicAnnotations.knowledge.interactions.push(['信源任务多选','在创建精品库弹窗输入任务名称、采集方式或目标知识库。','联想结果实时读取数据采集任务列表，支持多选、移除和创建校验。']);
+})();
+</script>
