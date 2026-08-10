@@ -1556,3 +1556,64 @@ renderLogicAnnotations();
   }
 })();
 </script>
+<style id="due-diligence-kpis-priority-style">
+#dueDiligence .due-kpis{grid-template-columns:repeat(3,1fr)}
+#dueReport #dueAddTargetBtn.priority-followed{background:#eaf8f2;color:#15855f;border-color:#bfe8d7;box-shadow:none}
+@media(max-width:900px){#dueDiligence .due-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){#dueDiligence .due-kpis{grid-template-columns:1fr}}
+</style>
+<script id="due-diligence-kpis-priority-script">
+// due-diligence-kpis-and-priority-v34
+(function refineDueDiligenceMetricsAndPriority(){
+  var kpis=document.querySelector('#dueDiligence .due-kpis');
+  if(kpis){
+    kpis.innerHTML='<article class="card"><span>招商关注的企业</span><b>128 家</b><em>本月新增 +18</em></article>'+
+      '<article class="card"><span>已完成尽调的</span><b>68 家</b><em>本月完成 +12</em></article>'+
+      '<article class="card"><span>重点跟进的</span><b>23 家</b><em>高适配企业 11 家</em></article>';
+  }
+
+  var targetButton=document.getElementById('dueAddTargetBtn');
+  function findFollowedCompany(name){
+    return typeof followedInvestmentCompanies!=='undefined'?followedInvestmentCompanies.find(function(item){return item.name===name}):null;
+  }
+  function syncPriorityButton(name){
+    if(!targetButton)return;
+    var item=findFollowedCompany(name);
+    var followed=!!(item&&item.priorityFollowed);
+    targetButton.textContent=followed?'✓ 已重点跟进':'＋ 重点跟进';
+    targetButton.classList.toggle('priority-followed',followed);
+    targetButton.disabled=followed;
+    targetButton.setAttribute('aria-pressed',String(followed));
+  }
+  window.markDueCompanyPriority=function(name){
+    name=name||currentDueCompany;
+    var item=findFollowedCompany(name);
+    if(!item&&typeof followedInvestmentCompanies!=='undefined'){
+      item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};
+      followedInvestmentCompanies.unshift(item);
+    }
+    if(item){item.priorityFollowed=true;item.status='report'}
+    if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncPriorityButton(name);
+    if(typeof toast==='function')toast('“'+name+'”已标记为重点跟进企业');
+  };
+  if(targetButton){
+    targetButton.textContent='＋ 重点跟进';
+    targetButton.setAttribute('aria-label','标记当前企业为重点跟进');
+    targetButton.onclick=function(){markDueCompanyPriority(currentDueCompany)};
+  }
+
+  var previousOpenDueReportPriority=window.openDueReport;
+  if(typeof previousOpenDueReportPriority==='function'){
+    window.openDueReport=function(name){
+      previousOpenDueReportPriority.apply(this,arguments);
+      syncPriorityButton(name||currentDueCompany);
+    };
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['首页业务统计','招商关注企业统计进入关注池的企业数；已完成尽调统计已生成有效报告的企业数；重点跟进统计被人工标记为重点推进的企业数。','招商关注名单、尽调报告版本、重点跟进状态','实时更新']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['重点跟进','在尽调报告右上角点击“重点跟进”。','将当前企业标记为重点跟进并写入招商跟进状态；重复操作不重复计数。']);
+  }
+  syncPriorityButton(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+})();
+</script>
