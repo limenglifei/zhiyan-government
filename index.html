@@ -2172,3 +2172,76 @@ renderLogicAnnotations();
   }
 })();
 </script>
+<style id="enterprise-profile-modal-v41-style">
+/* enterprise-profile-modal-fields-v41 */
+#profileModal .profile-modal{width:min(1120px,97vw)}
+#profileModal .profile-modal>header{padding:22px 26px 18px}
+#profileModal .profile-modal>header p{display:none}
+#profileModal .profile-modal-body{padding:0 26px}
+#profileModal .profile-section{padding:20px 0}
+#profileModal .profile-grid{column-gap:64px;row-gap:16px}
+#profileModal .profile-grid label{grid-template-columns:155px minmax(0,1fr)}
+#profileModal .profile-grid label>span{font-size:10px;color:#566274}
+#profileModal .profile-grid input,#profileModal .profile-grid select{height:42px;font-size:10px}
+#profileModal .unit-input b{height:42px;font-size:10px}
+#profileModal .chip-input{min-height:42px;background:#fff}
+#profileModal .chip-input em{font-size:8px;padding:7px 9px}
+#profileModal .chip-input em.more{color:#7c899b;background:#f4f5f7;border:1px solid #e1e5eb}
+#profileModal .profile-modal>footer{padding:15px 26px}
+#profileModal .profile-modal>footer p{font-size:9px}
+@media(max-width:850px){#profileModal .profile-grid{column-gap:20px}#profileModal .profile-grid label{grid-template-columns:120px minmax(0,1fr)}}
+</style>
+<script id="enterprise-profile-modal-v41-script">
+(function rebuildEnterpriseProfileModal(){
+  var modal=document.getElementById('profileModal');
+  if(!modal)return;
+  var title=document.getElementById('profileModalTitle');
+  if(title)title.textContent='完善企业信息';
+  var body=modal.querySelector('.profile-modal-body');
+  body.innerHTML='\
+    <div class="profile-grid profile-section first">\
+      <label><span><i>*</i> 所属行业</span><select id="profileIndustry" required><option value="">选择行业</option><option>制造业 / 汽车零部件及配件制造</option><option>制造业 / 计算机、通信和其他电子设备制造业</option><option>信息传输、软件和信息技术服务业</option><option>科学研究和技术服务业</option></select></label>\
+      <label><span>主营产品</span><div class="chip-input"><em>讯飞智能办公本 ×</em><em class="more">＋4</em><input aria-label="添加主营产品" placeholder="＋ 添加产品"></div></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span><i>*</i> 上年度营业收入</span><select id="profileRevenue" required><option value="">请选择</option><option>1000万以下</option><option>1000万～2000万</option><option>2000万～5000万</option><option>5000万～1亿</option><option>1亿～2亿</option><option>2亿～4亿</option><option>4亿～10亿</option><option>10亿～20亿</option><option>20亿以上</option></select></label>\
+      <label><span>上年度营收增长率</span><div class="unit-input"><input id="profileRevenueGrowth" inputmode="decimal" placeholder="请输入"><b>%</b></div></label>\
+      <label><span>上年度研发费用总额</span><div class="unit-input"><input id="profileRdExpense" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度利润总额</span><div class="unit-input"><input id="profileTotalProfit" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度净利润</span><div class="unit-input"><input id="profileNetProfit" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度纳税总额</span><div class="unit-input"><input id="profileTaxTotal" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span>当前职工总数</span><input id="profileEmployeeCount" inputmode="numeric" placeholder="请输入"></label>\
+      <label><span>当前研发人员数量</span><input id="profileRdEmployeeCount" inputmode="numeric" placeholder="请输入"></label>\
+    </div>\
+    <div class="profile-grid profile-section">\
+      <label><span>上年度资产总额</span><div class="unit-input"><input id="profileTotalAssets" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度资产负债率</span><div class="unit-input"><input id="profileAssetLiabilityRatio" inputmode="decimal" placeholder="请输入"><b>%</b></div></label>\
+      <label><span>上年度固定资产总额</span><div class="unit-input"><input id="profileFixedAssets" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+      <label><span>上年度累计设备原值</span><div class="unit-input"><input id="profileEquipmentOriginalValue" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
+    </div>';
+  var footer=modal.querySelector('.profile-modal>footer');
+  footer.innerHTML='<p>我们将采集您填写的信息，以及官方公开公示数据进行评估，匹配结果仅供参考</p><button class="secondary" type="button" onclick="closeEnterpriseProfile()">取消</button><button class="primary" type="button" onclick="saveEnterpriseProfile()">确定</button>';
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.fields.push(['完善企业信息','人工补充所属行业、主营产品、年度经营、人员与资产数据，用于弥补公开数据缺口。','企业人工填报、官方公开公示、企业主数据','确认后重新计算']);
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['确认企业信息','校验所属行业和上年度营业收入两个必填字段后保存。','保存成功后关闭弹窗，并重新计算政策匹配度及申报条件诊断。']);
+  }
+})();
+</script>
+<script id="enterprise-profile-validation-v41-script">
+(function addEnterpriseProfileValidation(){
+  var previousSaveEnterpriseProfile=window.saveEnterpriseProfile;
+  window.saveEnterpriseProfile=function(){
+    var industry=document.getElementById('profileIndustry');
+    var revenue=document.getElementById('profileRevenue');
+    if(!industry.value){
+      if(typeof toast==='function')toast('请选择所属行业');industry.focus();return;
+    }
+    if(!revenue.value){
+      if(typeof toast==='function')toast('请选择上年度营业收入');revenue.focus();return;
+    }
+    return previousSaveEnterpriseProfile.apply(this,arguments);
+  };
+})();
+</script>
