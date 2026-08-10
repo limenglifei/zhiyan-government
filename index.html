@@ -1951,3 +1951,24 @@ renderLogicAnnotations();
   renderFollowedInvestmentList();
 })();
 </script>
+<style id="enterprise-policy-actions-cleanup-style">
+#enterprisePolicy .project-actions{justify-content:flex-start}
+#enterprisePolicy .project-actions>span{flex:1}
+</style>
+<script id="enterprise-policy-actions-cleanup-script">
+// enterprise-policy-result-actions-cleanup-v38
+(function removeEnterprisePolicyApplicationActions(){
+  var removed=0;
+  document.querySelectorAll('#enterprisePolicy .project-actions button').forEach(function(button){
+    var label=button.textContent.trim();
+    if(label==='加入对比'||label==='我要申报'){button.remove();removed++}
+  });
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.interactions=prototypeLogicAnnotations.enterprisePolicy.interactions.filter(function(item){
+      return item[0]!=='加入对比'&&item[0]!=='我要申报';
+    });
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['结果卡片操作','点击政策项目卡片展开或收起申报条件诊断。','结果页不提供加入对比和直接申报入口，重点呈现匹配度、条件差距与补充材料建议。']);
+  }
+  document.getElementById('enterprisePolicy').setAttribute('data-removed-policy-actions',String(removed));
+})();
+</script>
