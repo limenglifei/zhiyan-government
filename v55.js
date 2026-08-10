@@ -1,0 +1,19 @@
+(function(){
+  var builder=document.getElementById("graphBuilderModal"),field=document.getElementById("graphDescriptionV52");if(!builder||!field||document.getElementById("graphDescriptionAttachV55"))return;
+  var label=field.closest("label"),caption=label.querySelector("span"),helper=label.querySelector("small"),upload=document.querySelector("#graphAiPanel .graph-upload"),reference=document.getElementById("graphReferenceTitleV54"),networkCard=document.querySelector("#graphBuilderModal .graph-network-card-v52"),networkButton=document.getElementById("graphNetworkToggleV48"),flow=document.querySelector("#graphAiPanel .graph-ai-flow"),fileInput=document.getElementById("graphFileInput"),attachments=[];
+  if(reference)reference.remove();if(upload)upload.style.display="none";if(networkCard)networkCard.style.display="none";
+  var head=document.createElement("div");head.className="graph-description-head-v55";head.innerHTML='<span>图谱描述</span><div class="graph-description-tools-v55"><button class="graph-description-tool-v55" id="graphDescriptionAttachV55" type="button" title="导入本地产业链相关资料" aria-label="上传产业链资料">📎</button><button class="graph-description-tool-v55 network" id="graphNetworkIconV55" type="button" title="联网补充" aria-label="联网补充" aria-pressed="true">◎</button></div>';label.insertBefore(head,field);if(caption)caption.remove();
+  field.placeholder="请输入产业链范围、重点环节和构建目标；也可点击附件图标导入本地产业链相关资料";
+  if(helper){helper.className="graph-description-helper-v55";helper.textContent="支持直接描述或导入 PDF、Word 等本地产业链资料，AI 将识别节点及上下游关系"}
+  var chips=document.createElement("div");chips.className="graph-attachment-chips-v55";chips.id="graphAttachmentChipsV55";field.insertAdjacentElement("afterend",chips);
+  document.getElementById("graphDescriptionAttachV55").onclick=function(){fileInput.click()};
+  function syncNetwork(){var active=networkButton&&networkButton.classList.contains("active"),icon=document.getElementById("graphNetworkIconV55");icon.classList.toggle("active",!!active);icon.setAttribute("aria-pressed",String(!!active));icon.title=active?"联网补充：已开启":"联网补充：已关闭"}
+  document.getElementById("graphNetworkIconV55").onclick=function(){toggleGraphNetworkV48();syncNetwork()};
+  var oldToggle=window.toggleGraphNetworkV48;window.toggleGraphNetworkV48=function(force){var result=oldToggle.apply(this,arguments);syncNetwork();return result};
+  function renderAttachments(){chips.innerHTML=attachments.map(function(file,index){return'<span class="graph-attachment-chip-v55"><span title="'+file.name.replace(/"/g,"&quot;")+'">📄 '+file.name+'</span><button type="button" onclick="removeGraphAttachmentV55('+index+')" aria-label="移除附件">×</button></span>'}).join("");if(flow)flow.classList.toggle("has-attachment-v55",attachments.length>0)}
+  window.removeGraphAttachmentV55=function(index){attachments.splice(index,1);if(!attachments.length&&fileInput)fileInput.value="";renderAttachments();var note=document.getElementById("graphFileNote");if(note&&!attachments.length)note.textContent="未导入附件，AI 将根据图谱描述与联网信源辅助构建。"};
+  var oldHandle=window.handleGraphFiles;window.handleGraphFiles=function(files){attachments=Array.from(files||[]).filter(function(file){return /\.(pdf|doc|docx)$/i.test(file.name)});renderAttachments();return oldHandle.apply(this,arguments)};
+  var oldOpen=window.openGraphBuilder;window.openGraphBuilder=function(){var result=oldOpen.apply(this,arguments);attachments=[];renderAttachments();syncNetwork();field.placeholder="请输入产业链范围、重点环节和构建目标；也可点击附件图标导入本地产业链相关资料";return result};
+  syncNetwork();
+  if(typeof prototypeLogicAnnotations!=="undefined"&&prototypeLogicAnnotations.knowledgeList)prototypeLogicAnnotations.knowledgeList.interactions.push(["图谱描述附件与联网","图谱描述右上角提供附件和联网两个轻量图标。","附件用于导入本地产业链资料；联网图标切换公开信源补充。独立参考文件模块不再展示。"])
+})();
