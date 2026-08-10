@@ -2924,3 +2924,186 @@ renderLogicAnnotations();
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledgeList){prototypeLogicAnnotations.knowledgeList.interactions.push(['产业链详情维护','节点数量进入图谱画布；链上企业进入明细，可手工添加与解绑。','链主及重点企业、本地配套率、产业链完整度支持业务编辑，保存后刷新产业链更新时间。'])}
 })();
 </script>
+<style id="node-attraction-flow-v50-style">
+.node-company-modal .node-ai-brief{display:none!important}
+.node-company-tabs [data-node-company-tab="external"]{display:none!important}
+.node-company-tabs [data-node-company-tab="local"]{flex:1;text-align:left;pointer-events:none}
+.node-company-modal #nodeMoreFilterBtn{min-width:156px;background:linear-gradient(135deg,#1671e8,#5a7cf2);box-shadow:0 8px 20px #2674e52b}
+.attraction-modal-v50{width:min(1120px,96vw)!important}
+.attraction-modal-v50 .prototype-modal-body{max-height:72vh;overflow:auto}
+.attraction-results-v50{margin-top:18px;border-top:1px solid #e5ebf3;padding-top:17px}
+.attraction-result-head-v50{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:12px}
+.attraction-result-head-v50 h3{margin:0 0 5px;color:#172d4e;font-size:15px}.attraction-result-head-v50 p{margin:0;color:#8290a4;font-size:9px}.attraction-result-head-v50 em{font-style:normal;padding:6px 10px;border-radius:14px;background:#eaf4ff;color:#2472dc;font-size:8px}
+.attraction-summary-v50{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:13px}
+.attraction-summary-v50 div{padding:11px 13px;border:1px solid #e2eaf4;border-radius:10px;background:linear-gradient(145deg,#f8fbff,#fff)}
+.attraction-summary-v50 span,.attraction-summary-v50 b{display:block}.attraction-summary-v50 span{color:#8190a5;font-size:8px}.attraction-summary-v50 b{margin-top:4px;color:#1e6fd7;font-size:18px}
+.attraction-table-wrap-v50{max-height:360px;overflow:auto;border:1px solid #e1e8f1;border-radius:10px}
+.attraction-table-v50{width:100%;border-collapse:collapse;min-width:900px}.attraction-table-v50 th,.attraction-table-v50 td{padding:11px 12px;border-bottom:1px solid #e9eef5;text-align:left;font-size:8px;vertical-align:middle}.attraction-table-v50 th{position:sticky;top:0;z-index:1;background:#f4f7fb;color:#738197}.attraction-table-v50 td b,.attraction-table-v50 td small{display:block}.attraction-table-v50 td small{max-width:230px;margin-top:4px;color:#8b98aa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.attraction-table-v50 td em{font-style:normal;color:#168765}.attraction-table-v50 .match-v50{color:#1f70df;font-size:12px}.attraction-actions-v50{display:flex;gap:6px;white-space:nowrap}.attraction-actions-v50 button{border:1px solid #d2deed;border-radius:6px;background:#fff;color:#526a87;padding:6px 8px;font-size:8px;cursor:pointer}.attraction-actions-v50 button:first-child{border-color:#2674e5;background:#2674e5;color:#fff;font-weight:700}
+@media(max-width:760px){.attraction-summary-v50{grid-template-columns:1fr}.attraction-result-head-v50{display:block}.attraction-result-head-v50 em{display:inline-block;margin-top:8px}}
+</style>
+<script id="node-attraction-flow-v50-script">
+(function(){
+  if(document.getElementById('attractionResultsV50'))return;
+  var nodeModal=document.getElementById('nodeCompanyModal'),attractionModal=document.getElementById('attractionModal'),lastNodeName='';
+  if(!nodeModal||!attractionModal)return;
+  var nodeHeaderText=nodeModal.querySelector('header p');
+  if(nodeHeaderText)nodeHeaderText.textContent='查看当前节点的本地企业基础、核心能力与产业协同关系';
+  attractionModal.querySelector('.prototype-modal').classList.add('attraction-modal-v50');
+  var attractionTitle=attractionModal.querySelector('header h2'),attractionDescription=attractionModal.querySelector('header p');
+  if(attractionTitle)attractionTitle.textContent='强链补链分析推荐';
+  if(attractionDescription)attractionDescription.textContent='设置目标产业链、补链节点与企业资质，AI 将综合产业补位价值、扩张信号和本地适配度推荐外地企业';
+  Array.from(attractionModal.querySelectorAll('.modal-form-grid>label')).forEach(function(label){
+    var caption=label.querySelector('span');if(!caption)return;
+    if(caption.textContent.trim()==='重点区域'){var region=label.querySelector('select');if(region)region.id='attractionRegionV50'}
+    if(caption.textContent.trim()==='落地载体'){
+      caption.textContent='企业荣誉资质';var select=label.querySelector('select');
+      if(select){select.id='attractionHonorV50';select.innerHTML='<option value="不限">不限</option><option value="专精特新">专精特新企业</option><option value="单项冠军">制造业单项冠军</option><option value="高新技术">高新技术企业</option><option value="链主">链主企业</option><option value="上市">上市及拟上市企业</option>'}
+    }
+  });
+  var preference=attractionModal.querySelector('.modal-full-field');if(preference)preference.remove();
+  var ruleText=attractionModal.querySelector('.ai-rule-box span');if(ruleText)ruleText.textContent='产业链节点相关度、扩张意愿、风险合规、技术创新、财务营收与企业荣誉资质';
+  attractionModal.querySelector('.prototype-modal-body').insertAdjacentHTML('beforeend','<section class="attraction-results-v50" id="attractionResultsV50" hidden><div class="attraction-result-head-v50"><div><h3 id="attractionResultTitleV50">外地推荐企业名单</h3><p>按强链补链价值与招商评估模型综合得分倒序展示</p></div><em id="attractionResultTimeV50">AI 推荐已完成</em></div><div class="attraction-summary-v50"><div><span>全国召回企业</span><b id="attractionCandidateCountV50">0</b></div><div><span>高潜推荐企业</span><b id="attractionHighCountV50">0</b></div><div><span>近期扩张信号</span><b id="attractionSignalCountV50">0</b></div></div><div class="attraction-table-wrap-v50"><table class="attraction-table-v50"><thead><tr><th>推荐企业</th><th>所在地区</th><th>企业荣誉资质</th><th>近期扩张信号</th><th>综合匹配度</th><th>操作</th></tr></thead><tbody id="attractionResultRowsV50"></tbody></table></div></section>');
+  function configureNodeRecommendButton(){
+    var button=document.getElementById('nodeMoreFilterBtn');if(!button)return;
+    button.textContent='✦ 强链补链分析推荐';button.onclick=function(){closeNodeCompanyList();openAttractionModal()};
+    var note=document.getElementById('nodeModalNote');if(note)note.textContent='本地企业用于研判现有基础；外地目标企业由强链补链分析模型统一推荐';
+  }
+  var previousSwitch=window.switchNodeCompanyTab;
+  window.switchNodeCompanyTab=function(){var result=previousSwitch.call(this,'local');configureNodeRecommendButton();return result};
+  var previousOpenNode=window.openNodeCompanyList;
+  window.openNodeCompanyList=function(name){lastNodeName=name;var result=previousOpenNode.apply(this,arguments);configureNodeRecommendButton();return result};
+  configureNodeRecommendButton();
+  var previousOpenAttraction=window.openAttractionModal;
+  window.openAttractionModal=function(){
+    var result=previousOpenAttraction.apply(this,arguments),nodeInput=document.getElementById('attractionNode');
+    if(lastNodeName&&nodeInput)nodeInput.value=lastNodeName;
+    document.getElementById('attractionResultsV50').hidden=true;
+    var button=document.getElementById('attractionRunBtn');button.disabled=false;button.textContent='开始推荐';return result;
+  };
+  function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  window.runAttractionRecommend=function(){
+    var nodeInput=document.getElementById('attractionNode'),node=nodeInput.value.trim(),button=document.getElementById('attractionRunBtn');
+    if(!node){toast('请输入目标补链节点');nodeInput.focus();return}
+    button.disabled=true;button.textContent='AI 正在召回并精排…';
+    setTimeout(function(){
+      var honor=(document.getElementById('attractionHonorV50')||{}).value||'不限',region=(document.getElementById('attractionRegionV50')||{}).value||'全国';
+      var companies=nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score});
+      if(honor!=='不限'){
+        var filtered=companies.filter(function(company){return(company.tags||[]).some(function(tag){return tag.indexOf(honor)>-1})});
+        if(filtered.length)companies=filtered.concat(companies.filter(function(company){return filtered.indexOf(company)<0})).slice(0,Math.max(10,filtered.length));
+      }
+      if(region!=='全国')companies.sort(function(a,b){var keyword=region.replace('地区',''),aHit=String(a.loc||'').indexOf(keyword)>-1,bHit=String(b.loc||'').indexOf(keyword)>-1;return aHit===bHit?b.score-a.score:(aHit?-1:1)});
+      var displayed=companies.slice(0,Math.min(15,companies.length)),high=displayed.filter(function(company){return Number(company.score)>=90}).length,signals=displayed.filter(function(company){return company.signalStrong}).length;
+      document.getElementById('attractionResultTitleV50').textContent=node+' · 外地推荐企业名单';
+      document.getElementById('attractionCandidateCountV50').textContent=nodeExternalCompanies.length+' 家';
+      document.getElementById('attractionHighCountV50').textContent=high+' 家';document.getElementById('attractionSignalCountV50').textContent=signals+' 家';
+      document.getElementById('attractionResultTimeV50').textContent='更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('attractionResultRowsV50').innerHTML=displayed.map(function(company,index){
+        var location=String(company.loc||'全国').split(' · ')[0],tags=company.tags||['待核验'],match=Math.max(82,Number(company.score||88)-Math.floor(index/4)),name=escapeHtml(company.name),encoded=encodeURIComponent(company.name);
+        return '<tr><td><b>'+name+'</b><small title="'+escapeHtml(node+'补位能力 · '+tags.join(' / '))+'">'+escapeHtml(node)+'补位能力 · '+escapeHtml(tags[0])+'</small></td><td>'+escapeHtml(location)+'</td><td><small title="'+escapeHtml(tags.join(' / '))+'">'+escapeHtml(tags.slice(0,2).join(' / '))+'</small></td><td><em>↑ '+escapeHtml(company.signal||'持续跟踪投资信号')+'</em></td><td><b class="match-v50">'+match+'%</b></td><td><div class="attraction-actions-v50"><button type="button" onclick="openDueReport(decodeURIComponent(\''+encoded+'\'))">✦ 生成尽调报告</button><button type="button" onclick="addInvestmentTarget(decodeURIComponent(\''+encoded+'\'))">＋ 加入招商名单</button></div></td></tr>';
+      }).join('');
+      var panel=document.getElementById('attractionResultsV50');panel.hidden=false;button.disabled=false;button.textContent='重新推荐';panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+      toast('已完成 '+node+' 强链补链分析，推荐 '+displayed.length+' 家外地目标企业');
+    },950);
+  };
+  document.getElementById('attractionRunBtn').textContent='开始推荐';
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.investment)prototypeLogicAnnotations.investment.interactions.push(['强链补链分析推荐','产业链节点弹窗仅展示本地企业，点击推荐按钮进入招商条件配置。','去除落地载体、招商偏好及排除条件；以企业荣誉资质作为筛选项，开始推荐后在弹窗内刷新外地企业名单。']);
+})();
+</script>
+<style id="chain-wide-recommend-v51-style">
+.attraction-scope-field-v51{grid-column:1/-1!important}.attraction-scope-switch-v51{display:flex;gap:8px;margin-top:7px}.attraction-scope-switch-v51 button{border:1px solid #d5dfec;border-radius:8px;background:#f8fafc;color:#5f7087;padding:8px 13px;font-size:9px;cursor:pointer}.attraction-scope-switch-v51 button.active{border-color:#2c78e6;background:#edf5ff;color:#1f6ed6;font-weight:700}.attraction-node-chips-v51{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px;padding:10px;border:1px dashed #d9e3f0;border-radius:9px;background:#fbfcfe}.attraction-node-chips-v51[hidden]{display:none}.attraction-node-chips-v51 button{border:1px solid #d8e2ee;border-radius:14px;background:#fff;color:#65768c;padding:6px 10px;font-size:8px;cursor:pointer}.attraction-node-chips-v51 button.active{border-color:#2b7ae8;background:#eaf3ff;color:#1f6ed6}.attraction-scope-tip-v51{display:block;margin-top:7px;color:#8b98aa;font-size:8px}
+.chain-report-v51{margin-bottom:14px;border:1px solid #dce8f7;border-radius:12px;background:linear-gradient(145deg,#f3f8ff,#fff);overflow:hidden}.chain-report-head-v51{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid #e2ebf6}.chain-report-head-v51 b,.chain-report-head-v51 span{display:block}.chain-report-head-v51 b{color:#1f426d;font-size:11px}.chain-report-head-v51 span{margin-top:4px;color:#7d8ea5;font-size:8px}.chain-report-head-v51 button{border:1px solid #bdd4f1;border-radius:7px;background:#fff;color:#2672d9;padding:7px 10px;font-size:8px;cursor:pointer}.chain-report-grid-v51{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;padding:13px}.chain-report-grid-v51 article{padding:11px 12px;border-radius:9px;background:#fff;border:1px solid #e8edf4}.chain-report-grid-v51 article label{display:block;color:#2673df;font-size:8px;font-weight:700}.chain-report-grid-v51 article p{margin:6px 0 0;color:#4c6079;font-size:8px;line-height:1.65}
+.recommend-reason-modal-v51{z-index:2600!important}.recommend-reason-dialog-v51{width:min(720px,94vw)!important}.recommend-company-v51{display:flex;align-items:center;gap:11px;padding:12px;border-radius:10px;background:#f3f7fc;margin-bottom:13px}.recommend-company-v51 i{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:#2675e3;color:#fff;font-style:normal;font-weight:800}.recommend-company-v51 b,.recommend-company-v51 span{display:block}.recommend-company-v51 b{color:#263b58;font-size:11px}.recommend-company-v51 span{margin-top:4px;color:#7d8ba0;font-size:8px}.recommend-reason-list-v51{display:grid;gap:9px}.recommend-reason-list-v51 article{display:grid;grid-template-columns:38px 1fr;gap:10px;padding:11px;border:1px solid #e2e9f2;border-radius:9px}.recommend-reason-list-v51 em{height:30px;border-radius:8px;display:grid;place-items:center;background:#eaf4ff;color:#2673df;font-style:normal;font-size:9px;font-weight:800}.recommend-reason-list-v51 b,.recommend-reason-list-v51 span{display:block}.recommend-reason-list-v51 b{color:#344a66;font-size:9px}.recommend-reason-list-v51 span{margin-top:4px;color:#75859a;font-size:8px;line-height:1.55}
+@media(max-width:760px){.chain-report-grid-v51{grid-template-columns:1fr}.chain-report-head-v51{align-items:flex-start;flex-direction:column}}
+</style>
+<script id="chain-wide-recommend-v51-script">
+(function(){
+  if(document.getElementById('recommendReasonModalV51'))return;
+  var modal=document.getElementById('attractionModal'),scopeMode='full',selectedNodes=[],availableNodes=[],pendingMode='full',pendingNode='',lastNode='',currentResults=[],currentScopeLabel='';
+  if(!modal)return;
+  var nodeInput=document.getElementById('attractionNode'),nodeLabel=nodeInput&&nodeInput.closest('label');
+  if(nodeLabel){
+    nodeLabel.classList.add('attraction-scope-field-v51');
+    nodeLabel.innerHTML='<span>分析范围</span><div class="attraction-scope-switch-v51"><button type="button" id="scopeFullBtnV51" onclick="setAttractionScopeModeV51(\'full\')">全链整体分析</button><button type="button" id="scopeNodesBtnV51" onclick="setAttractionScopeModeV51(\'nodes\')">多节点专项分析</button></div><div class="attraction-node-chips-v51" id="attractionNodeChipsV51"></div><small class="attraction-scope-tip-v51" id="attractionScopeTipV51">将对所选产业链全部节点进行完整度、配套能力与招商缺口研判</small><input id="attractionNode" type="hidden">';
+  }
+  var resultPanel=document.getElementById('attractionResultsV50');
+  resultPanel.querySelector('.attraction-summary-v50').insertAdjacentHTML('beforebegin','<section class="chain-report-v51" id="chainReportV51"><div class="chain-report-head-v51"><div><b id="chainReportTitleV51">产业链强链补链整体分析报告</b><span id="chainReportScopeV51">分析范围：全链整体分析</span></div><button type="button" onclick="exportChainReportV51()">↓ 导出整体分析报告</button></div><div class="chain-report-grid-v51"><article><label>核心量化判断</label><p id="chainReportCoreV51">等待生成分析报告</p></article><article><label>优先补链方向</label><p id="chainReportGapV51">等待识别关键薄弱节点</p></article><article><label>招商策略建议</label><p id="chainReportStrategyV51">等待生成目标企业筛选策略</p></article><article><label>行动建议</label><p id="chainReportActionV51">等待生成分阶段行动建议</p></article></div></section>');
+  document.body.insertAdjacentHTML('beforeend','<div class="collection-modal-backdrop recommend-reason-modal-v51" id="recommendReasonModalV51" aria-hidden="true"><section class="collection-modal small recommend-reason-dialog-v51" role="dialog" aria-modal="true" aria-labelledby="recommendReasonTitleV51"><header><div><h2 id="recommendReasonTitleV51">企业推荐理由</h2><p>结合产业链缺口、企业能力与投资信号输出可解释推荐依据</p></div><button class="modal-close" onclick="closeRecommendReasonV51()">×</button></header><div class="collection-modal-body"><div class="recommend-company-v51"><i>企</i><div><b id="recommendCompanyNameV51">目标企业</b><span id="recommendCompanyMetaV51">外地推荐企业</span></div></div><div class="recommend-reason-list-v51" id="recommendReasonListV51"></div></div><footer><button class="secondary" onclick="closeRecommendReasonV51()">关闭</button><button class="primary" id="recommendReasonAddV51">＋ 加入招商名单</button></footer></section></div>');
+  function currentChain(){var select=document.getElementById('attractionChain'),value=select&&select.value,key=Object.keys(chainIndustryData).find(function(k){return chainIndustryData[k].name===value})||activeChainKey;return chainIndustryData[key]}
+  function getNodes(){var data=currentChain();return data.columns.reduce(function(list,column){return list.concat(column.nodes.map(function(node){return{name:node[0],state:node[2]||''}}))},[])}
+  function syncScope(){
+    if(!resultPanel.hidden){resultPanel.hidden=true;var resetButton=document.getElementById('attractionRunBtn');resetButton.disabled=false;resetButton.textContent='开始推荐'}
+    document.getElementById('scopeFullBtnV51').classList.toggle('active',scopeMode==='full');document.getElementById('scopeNodesBtnV51').classList.toggle('active',scopeMode==='nodes');
+    var box=document.getElementById('attractionNodeChipsV51');box.hidden=scopeMode==='full';
+    box.innerHTML=availableNodes.map(function(item){return'<button type="button" class="'+(selectedNodes.indexOf(item.name)>-1?'active':'')+'" onclick="toggleAttractionNodeV51(\''+item.name+'\')">'+item.name+(item.state.indexOf('weak')>-1?' · 薄弱':'')+'</button>'}).join('');
+    var names=scopeMode==='full'?availableNodes.map(function(item){return item.name}):selectedNodes;document.getElementById('attractionNode').value=names.join('、');
+    document.getElementById('attractionScopeTipV51').textContent=scopeMode==='full'?'将对所选产业链全部节点进行完整度、配套能力与招商缺口研判':'已选择 '+selectedNodes.length+' 个节点，可组合生成专项强链补链分析';
+  }
+  function prepareScope(mode,node){availableNodes=getNodes();scopeMode=mode||'full';if(scopeMode==='nodes'){selectedNodes=node&&availableNodes.some(function(x){return x.name===node})?[node]:availableNodes.filter(function(x){return x.state.indexOf('weak')>-1}).slice(0,3).map(function(x){return x.name})}else selectedNodes=[];syncScope()}
+  window.setAttractionScopeModeV51=function(mode){scopeMode=mode;if(mode==='nodes'&&!selectedNodes.length)selectedNodes=availableNodes.filter(function(x){return x.state.indexOf('weak')>-1}).slice(0,3).map(function(x){return x.name});syncScope()};
+  window.toggleAttractionNodeV51=function(name){var index=selectedNodes.indexOf(name);if(index>-1)selectedNodes.splice(index,1);else selectedNodes.push(name);syncScope()};
+  var chainSelect=document.getElementById('attractionChain');if(chainSelect)chainSelect.addEventListener('change',function(){prepareScope(scopeMode,'')});
+  window.openChainWideRecommendV51=function(){pendingMode='full';pendingNode='';openAttractionModal()};
+  var mainButton=document.querySelector('.radar-recommend-btn');if(mainButton)mainButton.onclick=window.openChainWideRecommendV51;
+  function configureNodeButton(){var button=document.getElementById('nodeMoreFilterBtn');if(!button)return;button.textContent='✦ 强链补链分析推荐';button.onclick=function(){pendingMode='nodes';pendingNode=lastNode;closeNodeCompanyList();openAttractionModal()}}
+  var previousOpenNode=window.openNodeCompanyList;window.openNodeCompanyList=function(name){lastNode=name;var result=previousOpenNode.apply(this,arguments);configureNodeButton();return result};
+  var previousOpenAttraction=window.openAttractionModal;window.openAttractionModal=function(){var mode=pendingMode,node=pendingNode,result=previousOpenAttraction.apply(this,arguments);prepareScope(mode,node);pendingMode='full';pendingNode='';document.getElementById('attractionResultsV50').hidden=true;document.getElementById('attractionRunBtn').textContent='开始推荐';return result};
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function scopeNames(){return scopeMode==='full'?availableNodes.map(function(x){return x.name}):selectedNodes.slice()}
+  function reasonFor(company){var nodes=currentScopeLabel,tag=(company.tags||[])[0]||'优质成长企业';return[{icon:'链',title:'产业链补位价值',text:'企业核心能力与“'+nodes+'”存在较强关联，可补充本地关键产品供给并提升上下游协同。'},{icon:'扩',title:'近期扩张意愿',text:company.signal||'企业近期释放产能、招聘或区域布局信号，具备进一步跟踪价值。'},{icon:'资',title:'企业资质与能力',text:'企业具备“'+tag+'”等荣誉资质，技术创新与规模化交付能力处于同类企业前列。'},{icon:'适',title:'本地落地适配',text:'与园区产业基础、应用场景及配套条件匹配，建议进入重点接洽并开展经营风险核验。'}]}
+  window.openRecommendReasonV51=function(index){var company=currentResults[index];if(!company)return;document.getElementById('recommendReasonTitleV51').textContent=company.name+' · 推荐理由';document.getElementById('recommendCompanyNameV51').textContent=company.name;document.getElementById('recommendCompanyMetaV51').textContent=(company.loc||'全国')+' · 综合匹配度 '+company.score+'%';document.getElementById('recommendReasonListV51').innerHTML=reasonFor(company).map(function(item){return'<article><em>'+item.icon+'</em><div><b>'+item.title+'</b><span>'+esc(item.text)+'</span></div></article>'}).join('');document.getElementById('recommendReasonAddV51').onclick=function(){addInvestmentTarget(company.name)};var reasonModal=document.getElementById('recommendReasonModalV51');reasonModal.classList.add('open');reasonModal.setAttribute('aria-hidden','false')};
+  window.closeRecommendReasonV51=function(){var reasonModal=document.getElementById('recommendReasonModalV51');reasonModal.classList.remove('open');reasonModal.setAttribute('aria-hidden','true')};
+  window.exportChainReportV51=function(){toast('产业链强链补链整体分析报告已生成，正在准备导出文件')};
+  window.runAttractionRecommend=function(){
+    var names=scopeNames(),button=document.getElementById('attractionRunBtn');if(!names.length){toast('请至少选择一个产业链节点');return}button.disabled=true;button.textContent='AI 正在生成分析报告…';
+    setTimeout(function(){
+      var data=currentChain(),chainName=data.name,weakNodes=availableNodes.filter(function(x){return x.state.indexOf('weak')>-1}).map(function(x){return x.name}),honor=(document.getElementById('attractionHonorV50')||{}).value||'不限',region=(document.getElementById('attractionRegionV50')||{}).value||'全国';currentScopeLabel=scopeMode==='full'?chainName+'全链':names.join('、');
+      document.getElementById('chainReportTitleV51').textContent=chainName+'强链补链'+(scopeMode==='full'?'整体':'专项')+'分析报告';document.getElementById('chainReportScopeV51').textContent='分析范围：'+currentScopeLabel;
+      document.getElementById('chainReportCoreV51').textContent='当前链条完备度 '+data.complete+'%，本地配套率 '+data.local+'%，识别 '+data.weak+' 个关键薄弱节点；建议采用“本地培育 + 外部招引”双轮驱动。';
+      document.getElementById('chainReportGapV51').textContent=(scopeMode==='full'?(weakNodes.slice(0,4).join('、')||names.slice(0,4).join('、')):names.join('、'))+'应列为优先补链方向，重点补充核心产品、规模量产及协同验证能力。';
+      document.getElementById('chainReportStrategyV51').textContent='围绕节点相关度、扩张意愿、风险合规、技术创新和财务能力进行全国企业召回与精排，优先接洽高匹配且释放异地布局信号的企业。';
+      document.getElementById('chainReportActionV51').textContent='建议 30 日内完成目标企业初筛和推荐理由核验，60 日内开展重点企业尽调与落地条件对接，形成可跟踪的招商任务清单。';
+      var companies=nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score});if(honor!=='不限'){var filtered=companies.filter(function(c){return(c.tags||[]).some(function(tag){return tag.indexOf(honor)>-1})});if(filtered.length)companies=filtered.concat(companies.filter(function(c){return filtered.indexOf(c)<0}))}if(region!=='全国')companies.sort(function(a,b){var key=region.replace('地区',''),ah=String(a.loc||'').indexOf(key)>-1,bh=String(b.loc||'').indexOf(key)>-1;return ah===bh?b.score-a.score:(ah?-1:1)});currentResults=companies.slice(0,Math.min(15,companies.length));
+      document.getElementById('attractionResultTitleV50').textContent=currentScopeLabel+' · 外地推荐企业名单';document.getElementById('attractionCandidateCountV50').textContent=nodeExternalCompanies.length+' 家';document.getElementById('attractionHighCountV50').textContent=currentResults.filter(function(c){return c.score>=90}).length+' 家';document.getElementById('attractionSignalCountV50').textContent=currentResults.filter(function(c){return c.signalStrong}).length+' 家';document.getElementById('attractionResultTimeV50').textContent='更新于 '+new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('attractionResultRowsV50').innerHTML=currentResults.map(function(company,index){var location=String(company.loc||'全国').split(' · ')[0],tags=company.tags||['待核验'],match=Math.max(82,Number(company.score||88)-Math.floor(index/4)),encoded=encodeURIComponent(company.name);company.score=match;return'<tr><td><b>'+esc(company.name)+'</b><small>'+esc(currentScopeLabel)+'补位企业 · '+esc(tags[0])+'</small></td><td>'+esc(location)+'</td><td><small title="'+esc(tags.join(' / '))+'">'+esc(tags.slice(0,2).join(' / '))+'</small></td><td><em>↑ '+esc(company.signal||'持续跟踪投资信号')+'</em></td><td><b class="match-v50">'+match+'%</b></td><td><div class="attraction-actions-v50"><button type="button" onclick="openRecommendReasonV51('+index+')">查看推荐理由</button><button type="button" onclick="addInvestmentTarget(decodeURIComponent(\''+encoded+'\'))">＋ 加入招商名单</button></div></td></tr>'}).join('');
+      var panel=document.getElementById('attractionResultsV50');panel.hidden=false;button.disabled=false;button.textContent='重新分析推荐';panel.scrollIntoView({behavior:'smooth',block:'nearest'});toast('已生成'+currentScopeLabel+'强链补链分析报告，并推荐 '+currentResults.length+' 家外地企业');
+    },1100)
+  };
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.investment)prototypeLogicAnnotations.investment.interactions.push(['全链与多节点分析','从页面入口默认分析全链，从节点入口默认选择当前节点，也可切换多节点组合。','生成强链补链整体或专项分析报告，并据此召回、精排外地企业；推荐理由可下钻查看。']);
+})();
+</script>
+<style id="graph-builder-assist-v52-style">
+#graphBuilderModal .graph-builder-settings{display:flex;flex-direction:column}
+#graphBuilderModal .graph-build-options-v48.graph-region-only-v52{grid-template-columns:1fr;margin-bottom:10px}
+.graph-description-v52{display:block;margin-bottom:13px}.graph-description-v52 span{display:block;margin-bottom:6px;color:#65738a;font-size:8px}.graph-description-v52 textarea{width:100%;min-height:78px;resize:vertical;border:1px solid #d5dde8;border-radius:8px;background:#fff;padding:9px 10px;color:#32465f;font:8px/1.65 inherit;outline:0}.graph-description-v52 textarea:focus{border-color:#4a8fe8;box-shadow:0 0 0 3px #3385eb13}.graph-description-v52 small{display:block;margin-top:5px;color:#8b98aa;font-size:7px;line-height:1.5}
+.graph-builder-bottom-v52{margin-top:auto;padding-top:15px}.graph-ai-assist-v52{width:100%;height:42px;border:0;border-radius:9px;background:linear-gradient(135deg,#176fe5,#536eea);color:#fff;font-size:10px;font-weight:700;box-shadow:0 8px 20px #236cd12d;cursor:pointer}.graph-ai-assist-v52:disabled{opacity:.68;cursor:wait}.graph-network-card-v52{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:11px;padding:11px;border:1px solid #dfe7f1;border-radius:10px;background:#fff}.graph-network-card-v52>div:first-child b,.graph-network-card-v52>div:first-child span{display:block}.graph-network-card-v52>div:first-child b{color:#3f536d;font-size:8px}.graph-network-card-v52>div:first-child span{margin-top:3px;color:#8b98aa;font-size:7px}.graph-network-card-v52 .graph-network-toggle-v48{height:32px;margin:0}.graph-network-card-v52 .graph-network-toggle-v48 span{font-size:7px}.graph-network-card-v52 .graph-network-tip-v48{grid-column:1/-1;margin:0}.graph-ai-context-v52{margin-top:8px;color:#6f8096;font-size:7px;text-align:center}
+@media(max-width:800px){#graphBuilderModal .graph-builder-settings{display:block}.graph-builder-bottom-v52{margin-top:14px}}
+</style>
+<script id="graph-builder-assist-v52-script">
+(function(){
+  if(document.getElementById('graphDescriptionV52'))return;
+  var builder=document.getElementById('graphBuilderModal'),settings=builder&&builder.querySelector('.graph-builder-settings'),options=builder&&builder.querySelector('.graph-build-options-v48');if(!builder||!settings||!options)return;
+  options.classList.add('graph-region-only-v52');
+  var networkButton=document.getElementById('graphNetworkToggleV48'),networkTip=document.getElementById('graphNetworkTipV48');
+  var description=document.createElement('label');description.className='graph-description-v52';description.innerHTML='<span>图谱描述</span><textarea id="graphDescriptionV52" maxlength="500" placeholder="请描述产业链范围、重点环节、颗粒度及构建目标，例如：围绕新能源汽车整车，细化电池、电驱、电控、车规芯片及后市场服务节点"></textarea><small>AI 将结合图谱名称、地区范围、描述和导入文件识别节点及上下游关系</small>';options.insertAdjacentElement('afterend',description);
+  var bottom=document.createElement('div');bottom.className='graph-builder-bottom-v52';bottom.innerHTML='<button class="graph-ai-assist-v52" id="graphAiAssistBtnV52" type="button" onclick="runGraphAiAssistV52()">✦ AI辅助构建</button><div class="graph-ai-context-v52" id="graphAiContextV52">根据基础信息与产业资料智能生成图谱预览</div><section class="graph-network-card-v52"><div><b>联网补充</b><span>作为图谱构建的最后一项数据补充设置</span></div></section>';settings.appendChild(bottom);
+  var networkCard=bottom.querySelector('.graph-network-card-v52');networkCard.appendChild(networkButton);networkCard.appendChild(networkTip);var networkLabel=networkButton.querySelector('span');if(networkLabel)networkLabel.textContent='已开启';
+  var previousToggle=window.toggleGraphNetworkV48;window.toggleGraphNetworkV48=function(force){var result=previousToggle.apply(this,arguments),button=document.getElementById('graphNetworkToggleV48'),label=button.querySelector('span');if(label)label.textContent=button.classList.contains('active')?'已开启':'已关闭';return result};
+  function aiNodes(seed){
+    if(/生物|医药|医疗/.test(seed))return[{stage:'up',name:'关键试剂与原料',type:'薄弱节点'},{stage:'up',name:'医药研发服务',type:'基础节点'},{stage:'mid',name:'药物研发与临床试验',type:'核心节点'},{stage:'mid',name:'制剂生产与质量控制',type:'优势节点'},{stage:'down',name:'医疗机构与流通',type:'核心节点'},{stage:'down',name:'健康管理服务',type:'一般节点'}];
+    if(/半导体|芯片|集成电路/.test(seed))return[{stage:'up',name:'半导体材料',type:'基础节点'},{stage:'up',name:'EDA与核心设备',type:'薄弱节点'},{stage:'mid',name:'芯片设计',type:'核心节点'},{stage:'mid',name:'晶圆制造与封测',type:'薄弱节点'},{stage:'down',name:'模组与系统集成',type:'核心节点'},{stage:'down',name:'终端场景应用',type:'一般节点'}];
+    if(/装备|机器人|数控/.test(seed))return[{stage:'up',name:'核心材料与零部件',type:'基础节点'},{stage:'up',name:'控制系统与传感器',type:'薄弱节点'},{stage:'mid',name:'关键装备研发',type:'核心节点'},{stage:'mid',name:'智能制造与系统集成',type:'优势节点'},{stage:'down',name:'工业场景应用',type:'核心节点'},{stage:'down',name:'运维与再制造服务',type:'一般节点'}];
+    return[{stage:'up',name:'关键材料与核心元器件',type:'基础节点'},{stage:'up',name:'车规级芯片与传感器',type:'薄弱节点'},{stage:'mid',name:'电池电驱电控系统',type:'核心节点'},{stage:'mid',name:'整车研发与智能制造',type:'优势节点'},{stage:'down',name:'整车销售与场景应用',type:'核心节点'},{stage:'down',name:'充换电及后市场服务',type:'一般节点'}]
+  }
+  window.runGraphAiAssistV52=function(){
+    var name=document.getElementById('graphModelName').value.trim(),desc=document.getElementById('graphDescriptionV52').value.trim(),region=document.getElementById('graphRegionV48').value,button=document.getElementById('graphAiAssistBtnV52');if(!name){toast('请先输入产业链图谱名称');document.getElementById('graphModelName').focus();return}
+    graphBuildTimers.forEach(clearTimeout);graphBuildTimers=[];var steps=Array.from(document.querySelectorAll('#graphAiSteps span'));steps.forEach(function(step){step.className=''});button.disabled=true;button.textContent='AI 正在辅助构建…';document.getElementById('graphPreviewStatus').textContent='AI 辅助构建中';document.getElementById('graphAiContextV52').textContent='正在解析图谱描述、地区产业基础与公开信源';if(steps[0])steps[0].className='running';
+    steps.forEach(function(step,index){graphBuildTimers.push(setTimeout(function(){step.className='done';if(steps[index+1])steps[index+1].className='running';if(index===steps.length-1){graphBuilderNodes=aiNodes(name+' '+desc).map(function(node){node.source=document.getElementById('graphNetworkToggleV48').classList.contains('active')?'AI辅助构建 · 联网补充':'AI辅助构建';return node});renderGraphNodes();document.getElementById('graphPreviewStatus').textContent='AI 辅助构建完成';document.getElementById('graphFileNote').textContent='AI 已结合“'+name+'”图谱描述与 '+region+' 产业基础，生成 '+graphBuilderNodes.length+' 个节点，支持在右侧画布继续拖动、编辑或删除。';document.getElementById('graphAiContextV52').textContent='图谱预览已生成，请完成业务校验后保存';button.disabled=false;button.textContent='✦ AI重新辅助构建';toast('AI辅助构建完成，已生成产业链图谱预览')}},430*(index+1)))});
+  };
+  var previousOpen=window.openGraphBuilder;window.openGraphBuilder=function(){var result=previousOpen.apply(this,arguments);document.getElementById('graphDescriptionV52').value='';document.getElementById('graphAiAssistBtnV52').textContent='✦ AI辅助构建';return result};
+  var previousEdit=window.editChainGraphV47;window.editChainGraphV47=function(index){var result=previousEdit.apply(this,arguments),row=knowledgeBaseConfigs.chain.rows[index];document.getElementById('graphDescriptionV52').value=row&&row.description||'';document.getElementById('graphAiAssistBtnV52').textContent='✦ AI重新辅助构建';return result};
+  var previousReset=window.resetGraphBuilder;window.resetGraphBuilder=function(){var result=previousReset.apply(this,arguments);document.getElementById('graphDescriptionV52').value='';document.getElementById('graphAiAssistBtnV52').textContent='✦ AI辅助构建';return result};
+  var previousSave=window.saveGraphModel;window.saveGraphModel=function(){var name=document.getElementById('graphModelName').value.trim(),desc=document.getElementById('graphDescriptionV52').value.trim(),result=previousSave.apply(this,arguments),row=knowledgeBaseConfigs.chain.rows.find(function(item){return item.title===name});if(row)row.description=desc;return result};
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledgeList)prototypeLogicAnnotations.knowledgeList.interactions.push(['AI辅助构建图谱','填写图谱名称、地区范围与图谱描述，可结合导入文件和联网补充生成节点。','AI辅助构建按钮位于左侧底部；联网补充作为最末设置，关闭后仅使用用户输入与导入资料。']);
+})();
+</script>
