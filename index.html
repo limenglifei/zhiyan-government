@@ -2245,3 +2245,410 @@ renderLogicAnnotations();
   };
 })();
 </script>
+<style id="support-policy-multi-source-v42-style">
+/* support-policy-multi-source-v42 */
+#support .support-search-autocomplete{position:relative;min-width:0;text-align:left}
+#support .support-search-autocomplete>input{display:block;width:100%;box-sizing:border-box}
+#support .support-project-suggestions{position:absolute;z-index:80;top:48px;left:0;right:0;display:none;max-height:330px;overflow:auto;padding:7px;background:#fff;border:1px solid #cfdaea;border-radius:10px;box-shadow:0 16px 40px #173a681f}
+#support .support-project-suggestions.open{display:block}
+#support .support-project-suggestion{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:8px;background:#fff;text-align:left;color:#26364c;cursor:pointer}
+#support .support-project-suggestion:hover,#support .support-project-suggestion.active{background:#f1f6ff}
+#support .support-project-suggestion b,#support .support-project-suggestion small{display:block}
+#support .support-project-suggestion b{font-size:10px;line-height:1.45}
+#support .support-project-suggestion small{margin-top:4px;font-size:8px;color:#7d899a}
+#support .support-project-suggestion em{align-self:center;padding:4px 7px;border-radius:10px;background:#e9f7f0;color:#18845f;font-size:7px;font-style:normal;white-space:nowrap}
+#support .support-project-empty{padding:18px 12px;text-align:center;font-size:8px;color:#8794a6}
+#support .support-policy-source-tools{display:flex;align-items:center;justify-content:center;gap:8px;max-width:700px;margin:0 auto 10px}
+#support .support-policy-source-tools>span{font-size:8px;color:#8794a6;margin-right:2px}
+#support .support-source-button{display:inline-flex;align-items:center;gap:5px;height:31px;padding:0 10px;border:1px solid #d9e2ee;border-radius:7px;background:#fff;color:#536278;font-size:8px;cursor:pointer}
+#support .support-source-button:hover,#support .support-source-button.active{border-color:#8eb7ed;background:#eef5ff;color:#2673df}
+#support .support-source-button i{font-size:11px;font-style:normal}
+#support .support-policy-source-status{display:flex;align-items:center;justify-content:center;gap:7px;max-width:700px;min-height:28px;margin:0 auto 10px;padding:6px 10px;border:1px solid #e1e9f3;border-radius:7px;background:#f8fbff;color:#68778c;font-size:8px}
+#support .support-policy-source-status i{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#e7f1ff;color:#2673df;font-style:normal}
+#support .support-policy-source-status strong{color:#31425b;font-weight:600}
+#support .support-policy-source-status button{margin-left:auto;border:0;background:transparent;color:#2673df;font-size:8px;cursor:pointer}
+#support .support-fulltext-panel{display:none;max-width:700px;margin:0 auto 12px;padding:12px;border:1px solid #dbe5f1;border-radius:9px;background:#fbfdff;text-align:left}
+#support .support-fulltext-panel.open{display:block}
+#support .support-fulltext-panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+#support .support-fulltext-panel header b{font-size:9px;color:#31425b}
+#support .support-fulltext-panel header button{border:0;background:transparent;color:#7c899b;cursor:pointer}
+#support .support-fulltext-panel textarea{display:block;width:100%;height:118px;resize:vertical;box-sizing:border-box;padding:10px 12px;border:1px solid #cfdaea;border-radius:7px;background:#fff;color:#324159;font-size:9px;line-height:1.65;outline:none}
+#support .support-fulltext-panel textarea:focus{border-color:#6e9fe4;box-shadow:0 0 0 3px #2673df12}
+#support .support-fulltext-panel footer{display:flex;justify-content:space-between;margin-top:7px;color:#8a96a7;font-size:7px}
+#support.matched .support-policy-source-tools,#support.matched .support-policy-source-status,#support.matched .support-fulltext-panel{display:none!important}
+@media(max-width:720px){#support .support-policy-source-tools{flex-wrap:wrap}#support .support-policy-source-tools>span{width:100%}#support .support-policy-input{grid-template-columns:1fr}#support .support-project-suggestions{top:45px}}
+</style>
+<script id="support-policy-multi-source-v42-script">
+(function upgradeSupportPolicyInput(){
+  var input=document.getElementById('supportPolicyInput');
+  var inputRow=input&&input.closest('.support-policy-input');
+  if(!input||!inputRow||document.getElementById('supportProjectSuggestions'))return;
+
+  var sourceMode='project';
+  var selectedProject=null;
+  var selectedFile=null;
+  var currentSuggestions=[];
+  var highlightedIndex=-1;
+  var wrapper=document.createElement('div');
+  wrapper.className='support-search-autocomplete';
+  inputRow.insertBefore(wrapper,input);
+  wrapper.appendChild(input);
+  input.placeholder='输入政策或项目名称，联想范围为项目库中“参与匹配”的项目';
+  input.setAttribute('autocomplete','off');
+  input.setAttribute('role','combobox');
+  input.setAttribute('aria-autocomplete','list');
+  input.setAttribute('aria-expanded','false');
+  input.setAttribute('aria-controls','supportProjectSuggestions');
+  wrapper.insertAdjacentHTML('beforeend','<div class="support-project-suggestions" id="supportProjectSuggestions" role="listbox" aria-label="参与匹配的政策项目"></div>');
+  inputRow.insertAdjacentHTML('afterend','\
+    <div class="support-policy-source-tools" id="supportPolicySourceTools">\
+      <span>政策输入方式</span>\
+      <button class="support-source-button active" id="supportProjectModeBtn" type="button"><i>⌕</i>项目库联想</button>\
+      <button class="support-source-button" id="supportUploadModeBtn" type="button"><i>⇧</i>上传政策文件</button>\
+      <button class="support-source-button" id="supportFullTextModeBtn" type="button"><i>文</i>直接输入政策全文</button>\
+      <input id="supportPolicyFileInput" type="file" accept=".pdf,.doc,.docx,.txt,.md" hidden>\
+    </div>\
+    <div class="support-policy-source-status" id="supportPolicySourceStatus"><i>库</i><span>联想搜索仅包含项目库中<strong>参与匹配</strong>的项目</span></div>\
+    <div class="support-fulltext-panel" id="supportPolicyFullTextPanel">\
+      <header><b>输入政策全文</b><button type="button" id="supportFullTextClose" aria-label="收起政策全文">×</button></header>\
+      <textarea id="supportPolicyFullText" maxlength="20000" placeholder="可粘贴政策正文、申报条件、支持范围、奖补标准等内容，AI 将自动解析匹配条件"></textarea>\
+      <footer><span>支持最多 20,000 字，内容仅用于本次匹配分析</span><span id="supportPolicyFullTextCount">0 / 20,000</span></footer>\
+    </div>');
+
+  var suggestionBox=document.getElementById('supportProjectSuggestions');
+  var status=document.getElementById('supportPolicySourceStatus');
+  var fileInput=document.getElementById('supportPolicyFileInput');
+  var fullTextPanel=document.getElementById('supportPolicyFullTextPanel');
+  var fullText=document.getElementById('supportPolicyFullText');
+  var fullTextCount=document.getElementById('supportPolicyFullTextCount');
+  var modeButtons={
+    project:document.getElementById('supportProjectModeBtn'),
+    file:document.getElementById('supportUploadModeBtn'),
+    text:document.getElementById('supportFullTextModeBtn')
+  };
+
+  function escapeSupportHtml(value){return String(value==null?'':value).replace(/[&<>\"]/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char]})}
+  function participatingProjects(){
+    if(typeof knowledgeBaseConfigs==='undefined'||!knowledgeBaseConfigs.project)return [];
+    return knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false});
+  }
+  function setSourceStatus(icon,html,action){
+    status.innerHTML='<i>'+icon+'</i><span>'+html+'</span>'+(action?'<button type="button" id="supportSourceStatusAction">'+action.label+'</button>':'');
+    if(action){var actionButton=document.getElementById('supportSourceStatusAction');if(actionButton)actionButton.onclick=action.click}
+  }
+  function setMode(mode){
+    sourceMode=mode;
+    Object.keys(modeButtons).forEach(function(key){modeButtons[key].classList.toggle('active',key===mode)});
+    fullTextPanel.classList.toggle('open',mode==='text');
+    closeSuggestions();
+    if(mode==='project'){
+      setSourceStatus('库','联想搜索仅包含项目库中<strong>参与匹配</strong>的项目');
+      input.focus();
+    }else if(mode==='file'){
+      if(selectedFile){setSourceStatus('件','已选择文件：<strong>'+escapeSupportHtml(selectedFile.name)+'</strong>',{label:'重新选择',click:function(){fileInput.click()}})}
+      else setSourceStatus('件','支持 PDF、Word、TXT、Markdown 政策文件，AI 将自动解析申报条件');
+    }else{
+      updateFullTextStatus();
+      setTimeout(function(){fullText.focus()},0);
+    }
+  }
+  function closeSuggestions(){suggestionBox.classList.remove('open');input.setAttribute('aria-expanded','false');highlightedIndex=-1}
+  function renderSuggestions(query){
+    var keyword=(query||'').trim().toLowerCase();
+    currentSuggestions=participatingProjects().filter(function(row){
+      var haystack=[row.title,row.sub,row.category,row.org,row.level,row.condition].join(' ').toLowerCase();
+      return !keyword||haystack.indexOf(keyword)>-1;
+    }).slice(0,8);
+    highlightedIndex=-1;
+    if(!currentSuggestions.length){
+      suggestionBox.innerHTML='<div class="support-project-empty">未找到参与匹配的项目，可上传政策文件或直接输入政策全文</div>';
+    }else{
+      suggestionBox.innerHTML=currentSuggestions.map(function(row,index){
+        return '<button type="button" class="support-project-suggestion" role="option" data-support-suggestion-index="'+index+'"><span><b>'+escapeSupportHtml(row.title)+'</b><small>'+escapeSupportHtml([row.level,row.org,row.deadline].filter(Boolean).join(' · '))+'</small></span><em>参与匹配</em></button>';
+      }).join('');
+      suggestionBox.querySelectorAll('[data-support-suggestion-index]').forEach(function(button){button.onclick=function(){selectSuggestion(Number(this.dataset.supportSuggestionIndex))}});
+    }
+    suggestionBox.classList.add('open');input.setAttribute('aria-expanded','true');
+  }
+  function selectSuggestion(index){
+    var row=currentSuggestions[index];if(!row)return;
+    selectedProject=row;sourceMode='project';
+    Object.keys(modeButtons).forEach(function(key){modeButtons[key].classList.toggle('active',key==='project')});
+    fullTextPanel.classList.remove('open');input.value=row.title;closeSuggestions();
+    setSourceStatus('项','已选参与匹配项目：<strong>'+escapeSupportHtml(row.title)+'</strong>',{label:'更换项目',click:function(){input.focus();renderSuggestions(input.value)}});
+  }
+  function updateHighlight(next){
+    var buttons=suggestionBox.querySelectorAll('[data-support-suggestion-index]');if(!buttons.length)return;
+    highlightedIndex=(next+buttons.length)%buttons.length;
+    buttons.forEach(function(button,index){button.classList.toggle('active',index===highlightedIndex);button.setAttribute('aria-selected',String(index===highlightedIndex))});
+    buttons[highlightedIndex].scrollIntoView({block:'nearest'});
+  }
+  function updateFullTextStatus(){
+    var length=fullText.value.trim().length;
+    fullTextCount.textContent=fullText.value.length.toLocaleString()+' / 20,000';
+    setSourceStatus('文',length?'已输入政策全文：<strong>'+length.toLocaleString()+' 字</strong>':'请粘贴政策全文，AI 将自动抽取申报对象、条件与奖补标准');
+  }
+
+  input.addEventListener('focus',function(){if(sourceMode!=='project')setMode('project');renderSuggestions(input.value)});
+  input.addEventListener('input',function(){selectedProject=null;if(sourceMode!=='project')setMode('project');renderSuggestions(input.value)});
+  input.addEventListener('keydown',function(event){
+    if(event.key==='ArrowDown'){event.preventDefault();if(!suggestionBox.classList.contains('open'))renderSuggestions(input.value);else updateHighlight(highlightedIndex+1)}
+    else if(event.key==='ArrowUp'){event.preventDefault();updateHighlight(highlightedIndex-1)}
+    else if(event.key==='Enter'&&highlightedIndex>-1){event.preventDefault();selectSuggestion(highlightedIndex)}
+    else if(event.key==='Escape')closeSuggestions();
+  });
+  document.addEventListener('click',function(event){if(!wrapper.contains(event.target)&&!modeButtons.project.contains(event.target))closeSuggestions()});
+  modeButtons.project.onclick=function(){setMode('project');renderSuggestions(input.value)};
+  modeButtons.file.onclick=function(){setMode('file');fileInput.click()};
+  modeButtons.text.onclick=function(){setMode('text')};
+  document.getElementById('supportFullTextClose').onclick=function(){setMode('project')};
+  fullText.addEventListener('input',updateFullTextStatus);
+  fileInput.addEventListener('change',function(){
+    selectedFile=this.files&&this.files[0];if(!selectedFile)return;
+    setMode('file');input.value=selectedFile.name;
+    setSourceStatus('件','已选择文件：<strong>'+escapeSupportHtml(selectedFile.name)+'</strong>',{label:'重新选择',click:function(){fileInput.click()}});
+    if(typeof toast==='function')toast('已选择政策文件，点击一键匹配企业开始解析');
+  });
+
+  var originalRunSupportMatch=window.runSupportMatch;
+  if(typeof originalRunSupportMatch==='function')window.runSupportMatch=function(){
+    var originalValue=input.value;
+    if(sourceMode==='file'){
+      if(!selectedFile){if(typeof toast==='function')toast('请先选择需要解析的政策文件');fileInput.click();return}
+      input.value=selectedFile.name+'（上传政策文件）';
+    }else if(sourceMode==='text'){
+      var textValue=fullText.value.trim();
+      if(!textValue){if(typeof toast==='function')toast('请输入政策全文');fullText.focus();return}
+      input.value='自定义政策全文（'+textValue.length.toLocaleString()+'字）';
+    }else if(!input.value.trim()){
+      if(typeof toast==='function')toast('请输入项目名称，或选择上传政策文件/输入政策全文');input.focus();return;
+    }
+    closeSuggestions();
+    var result=originalRunSupportMatch.apply(this,arguments);
+    if(sourceMode==='file'||sourceMode==='text')setTimeout(function(){input.value=originalValue||input.value},0);
+    return result;
+  };
+  var originalChooseSupportPolicy=window.chooseSupportPolicy;
+  if(typeof originalChooseSupportPolicy==='function')window.chooseSupportPolicy=function(button){setMode('project');var result=originalChooseSupportPolicy.apply(this,arguments);selectedProject=participatingProjects().find(function(row){return row.title===input.value})||null;return result};
+  var originalChooseSupportNotice=window.chooseSupportNotice;
+  if(typeof originalChooseSupportNotice==='function')window.chooseSupportNotice=function(name){setMode('project');return originalChooseSupportNotice.apply(this,arguments)};
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.fields.push(['政策输入来源','支持项目库联想、政策文件上传和政策全文输入三种来源；项目联想值域仅包含“参与匹配”的项目。','项目库参与匹配状态、用户上传文件、用户输入正文','每次发起匹配时读取']);
+    prototypeLogicAnnotations.support.interactions.push(['项目库联想搜索','输入政策或项目关键词，支持键盘上下选择与回车确认。','候选项实时读取项目库参与匹配状态，关闭参与匹配的项目不进入联想结果。']);
+    prototypeLogicAnnotations.support.interactions.push(['上传或输入政策','选择 PDF/Word/TXT/Markdown 文件，或粘贴政策全文后点击一键匹配。','AI 先解析政策对象、申报条件和奖补标准，再进入企业召回、诊断和排序流程。']);
+  }
+})();
+</script>
+<style id="support-home-workbench-v43-style">
+/* support-home-workbench-v43 */
+#support .pending-support-section{max-width:1180px;margin:16px auto}
+#support .pending-support-head,#support .support-feed-head-v43{display:flex;align-items:center;justify-content:space-between;gap:18px}
+#support .pending-support-head>div:first-child h2,#support .support-feed-head-v43 h3{margin:0 0 5px;font-size:13px}
+#support .pending-support-head p,#support .support-feed-head-v43 p{margin:0;color:#7d899a;font-size:8px}
+#support .pending-support-actions{display:flex;align-items:center;gap:9px}
+#support .pending-support-actions span{font-size:8px;color:#64748a}
+#support .pending-support-actions b{color:#2673df;font-size:14px}
+#support .pending-support-table-wrap{overflow:auto;margin-top:13px;border:1px solid #e3e9f1;border-radius:9px}
+#support .pending-support-table{width:100%;min-width:900px;border-collapse:collapse}
+#support .pending-support-table th,#support .pending-support-table td{padding:11px 12px;border-bottom:1px solid #edf1f5;text-align:left;font-size:8px}
+#support .pending-support-table th{background:#f5f8fc;color:#647187;font-weight:600}
+#support .pending-support-table tr:last-child td{border-bottom:0}
+#support .pending-company-cell{display:flex;align-items:center;gap:9px}
+#support .pending-company-cell i{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#eaf3ff;color:#2673df;font-style:normal;font-weight:700}
+#support .pending-company-cell b,#support .pending-company-cell span{display:block}
+#support .pending-company-cell b{font-size:9px;color:#2e3d53}
+#support .pending-company-cell span{margin-top:3px;color:#8793a4;font-size:7px}
+#support .pending-match-score{color:#15966a;font-weight:700}
+#support .pending-unclaimed{display:inline-block;padding:4px 7px;border-radius:10px;background:#fff0ee;color:#dc5962;font-style:normal}
+#support .pending-project-count{display:inline-block;padding:4px 7px;border-radius:10px;background:#edf5ff;color:#2673df;font-style:normal}
+#support .pending-row-actions{display:flex;gap:9px}
+#support .pending-row-actions button{border:0;background:transparent;color:#2673df;font-size:8px;cursor:pointer}
+#support .support-info-panels{max-width:1180px;margin-left:auto;margin-right:auto}
+#support .support-feed-card-v43{min-width:0}
+#support .support-feed-list-v43{max-height:500px;overflow-y:auto;margin-top:12px;padding-right:5px;scrollbar-width:thin}
+#support .support-feed-item-v43{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;width:100%;padding:12px 9px;border:0;border-bottom:1px solid #edf1f5;background:#fff;text-align:left;cursor:pointer}
+#support .support-feed-item-v43:hover{background:#f7faff}
+#support .support-feed-icon-v43{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#eaf3ff;color:#2673df;font-size:8px;font-style:normal}
+#support .support-feed-icon-v43.publication{background:#f0edff;color:#765fd8}
+#support .support-feed-copy-v43 b,#support .support-feed-copy-v43 span{display:block}
+#support .support-feed-copy-v43 b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#2c3b50;font-size:9px}
+#support .support-feed-copy-v43 span{margin-top:5px;color:#7d899a;font-size:7px}
+#support .support-feed-tags-v43{display:flex;gap:5px;margin-top:6px}
+#support .support-feed-tags-v43 i{padding:3px 6px;border-radius:9px;background:#f1f4f8;color:#6c798c;font-size:6px;font-style:normal}
+#support .support-feed-date-v43{align-self:center;color:#8a96a7;font-size:7px;font-style:normal}
+#support .support-feed-load-state{padding:11px;text-align:center;color:#8793a4;font-size:7px}
+#support .support-feed-load-state.loading{color:#2673df}
+#support.matched .pending-support-section{display:none!important}
+.support-detail-backdrop-v43{position:fixed;inset:0;z-index:1700;display:none;align-items:center;justify-content:center;padding:20px;background:#0a172b80}
+.support-detail-backdrop-v43.open{display:flex}
+.support-detail-modal-v43{display:flex;flex-direction:column;width:min(900px,96vw);max-height:90vh;overflow:hidden;border-radius:13px;background:#fff;box-shadow:0 25px 80px #07162955}
+.support-detail-modal-v43>header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 21px;border-bottom:1px solid #e5eaf1}
+.support-detail-modal-v43>header label{color:#2673df;font-size:7px;letter-spacing:1.4px}
+.support-detail-modal-v43>header h2{margin:5px 0 0;font-size:16px}
+.support-detail-modal-v43>header button{border:0;background:transparent;color:#7d899a;font-size:21px;cursor:pointer}
+.support-detail-body-v43{overflow:auto;padding:18px 21px}
+.support-detail-meta-v43{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}
+.support-detail-meta-v43 span{padding:5px 8px;border-radius:11px;background:#f1f5fa;color:#627086;font-size:7px}
+.support-detail-section-v43{margin-top:14px;padding-top:14px;border-top:1px solid #edf1f5}
+.support-detail-section-v43 h3{margin:0 0 8px;font-size:10px}
+.support-detail-section-v43 p{margin:0;color:#5d6c82;font-size:9px;line-height:1.85}
+.support-project-list-v43{display:grid;gap:9px}
+.support-project-item-v43{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:12px;padding:13px;border:1px solid #e1e7ef;border-radius:9px}
+.support-project-item-v43 b,.support-project-item-v43 span{display:block}
+.support-project-item-v43 b{font-size:10px;color:#2d3b50}
+.support-project-item-v43 span{margin-top:5px;color:#778499;font-size:7px;line-height:1.6}
+.support-project-item-v43 aside{text-align:right}
+.support-project-item-v43 aside strong{display:block;color:#2673df;font-size:16px}
+.support-project-item-v43 aside em{font-size:7px;color:#15966a;font-style:normal}
+.support-detail-modal-v43>footer{display:flex;justify-content:flex-end;gap:8px;padding:13px 21px;border-top:1px solid #e5eaf1}
+@media(max-width:800px){#support .pending-support-head{align-items:flex-start;flex-direction:column}#support .support-info-panels{grid-template-columns:1fr}.support-project-item-v43{grid-template-columns:1fr}#support .support-feed-list-v43{max-height:420px}}
+</style>
+<script id="support-home-workbench-v43-script">
+(function buildSupportHomeWorkbench(){
+  var support=document.getElementById('support');
+  var infoPanels=support&&support.querySelector('.support-info-panels');
+  if(!support||!infoPanels||document.getElementById('pendingSupportSection'))return;
+
+  var pendingCompanies=[
+    {name:'海州智造科技有限公司',industry:'汽车零部件 · 经开区',match:96,unclaimed:4,contact:'王敏',projects:4},
+    {name:'华芯微电子（海州）有限公司',industry:'功率半导体 · 高新区',match:94,unclaimed:3,contact:'李睿',projects:5},
+    {name:'恒泰高端装备制造有限公司',industry:'工业母机 · 临港区',match:93,unclaimed:3,contact:'周宁',projects:4},
+    {name:'云创工业软件有限公司',industry:'工业软件 · 软件园',match:91,unclaimed:2,contact:'陈航',projects:3},
+    {name:'新源固态电池有限公司',industry:'新能源材料 · 高新区',match:90,unclaimed:4,contact:'赵雪',projects:5},
+    {name:'海州精密传感科技有限公司',industry:'智能传感器 · 经开区',match:89,unclaimed:2,contact:'孙悦',projects:3},
+    {name:'智航机器人科技有限公司',industry:'具身智能 · 科创园',match:88,unclaimed:3,contact:'林峰',projects:4},
+    {name:'海州生物医药股份有限公司',industry:'创新药 · 生物医药园',match:87,unclaimed:2,contact:'吴桐',projects:3},
+    {name:'东岳动力科技有限公司',industry:'动力电池 · 经开区',match:86,unclaimed:3,contact:'蒋晨',projects:4},
+    {name:'绿能循环材料有限公司',industry:'资源循环 · 临港区',match:85,unclaimed:2,contact:'许岩',projects:3}
+  ];
+  var pendingSection=document.createElement('section');
+  pendingSection.id='pendingSupportSection';
+  pendingSection.className='card pending-support-section';
+  pendingSection.innerHTML='<div class="pending-support-head"><div><h2>待扶持企业名单</h2><p>AI 识别高匹配且存在应享未享政策的企业，可查看每家企业可申报项目</p></div><div class="pending-support-actions"><span>待跟进 <b>23</b> 家 · 可报项目 <b>68</b> 项</span><button class="secondary" type="button" onclick="exportPendingSupportList()">⇩ 导出待扶持名单</button></div></div><div class="pending-support-table-wrap"><table class="pending-support-table"><thead><tr><th>企业名称</th><th>政策匹配度</th><th>应享未享</th><th>可申报项目</th><th>跟进负责人</th><th>操作</th></tr></thead><tbody id="pendingSupportRows"></tbody></table></div>';
+  infoPanels.parentNode.insertBefore(pendingSection,infoPanels);
+
+  function renderPendingRows(){
+    document.getElementById('pendingSupportRows').innerHTML=pendingCompanies.map(function(item,index){
+      return '<tr><td><div class="pending-company-cell"><i>'+item.name.slice(0,1)+'</i><div><b>'+item.name+'</b><span>'+item.industry+'</span></div></div></td><td><span class="pending-match-score">'+item.match+'%</span></td><td><em class="pending-unclaimed">'+item.unclaimed+' 项</em></td><td><em class="pending-project-count">'+item.projects+' 个可报项目</em></td><td>'+item.contact+'</td><td><div class="pending-row-actions"><button type="button" onclick="openPendingCompanyProjects('+index+')">查看可报项目 →</button></div></td></tr>';
+    }).join('');
+  }
+  renderPendingRows();
+
+  var noticeSeeds=[
+    ['国家重点研发计划“智能制造与机器人”重点专项申报通知','工业和信息化部','国家级','智能制造','2026-07-20','申报截止 08-30'],
+    ['2026年度省级专精特新中小企业培育项目申报通知','省工业和信息化厅','省级','专精特新','2026-07-18','申报截止 08-18'],
+    ['海州市制造业数字化转型扶持计划申报指南','海州市工业和信息化局','市级','数字化转型','2026-07-16','申报截止 08-12'],
+    ['绿色工厂梯度培育及奖励项目申报工作通知','省发展改革委','省级','绿色制造','2026-07-14','申报截止 09-05']
+  ];
+  var publicationSeeds=[
+    ['2026年第一批高新技术企业认定公示名单','省科技厅','省级','高新技术','2026-07-19','共386家企业'],
+    ['省级专精特新中小企业拟认定名单（第二批）','省工业和信息化厅','省级','专精特新','2026-07-17','共218家企业'],
+    ['海州市制造业数字化改造奖补项目拟支持名单','海州市工业和信息化局','市级','数字化','2026-07-15','共74个项目'],
+    ['2026年度绿色制造体系示范单位公示名单','省发展改革委','省级','绿色工厂','2026-07-12','共96家企业']
+  ];
+  function makeFeed(seeds,type){
+    var rows=seeds.map(function(x){return {title:x[0],org:x[1],level:x[2],tag:x[3],date:x[4],meta:x[5],type:type}});
+    var themes=type==='notice'?['科技成果转化专项资金','智能工厂梯度培育','首台套重大技术装备认定','中小企业数字化赋能','绿色低碳技术改造','人才创新创业支持']:['科技计划拟立项项目','制造业单项冠军拟认定企业','数字经济示范项目','绿色工厂评价结果','人才项目拟资助名单','工业设计中心认定名单'];
+    for(var i=rows.length;i<60;i++){
+      var n=i+1,theme=themes[i%themes.length];
+      rows.push({title:'2026年度'+theme+(type==='notice'?'申报通知（第'+n+'批）':'公示名单（第'+n+'批）'),org:i%3===0?'省工业和信息化厅':i%3===1?'海州市科技局':'海州市发展改革委',level:i%3===0?'省级':'市级',tag:theme,date:'2026-'+String(7-Math.floor(i/28)).padStart(2,'0')+'-'+String(28-i%28).padStart(2,'0'),meta:type==='notice'?'申报截止 '+String(8+i%3).padStart(2,'0')+'-'+String(10+i%18).padStart(2,'0'):'共'+(36+i*3)+'家企业',type:type});
+    }
+    return rows;
+  }
+  var feeds={notice:makeFeed(noticeSeeds,'notice'),publication:makeFeed(publicationSeeds,'publication')};
+  var loaded={notice:20,publication:20};
+  infoPanels.innerHTML='<section class="card support-feed-card-v43"><div class="support-feed-head-v43"><div><h3>申报通知</h3><p>最新国家、省级、市级项目申报通知 · 上滑加载更多</p></div><span class="status ok">每批20条</span></div><div class="support-feed-list-v43" id="supportNoticeFeed"></div></section><section class="card support-feed-card-v43"><div class="support-feed-head-v43"><div><h3>最新公示</h3><p>近期发布的政策项目公示名单文件 · 上滑加载更多</p></div><span class="status ok">每批20条</span></div><div class="support-feed-list-v43" id="supportPublicationFeed"></div></section>';
+
+  function renderFeed(type){
+    var box=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+    var rows=feeds[type].slice(0,loaded[type]);
+    box.innerHTML=rows.map(function(item,index){
+      return '<button type="button" class="support-feed-item-v43" onclick="openSupportFeedDetail(\''+type+'\','+index+')"><i class="support-feed-icon-v43 '+(type==='publication'?'publication':'')+'">'+(type==='notice'?item.level.slice(0,1):'PDF')+'</i><span class="support-feed-copy-v43"><b>'+item.title+'</b><span>'+item.org+' · '+item.meta+'</span><span class="support-feed-tags-v43"><i>'+item.level+'</i><i>'+item.tag+'</i></span></span><em class="support-feed-date-v43">'+item.date.slice(5)+'</em></button>';
+    }).join('')+'<div class="support-feed-load-state" id="'+type+'LoadState">'+(loaded[type]<feeds[type].length?'继续上滑加载下一批20条':'已加载全部 '+feeds[type].length+' 条')+'</div>';
+  }
+  function bindInfinite(type){
+    var box=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+    box.addEventListener('scroll',function(){
+      if(box.scrollTop+box.clientHeight<box.scrollHeight-28||loaded[type]>=feeds[type].length)return;
+      loaded[type]=Math.min(loaded[type]+20,feeds[type].length);
+      renderFeed(type);
+      var nextBox=document.getElementById(type==='notice'?'supportNoticeFeed':'supportPublicationFeed');
+      nextBox.scrollTop=Math.max(0,nextBox.scrollHeight-nextBox.clientHeight-70);
+      bindInfinite(type);
+      if(typeof toast==='function')toast('已加载下一批20条'+(type==='notice'?'申报通知':'公示文件'));
+    },{once:true});
+  }
+  renderFeed('notice');renderFeed('publication');bindInfinite('notice');bindInfinite('publication');
+
+  document.body.insertAdjacentHTML('beforeend','<div class="support-detail-backdrop-v43" id="supportDetailBackdropV43" aria-hidden="true"><section class="support-detail-modal-v43" role="dialog" aria-modal="true" aria-labelledby="supportDetailTitleV43"><header><div><label id="supportDetailEyebrowV43">POLICY DETAIL</label><h2 id="supportDetailTitleV43"></h2></div><button type="button" onclick="closeSupportDetailV43()" aria-label="关闭">×</button></header><div class="support-detail-body-v43" id="supportDetailBodyV43"></div><footer><button class="secondary" type="button" onclick="closeSupportDetailV43()">关闭</button></footer></section></div>');
+
+  window.closeSupportDetailV43=function(){var modal=document.getElementById('supportDetailBackdropV43');modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow=''};
+  function openDetail(title,eyebrow,body){
+    document.getElementById('supportDetailTitleV43').textContent=title;
+    document.getElementById('supportDetailEyebrowV43').textContent=eyebrow;
+    document.getElementById('supportDetailBodyV43').innerHTML=body;
+    var modal=document.getElementById('supportDetailBackdropV43');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+  }
+  window.openPendingCompanyProjects=function(index){
+    var company=pendingCompanies[index];if(!company)return;
+    var projects=(typeof knowledgeBaseConfigs!=='undefined'?knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false}):[]).slice(0,company.projects);
+    if(projects.length<company.projects&&typeof knowledgeBaseConfigs!=='undefined')projects=knowledgeBaseConfigs.project.rows.slice(0,company.projects);
+    var body='<div class="support-detail-meta-v43"><span>政策匹配度 '+company.match+'%</span><span>应享未享 '+company.unclaimed+' 项</span><span>负责人 '+company.contact+'</span></div><div class="support-project-list-v43">'+projects.map(function(project,i){return '<article class="support-project-item-v43"><div><b>'+project.title+'</b><span>'+project.level+' · '+project.org+' · '+project.category+'</span><span>申报条件诊断：核心条件基本符合，建议补充项目备案及上年度经营材料。</span></div><aside><strong>'+(company.match-i*2)+'%</strong><em>可申报</em></aside></article>'}).join('')+'</div>';
+    openDetail(company.name+' · 可申报政策项目','PENDING SUPPORT PROJECTS',body);
+  };
+  window.openSupportFeedDetail=function(type,index){
+    var item=feeds[type]&&feeds[type][index];if(!item)return;
+    var isNotice=type==='notice';
+    var body='<div class="support-detail-meta-v43"><span>'+item.level+'</span><span>'+item.org+'</span><span>发布时间 '+item.date+'</span><span>'+item.meta+'</span></div><section class="support-detail-section-v43"><h3>'+(isNotice?'申报对象与支持方向':'公示内容')+'</h3><p>'+(isNotice?'面向依法登记、经营正常且符合产业方向的企业，重点支持技术改造、研发创新、数字化转型和绿色低碳项目。系统已同步拆解申报对象、资格条件、材料要求与奖补标准。':'本次公示已完成主管部门审核与专家评审程序，名单包含企业名称、所属地区、申报项目及拟支持金额等信息，公示期内接受社会监督。')+'</p></section><section class="support-detail-section-v43"><h3>'+(isNotice?'关键申报条件':'附件与公示期')+'</h3><p>'+(isNotice?'企业需具备独立法人资格、近三年无重大失信记录，并按要求提交经营、研发、投入及项目备案材料。':'附件：'+item.title+'.pdf；公示期：发布之日起5个工作日；异议可向'+item.org+'提交书面材料。')+'</p></section><section class="support-detail-section-v43"><h3>原文与数据来源</h3><p>'+item.org+'官方发布渠道 · 原文已归档至精品知识库，可追溯采集时间、附件与数据血缘。</p></section>';
+    openDetail(item.title,isNotice?'APPLICATION NOTICE DETAIL':'PUBLICATION DETAIL',body);
+  };
+  window.exportPendingSupportList=function(){
+    var csv='企业名称,所属行业,政策匹配度,应享未享项目数,可申报项目数,跟进负责人\n'+pendingCompanies.map(function(item){return [item.name,item.industry,item.match+'%',item.unclaimed,item.projects,item.contact].join(',')}).join('\n');
+    var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='政策精准扶持-待扶持企业名单.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},500);if(typeof toast==='function')toast('待扶持企业名单已导出');
+  };
+  document.getElementById('supportDetailBackdropV43').addEventListener('click',function(event){if(event.target===this)closeSupportDetailV43()});
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示匹配度、未享项目数、可报项目数和跟进负责人。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
+    prototypeLogicAnnotations.support.interactions.push(['查看可报项目','点击待扶持企业操作列的“查看可报项目”。','下钻展示该企业可申报项目、单项匹配度和条件诊断摘要。']);
+    prototypeLogicAnnotations.support.interactions.push(['通知与公示上滑加载','申报通知和最新公示列表每次加载20条，滚动至列表底部自动加载下一批。','点击单条进入详情，不再设置“查看全部”入口。']);
+  }
+})();
+</script>
+<style id="support-result-three-tabs-v44-style">
+/* support-result-three-tabs-v44 */
+#support .support-filter-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:760px){#support .support-filter-tabs{grid-template-columns:1fr}}
+</style>
+<script id="support-result-three-tabs-v44-script">
+(function refineSupportResultFilters(){
+  var highButton=document.querySelector('#support [data-support-filter="high"]');
+  if(highButton)highButton.remove();
+  var labels={all:'匹配企业',unenjoyed:'应享未享',enjoyed:'已享受政策'};
+  document.querySelectorAll('#support [data-support-filter]').forEach(function(button){
+    var label=button.querySelector('span');
+    if(label&&labels[button.dataset.supportFilter])label.textContent=labels[button.dataset.supportFilter];
+  });
+  var previousGetSupportCompanies=window.getSupportCompanies;
+  window.getSupportCompanies=function(){
+    var list=previousGetSupportCompanies.apply(this,arguments);
+    return list.sort(function(a,b){return b.c.s-a.c.s});
+  };
+  var previousRenderCompanies=window.renderCompanies;
+  window.renderCompanies=function(){
+    var list=getSupportCompanies();
+    var pages=Math.max(1,Math.ceil(list.length/supportPageSize));
+    supportPage=Math.min(Math.max(1,supportPage),pages);
+    var pageRows=list.slice((supportPage-1)*supportPageSize,supportPage*supportPageSize);
+    if(pageRows.length&&!pageRows.some(function(item){return item.index===ci}))ci=pageRows[0].index;
+    return previousRenderCompanies.apply(this,arguments);
+  };
+  if(supportFilter==='high')supportFilter='all';
+  document.querySelectorAll('#support [data-support-filter]').forEach(function(button){button.classList.toggle('active',button.dataset.supportFilter===supportFilter)});
+  renderCompanies();
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
+    prototypeLogicAnnotations.support.interactions.push(['结果筛选与排序','结果页保留匹配企业、应享未享、已享受政策三个筛选项。','各筛选结果均按照政策匹配度从高到低排序，翻页不改变排序规则。']);
+  }
+})();
+</script>
