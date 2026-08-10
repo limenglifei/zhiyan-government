@@ -2053,3 +2053,122 @@ renderLogicAnnotations();
   renderFollowedPolicyCompanies();
 })();
 </script>
+<style id="policy-due-report-refinement-style">
+/* policy-and-due-report-refinement-v40 */
+#enterprisePolicy .ep-company>.company-logo,#enterprisePolicy .ep-company>.company-profile-actions{display:none!important}
+#enterprisePolicy .ep-company{padding:20px 22px;gap:0}
+#enterprisePolicy .ep-company>div:nth-child(2){min-width:0}
+#dueReport .due-report-head>div:last-child{align-items:center;flex-wrap:wrap;justify-content:flex-end}
+#dueReport .due-report-company-switch{display:flex;align-items:center;gap:7px;padding:6px 8px 6px 10px;border:1px solid #d7e0ec;border-radius:8px;background:#fff}
+#dueReport .due-report-company-switch span{font-size:8px;color:#758398;white-space:nowrap}
+#dueReport .due-report-company-switch select{width:250px;border:0;outline:0;background:transparent;color:#33445d;font-size:9px}
+#dueReport .due-report-guidance{margin-top:14px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px;background:linear-gradient(120deg,#eef5ff,#fff 72%);border-color:#cfe0f5}
+#dueReport .due-report-guidance-copy{display:grid;grid-template-columns:40px 1fr;gap:2px 12px;align-items:center}
+#dueReport .due-report-guidance-copy>i{grid-row:1/3;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#2676e8,#745de0);color:#fff;font-size:16px;font-style:normal}
+#dueReport .due-report-guidance-copy h2{font-size:13px;margin:0 0 4px}
+#dueReport .due-report-guidance-copy p{font-size:8px;color:#77869a;margin:0}
+#dueReport .due-report-guidance-actions{display:flex;align-items:center;gap:9px}
+#dueReport .due-report-guidance-actions button{min-width:132px;padding:10px 15px}
+#dueReport #dueRiskPendingBtn.flagged{background:#fff3e4;color:#c66d20;border-color:#efca9e}
+#dueReport #dueAddTargetBtn.flagged{background:#eaf8f2;color:#14835e;border:1px solid #bce5d3;box-shadow:none}
+@media(max-width:900px){#dueReport .due-report-guidance{align-items:flex-start;flex-direction:column}#dueReport .due-report-company-switch select{width:190px}}
+@media(max-width:620px){#dueReport .due-report-guidance-actions{width:100%;flex-direction:column}#dueReport .due-report-guidance-actions button{width:100%}}
+</style>
+<script id="policy-due-report-refinement-script">
+(function refinePolicyAndDueReport(){
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  var report=document.getElementById('dueReport');
+  var headActions=report&&report.querySelector('.due-report-head>div:last-child');
+  var downloadButton=headActions&&headActions.querySelector('button[onclick*="downloadDueReport"]');
+  var companySwitch=document.createElement('label');
+  companySwitch.className='due-report-company-switch';
+  companySwitch.innerHTML='<span>切换企业</span><select id="dueReportCompanySwitch" aria-label="切换尽调企业"></select>';
+  if(headActions)headActions.insertBefore(companySwitch,downloadButton||headActions.firstChild);
+  var switchSelect=document.getElementById('dueReportCompanySwitch');
+
+  function reportableCompanies(){
+    var seen={};
+    return followedInvestmentCompanies.filter(function(item){
+      if(item.status!=='report'||seen[item.name])return false;
+      seen[item.name]=true;return true;
+    });
+  }
+  function renderCompanySwitch(name){
+    if(!switchSelect)return;
+    var companies=reportableCompanies();
+    switchSelect.innerHTML=companies.map(function(item){return '<option value="'+item.name.replace(/"/g,'&quot;')+'">'+item.name+'</option>'}).join('');
+    if(name&&companies.some(function(item){return item.name===name}))switchSelect.value=name;
+  }
+  if(switchSelect)switchSelect.onchange=function(){openDueReport(this.value)};
+
+  var actionPlan=report&&report.querySelector('.due-action-plan');
+  var guidance=document.createElement('section');
+  guidance.className='card due-report-guidance';
+  guidance.innerHTML='<div class="due-report-guidance-copy"><i>✓</i><h2>报告研判完成，更新招商跟进状态</h2><p>根据尽调结论标记风险待核验或纳入重点跟进，后续可随时取消标记。</p></div><div class="due-report-guidance-actions" id="dueReportGuidanceActions"></div>';
+  if(actionPlan)actionPlan.insertAdjacentElement('afterend',guidance);
+  var guidanceActions=document.getElementById('dueReportGuidanceActions');
+  var priorityButton=document.getElementById('dueAddTargetBtn');
+  var riskButton=document.getElementById('dueRiskPendingBtn');
+  if(!riskButton){
+    riskButton=document.createElement('button');riskButton.type='button';riskButton.id='dueRiskPendingBtn';riskButton.className='secondary';
+  }
+  if(guidanceActions){guidanceActions.appendChild(riskButton);if(priorityButton)guidanceActions.appendChild(priorityButton)}
+
+  function findOrCreateCompany(name){
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    if(!item){
+      item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report',followedAt:'2026-08-10 10:32',dueAt:'2026-08-10 10:35',priorityFollowed:false,riskPending:false};
+      followedInvestmentCompanies.unshift(item);renderCompanySwitch(name);
+    }
+    return item;
+  }
+  function syncDueReportActions(name){
+    var item=findOrCreateCompany(name);
+    var risk=!!item.riskPending,priority=!!item.priorityFollowed;
+    riskButton.disabled=false;
+    riskButton.className='secondary'+(risk?' flagged':'');
+    riskButton.textContent=risk?'取消标记风险':'⚠ 标记风险';
+    riskButton.setAttribute('aria-pressed',String(risk));
+    riskButton.setAttribute('aria-label',risk?'取消当前企业风险标记':'标记当前企业存在风险待核验');
+    if(priorityButton){
+      priorityButton.disabled=false;
+      priorityButton.className='primary'+(priority?' flagged':'');
+      priorityButton.textContent=priority?'取消重点跟进':'★ 标记重点跟进';
+      priorityButton.setAttribute('aria-pressed',String(priority));
+      priorityButton.setAttribute('aria-label',priority?'取消当前企业重点跟进':'标记当前企业为重点跟进');
+    }
+  }
+  window.toggleDueCompanyRisk=function(){
+    var item=findOrCreateCompany(currentDueCompany);item.riskPending=!item.riskPending;
+    if(typeof setDueListFilter==='function')setDueListFilter('all');else if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncDueReportActions(currentDueCompany);
+    if(typeof toast==='function')toast(item.riskPending?'已标记“'+currentDueCompany+'”为风险待核验':'已取消“'+currentDueCompany+'”的风险标记');
+  };
+  window.toggleDueCompanyPriority=function(){
+    var item=findOrCreateCompany(currentDueCompany);item.priorityFollowed=!item.priorityFollowed;
+    if(typeof setDueListFilter==='function')setDueListFilter('all');else if(typeof renderFollowedInvestmentList==='function')renderFollowedInvestmentList();
+    syncDueReportActions(currentDueCompany);
+    if(typeof toast==='function')toast(item.priorityFollowed?'已将“'+currentDueCompany+'”标记为重点跟进':'已取消“'+currentDueCompany+'”的重点跟进标记');
+  };
+  riskButton.onclick=toggleDueCompanyRisk;
+  if(priorityButton)priorityButton.onclick=toggleDueCompanyPriority;
+
+  function syncDueCompanyContent(name){
+    ['dueSummaryCompany','dueProfileCompany','dueBaseCompanyV2'].forEach(function(id){var node=document.getElementById(id);if(node)node.textContent=name});
+    var base=document.getElementById('dueBaseCompany');if(base&&base.childNodes.length)base.childNodes[0].nodeValue=name+' ';
+    var logo=document.querySelector('#dueReport .enterprise-identity-logo');if(logo)logo.textContent=name.slice(0,1);
+    renderCompanySwitch(name);syncDueReportActions(name);
+  }
+  var previousOpenDueReport=window.openDueReport;
+  if(typeof previousOpenDueReport==='function')window.openDueReport=function(name){
+    previousOpenDueReport.apply(this,arguments);syncDueCompanyContent(name||currentDueCompany);
+  };
+  renderCompanySwitch(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+  syncDueCompanyContent(typeof currentDueCompany!=='undefined'?currentDueCompany:reportableCompanies()[0].name);
+
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueReport){
+    prototypeLogicAnnotations.dueReport.interactions.push(['切换尽调企业','在报告页顶部选择已生成尽调报告的企业。','保持报告视图，切换当前企业上下文、报告标题、企业摘要和状态按钮。']);
+    prototypeLogicAnnotations.dueReport.interactions.push(['报告底部状态引导','在报告底部点击标记风险或标记重点跟进。','按钮支持标记与取消，操作后同步更新企业尽调助手统计和企业名单。']);
+  }
+})();
+</script>
