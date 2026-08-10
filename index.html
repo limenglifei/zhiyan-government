@@ -1617,3 +1617,122 @@ renderLogicAnnotations();
   syncPriorityButton(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
 })();
 </script>
+<style id="due-risk-filter-style">
+#dueDiligence .due-kpis{grid-template-columns:repeat(4,1fr)}
+#dueDiligence .due-kpis article{position:relative;cursor:pointer;transition:.18s ease;outline:none}
+#dueDiligence .due-kpis article:hover{border-color:#9fc1ed;transform:translateY(-1px);box-shadow:0 9px 22px rgba(23,74,133,.09)}
+#dueDiligence .due-kpis article.active{border-color:#4289e8;background:linear-gradient(135deg,#edf5ff,#fff);box-shadow:0 8px 22px rgba(31,105,202,.12)}
+#dueDiligence .due-kpis article.active:after{content:"";position:absolute;left:16px;right:16px;bottom:-1px;height:3px;border-radius:3px;background:#2676e8}
+#dueDiligence .due-kpis article[data-due-filter="risk"] em{color:#dc7726}
+#dueDiligence .due-list-status.risk{background:#fff3e4;color:#d97923}
+#dueReport #dueRiskPendingBtn.risk-pending{background:#fff3e4;color:#c66d20;border-color:#f1d1ac;box-shadow:none}
+@media(max-width:900px){#dueDiligence .due-kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){#dueDiligence .due-kpis{grid-template-columns:1fr}}
+</style>
+<script id="due-risk-filter-script">
+// due-risk-filter-and-report-action-v35
+(function addDueRiskFilterAndReportAction(){
+  var dueListFilter='all';
+  if(typeof followedInvestmentCompanies==='undefined')return;
+  followedInvestmentCompanies.forEach(function(item,index){
+    if(typeof item.priorityFollowed!=='boolean')item.priorityFollowed=index===3;
+    if(typeof item.riskPending!=='boolean')item.riskPending=index===1||index===2;
+  });
+
+  function renderDueKpis(){
+    var mount=document.querySelector('#dueDiligence .due-kpis');
+    if(!mount)return;
+    mount.innerHTML=[
+      ['all','招商关注的企业','128 家','本月新增 +18'],
+      ['report','已完成尽调的','68 家','本月完成 +12'],
+      ['priority','重点跟进的','23 家','高适配企业 11 家'],
+      ['risk','风险待核验','7 家','本周新增 2 家']
+    ].map(function(item){
+      return '<article class="card'+(dueListFilter===item[0]?' active':'')+'" data-due-filter="'+item[0]+'" role="button" tabindex="0" aria-pressed="'+(dueListFilter===item[0])+'" onclick="setDueListFilter(\''+item[0]+'\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();setDueListFilter(\''+item[0]+'\')}"><span>'+item[1]+'</span><b>'+item[2]+'</b><em>'+item[3]+'</em></article>';
+    }).join('');
+  }
+
+  function filteredDueCompanies(){
+    if(dueListFilter==='report')return followedInvestmentCompanies.filter(function(item){return item.status==='report'});
+    if(dueListFilter==='priority')return followedInvestmentCompanies.filter(function(item){return item.priorityFollowed});
+    if(dueListFilter==='risk')return followedInvestmentCompanies.filter(function(item){return item.riskPending});
+    return followedInvestmentCompanies.slice();
+  }
+
+  window.renderFollowedInvestmentList=function(){
+    var rows=document.getElementById('followedInvestmentRows');
+    if(!rows)return;
+    var filtered=filteredDueCompanies();
+    if(!filtered.length){
+      rows.innerHTML='<tr><td colspan="7"><div class="kb-empty"><b>暂无符合当前状态的企业</b><span>可切换上方统计指标查看其他企业名单</span></div></td></tr>';
+    }else{
+      rows.innerHTML=filtered.map(function(item){
+        var hasReport=item.status==='report';
+        var action=hasReport?"openDueReport('"+item.name+"')":"startDueFromFollowed('"+item.name+"')";
+        var statusText=item.riskPending?'风险待核验':hasReport?'已生成报告':'待尽调';
+        var statusClass=item.riskPending?'risk':hasReport?'report':'pending';
+        var identity=item.priorityFollowed?'重点跟进企业':'重点招商关注企业';
+        return '<tr><td><b>'+item.name+'</b><span>'+identity+'</span></td><td>'+item.track+'</td><td>'+item.location+'</td><td><b class="follow-fit">'+item.fit+'%</b></td><td>2026-07-'+(hasReport?'22':'26')+'</td><td><span class="due-list-status '+statusClass+'">'+statusText+'</span></td><td><button class="'+(hasReport?'report':'start')+'" onclick="'+action+'">'+(hasReport?'查看报告':'去尽调')+'</button></td></tr>';
+      }).join('');
+    }
+    var count=document.getElementById('followedInvestmentCount');
+    if(count){
+      var labels={all:'家招商关注',report:'家已完成尽调',priority:'家重点跟进',risk:'家风险待核验'};
+      count.textContent=filtered.length+' '+labels[dueListFilter];
+    }
+  };
+
+  window.setDueListFilter=function(filter){
+    dueListFilter=filter||'all';
+    renderDueKpis();
+    renderFollowedInvestmentList();
+  };
+
+  var reportActions=document.querySelector('#dueReport .due-report-head>div:last-child');
+  var priorityButton=document.getElementById('dueAddTargetBtn');
+  var riskButton=document.getElementById('dueRiskPendingBtn');
+  if(reportActions&&!riskButton){
+    riskButton=document.createElement('button');
+    riskButton.type='button';
+    riskButton.className='secondary';
+    riskButton.id='dueRiskPendingBtn';
+    riskButton.textContent='⚠ 风险待定';
+    riskButton.setAttribute('aria-label','标记当前企业为风险待定');
+    riskButton.onclick=function(){markDueCompanyRiskPending(currentDueCompany)};
+    reportActions.insertBefore(riskButton,priorityButton||null);
+  }
+
+  function syncDueRiskButton(name){
+    if(!riskButton)return;
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    var pending=!!(item&&item.riskPending);
+    riskButton.textContent=pending?'✓ 已标记风险待定':'⚠ 风险待定';
+    riskButton.classList.toggle('risk-pending',pending);
+    riskButton.disabled=pending;
+    riskButton.setAttribute('aria-pressed',String(pending));
+  }
+
+  window.markDueCompanyRiskPending=function(name){
+    name=name||currentDueCompany;
+    var item=followedInvestmentCompanies.find(function(company){return company.name===name});
+    if(!item){item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};followedInvestmentCompanies.unshift(item)}
+    item.riskPending=true;
+    renderFollowedInvestmentList();
+    syncDueRiskButton(name);
+    if(typeof toast==='function')toast('“'+name+'”已加入风险待核验名单');
+  };
+
+  var previousOpenDueReportRisk=window.openDueReport;
+  if(typeof previousOpenDueReportRisk==='function'){
+    window.openDueReport=function(name){previousOpenDueReportRisk.apply(this,arguments);syncDueRiskButton(name||currentDueCompany)};
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.dueDiligence){
+    prototypeLogicAnnotations.dueDiligence.fields.push(['风险待核验','统计尽调过程中存在数据冲突、重要字段缺失或风险结论需要人工确认的企业数。','尽调任务、风险规则命中、人工复核状态','实时更新']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['统计指标联动','点击招商关注、已完成尽调、重点跟进或风险待核验统计卡。','下方企业名单和样本数量按对应状态即时刷新。']);
+    prototypeLogicAnnotations.dueDiligence.interactions.push(['标记风险待定','在尽调报告右上角点击“风险待定”。','企业进入风险待核验名单，按钮变为已标记状态并防止重复提交。']);
+  }
+  renderDueKpis();
+  renderFollowedInvestmentList();
+  syncDueRiskButton(typeof currentDueCompany!=='undefined'?currentDueCompany:'');
+})();
+</script>
