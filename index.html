@@ -1972,3 +1972,84 @@ renderLogicAnnotations();
   document.getElementById('enterprisePolicy').setAttribute('data-removed-policy-actions',String(removed));
 })();
 </script>
+<style id="enterprise-policy-followed-list-style">
+#enterprisePolicy .ep-followed-company-list{max-width:1100px;margin:0 auto 28px;overflow:hidden}
+#enterprisePolicy.matched .ep-followed-company-list{display:none}
+#enterprisePolicy .ep-followed-company-list .card-title{padding:17px 19px}
+#enterprisePolicy .ep-followed-company-list .card-title h2{font-size:13px}
+#enterprisePolicy .ep-followed-company-list .card-title p{font-size:8px;color:#7d899c;margin:4px 0 0}
+#enterprisePolicy .ep-followed-company-list table{width:100%;border-collapse:collapse}
+#enterprisePolicy .ep-followed-company-list th,#enterprisePolicy .ep-followed-company-list td{padding:12px 14px;border-bottom:1px solid #edf1f5;text-align:left;font-size:8px;white-space:nowrap}
+#enterprisePolicy .ep-followed-company-list th{background:#f7f9fc;color:#758397;font-weight:600}
+#enterprisePolicy .ep-followed-company-list td:first-child{white-space:normal;min-width:190px}
+#enterprisePolicy .ep-followed-company-list td:first-child b,#enterprisePolicy .ep-followed-company-list td:first-child span{display:block}
+#enterprisePolicy .ep-followed-company-list td:first-child b{font-size:9px;color:#26364d}
+#enterprisePolicy .ep-followed-company-list td:first-child span{font-size:7px;color:#8a97a8;margin-top:4px}
+#enterprisePolicy .ep-report-status{display:inline-flex;padding:5px 8px;border-radius:10px;font-size:7px;font-style:normal}
+#enterprisePolicy .ep-report-status.generated{background:#eaf8f2;color:#16865f}
+#enterprisePolicy .ep-report-status.pending{background:#fff3e4;color:#d57a28}
+#enterprisePolicy .ep-followed-action{border:0;border-radius:7px;padding:7px 10px;font-size:8px;font-weight:700}
+#enterprisePolicy .ep-followed-action.report-ready{background:#edf5ff;color:#1c6fda}
+#enterprisePolicy .ep-followed-action.generate{background:#176ce2;color:#fff;box-shadow:0 5px 12px rgba(23,108,226,.18)}
+@media(max-width:900px){#enterprisePolicy .ep-followed-company-list{overflow-x:auto}#enterprisePolicy .ep-followed-company-list table{min-width:900px}}
+</style>
+<script id="enterprise-policy-followed-list-script">
+// enterprise-policy-followed-companies-v39
+(function addEnterprisePolicyFollowedCompanies(){
+  var inputCard=document.querySelector('#enterprisePolicy .enterprise-input-card');
+  if(!inputCard)return;
+  var followedCompanies=[
+    {name:'海州智造科技有限公司',track:'新能源汽车零部件',region:'海州经开区',followedAt:'2026-07-18 09:26',status:'generated',reportTime:'2026-07-18 10:05'},
+    {name:'海州精工智能装备有限公司',track:'高端装备制造',region:'海州高新区',followedAt:'2026-07-21 14:12',status:'pending',reportTime:'—'},
+    {name:'华芯微电子（海州）有限公司',track:'车规级芯片',region:'临港产业园',followedAt:'2026-07-22 16:40',status:'generated',reportTime:'2026-07-23 09:18'},
+    {name:'联创智能座舱科技有限公司',track:'智能座舱',region:'软件产业园',followedAt:'2026-07-25 11:08',status:'pending',reportTime:'—'},
+    {name:'新源固态电池有限公司',track:'动力电池',region:'新能源产业园',followedAt:'2026-07-26 15:32',status:'generated',reportTime:'2026-07-27 10:46'},
+    {name:'云创工业软件有限公司',track:'工业软件',region:'海州高新区',followedAt:'2026-07-28 09:55',status:'pending',reportTime:'—'}
+  ];
+  var section=document.createElement('section');
+  section.className='card ep-followed-company-list';
+  section.id='epFollowedCompanyList';
+  section.innerHTML='<div class="card-title"><div><h2>我重点跟进的企业</h2><p>集中查看重点企业的政策匹配报告生成进度，并可直接进入报告或发起生成</p></div><span class="status run" id="epFollowedSummary"></span></div><table><thead><tr><th>企业名称</th><th>重点赛道</th><th>所在地区</th><th>纳入跟进时间</th><th>匹配报告生成状态</th><th>报告更新时间</th><th>操作</th></tr></thead><tbody id="epFollowedCompanyRows"></tbody></table>';
+  inputCard.insertAdjacentElement('afterend',section);
+
+  function renderFollowedPolicyCompanies(){
+    var rows=document.getElementById('epFollowedCompanyRows');
+    rows.innerHTML=followedCompanies.map(function(item,index){
+      var generated=item.status==='generated';
+      return '<tr><td><b>'+item.name+'</b><span>重点跟进企业</span></td><td>'+item.track+'</td><td>'+item.region+'</td><td>'+item.followedAt+'</td><td><em class="ep-report-status '+(generated?'generated':'pending')+'">'+(generated?'已经生成':'待生成')+'</em></td><td>'+item.reportTime+'</td><td><button type="button" class="ep-followed-action '+(generated?'report-ready':'generate')+'" onclick="openTrackedPolicyReport('+index+')">'+(generated?'查看匹配报告':'生成匹配报告')+'</button></td></tr>';
+    }).join('');
+    var generatedCount=followedCompanies.filter(function(item){return item.status==='generated'}).length;
+    document.getElementById('epFollowedSummary').textContent=generatedCount+' 份已生成 · '+(followedCompanies.length-generatedCount)+' 份待生成';
+  }
+
+  function showExistingPolicyReport(item){
+    document.getElementById('epSearch').value=item.name;
+    document.querySelector('#enterprisePolicy .ep-company h2').textContent=item.name;
+    document.getElementById('enterprisePolicy').classList.add('matched');
+    document.getElementById('enterpriseMatchBtn').textContent='✦ 重新匹配政策';
+    document.querySelector('#enterprisePolicy .ep-overview-grid').scrollIntoView({behavior:'smooth',block:'start'});
+    if(typeof toast==='function')toast('已打开“'+item.name+'”政策匹配报告');
+  }
+  window.openTrackedPolicyReport=function(index){
+    var item=followedCompanies[index];if(!item)return;
+    document.getElementById('epSearch').value=item.name;
+    if(item.status==='generated'){showExistingPolicyReport(item);return}
+    item.status='generated';item.reportTime='刚刚';renderFollowedPolicyCompanies();runEnterprisePolicyMatch();
+  };
+
+  var previousRunEnterprisePolicyMatch=window.runEnterprisePolicyMatch;
+  if(typeof previousRunEnterprisePolicyMatch==='function'){
+    window.runEnterprisePolicyMatch=function(){
+      var name=document.getElementById('epSearch').value.trim();
+      var tracked=followedCompanies.find(function(item){return item.name===name});
+      if(tracked&&tracked.status!=='generated'){tracked.status='generated';tracked.reportTime='刚刚';renderFollowedPolicyCompanies()}
+      return previousRunEnterprisePolicyMatch.apply(this,arguments);
+    };
+  }
+  if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.enterprisePolicy){
+    prototypeLogicAnnotations.enterprisePolicy.fields.push(['匹配报告生成状态','重点跟进企业的匹配报告分为已经生成和待生成；已经生成记录报告最新更新时间。','重点跟进企业名单、政策匹配任务、报告版本','任务完成后实时更新']);
+    prototypeLogicAnnotations.enterprisePolicy.interactions.push(['重点企业报告操作','已经生成的企业点击查看匹配报告，待生成企业点击生成匹配报告。','操作与企业输入框联动，生成完成后进入对应企业政策匹配结果页。']);
+  }
+  renderFollowedPolicyCompanies();
+})();
+</script>
