@@ -1,0 +1,5 @@
+/* haizhou-region-and-standalone-report-v57 */
+.metric .metric-region{display:inline-flex;align-items:center;margin-left:6px;padding:3px 7px;border-radius:10px;background:#eaf3ff;color:#2673df!important;font-size:7px;font-style:normal;line-height:1}
+#dashboard>.head h1{letter-spacing:-.4px}
+#dashboard>.head label{letter-spacing:2px}
+@media(max-width:720px){.metric .metric-region{display:flex;width:max-content;margin:5px 0 0}}
