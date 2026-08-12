@@ -1,0 +1,16 @@
+/* node-local-and-recommendation-flow-v59 */
+.node-company-modal.node-two-phase-v59{width:min(1180px,96vw)}
+.node-company-modal.node-two-phase-v59 .node-company-tabs{display:none!important}
+.node-company-modal.node-two-phase-v59 .node-ai-brief{display:flex!important}
+.node-company-modal.node-two-phase-v59 .node-company-summary{grid-template-columns:repeat(3,1fr)}
+.node-company-modal.node-two-phase-v59 header>div>p{max-width:800px}
+.node-company-modal.node-two-phase-v59 #nodeMoreFilterBtn{display:inline-flex!important;align-items:center;justify-content:center;min-width:142px}
+.node-reinforce-btn-v59{box-shadow:0 8px 20px rgba(38,116,229,.22)}
+.node-reinforce-btn-v59:disabled{opacity:.72;cursor:wait}
+.node-profile-btn-v59{border:1px solid #cfe0f6!important;background:#f5f9ff!important;color:#2673df!important}
+.node-add-btn-v59{border:1px solid #2674e5!important;background:#2674e5!important;color:#fff!important;font-weight:700}
+.node-add-btn-v59.added{border-color:#d7dee8!important;background:#eef1f5!important;color:#8491a3!important}
+.local-fit-v59{color:#16976b}.recommend-fit-v59{color:#1d70df;font-size:12px}
+.node-company-modal.node-two-phase-v59 tbody tr{transition:background .16s ease}
+.node-company-modal.node-two-phase-v59 tbody tr:hover{background:#f8fbff}
+@media(max-width:900px){.node-company-modal.node-two-phase-v59 .node-company-summary{grid-template-columns:1fr}}
