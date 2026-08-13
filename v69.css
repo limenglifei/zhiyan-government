@@ -1,0 +1,32 @@
+/* v69 - 单节点推荐企业列宽与招商红线 */
+#nodeCompanyModal.recommend-layout-v69 .node-company-modal{width:min(1440px,97vw)!important}
+#nodeCompanyModal.recommend-layout-v69 .prototype-modal-body{overflow-x:auto;padding-left:20px;padding-right:20px}
+#nodeCompanyModal.recommend-layout-v69 .node-company-table{width:100%;min-width:1320px;table-layout:fixed;border-collapse:collapse}
+#nodeCompanyModal.recommend-layout-v69 .node-company-table th,
+#nodeCompanyModal.recommend-layout-v69 .node-company-table td{box-sizing:border-box;padding:12px 10px;vertical-align:middle;line-height:1.45}
+#nodeCompanyModal.recommend-layout-v69 .node-company-table th{font-size:12px;color:#5e6d83;background:#f4f7fc}
+#nodeCompanyModal.recommend-layout-v69 .node-company-table td{font-size:12px;color:#455772}
+#nodeCompanyModal.recommend-layout-v69 .col-select-v69{width:44px}
+#nodeCompanyModal.recommend-layout-v69 .col-company-v69{width:220px}
+#nodeCompanyModal.recommend-layout-v69 .col-region-v69{width:112px}
+#nodeCompanyModal.recommend-layout-v69 .col-honor-v69{width:190px}
+#nodeCompanyModal.recommend-layout-v69 .col-ability-v69{width:190px}
+#nodeCompanyModal.recommend-layout-v69 .col-score-v69{width:82px}
+#nodeCompanyModal.recommend-layout-v69 .col-phone-v69{width:126px}
+#nodeCompanyModal.recommend-layout-v69 .col-email-v69{width:190px}
+#nodeCompanyModal.recommend-layout-v69 .col-action-v69{width:146px}
+#nodeCompanyModal.recommend-layout-v69 .node-company-table th:nth-child(2),
+#nodeCompanyModal.recommend-layout-v69 .node-company-table td:nth-child(2),
+#nodeCompanyModal.recommend-layout-v69 .node-company-table th:nth-child(7),
+#nodeCompanyModal.recommend-layout-v69 .node-company-table td:nth-child(7),
+#nodeCompanyModal.recommend-layout-v69 .node-company-table th:nth-child(8),
+#nodeCompanyModal.recommend-layout-v69 .node-company-table td:nth-child(8){min-width:0!important}
+.recommend-company-cell-v69 b{display:block;font-size:13px!important;line-height:1.5;color:#172d4f;white-space:normal;word-break:break-all}
+.recommend-honor-cell-v69 .honor-tags-v64{display:flex;flex-wrap:wrap;gap:4px}.recommend-honor-cell-v69 .honor-tags-v64 span{white-space:normal}
+.recommend-ability-cell-v69{white-space:normal;word-break:break-word}.recommend-email-cell-v69{white-space:normal!important;overflow-wrap:anywhere;color:#256fd4!important}
+#nodeCompanyModal.recommend-layout-v69 .recommend-action-v68 button{width:100%;padding:8px 8px!important}
+
+.node-redline-v69{grid-column:1/-1;margin-top:16px;padding:15px 16px;border:1px solid #f0d6d2;border-radius:12px;background:linear-gradient(135deg,#fff9f7,#fff)}
+.node-redline-title-v69{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}.node-redline-title-v69>div{display:flex;align-items:center;gap:9px}.node-redline-title-v69>div>i{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:#f05252;color:#fff;font-style:normal;font-weight:800}.node-redline-title-v69 span b,.node-redline-title-v69 span small{display:block}.node-redline-title-v69 span b{font-size:13px;color:#8f2e31}.node-redline-title-v69 span small{margin-top:3px;color:#9d7b7b;font-size:10px}.node-redline-title-v69>em{padding:4px 8px;border-radius:14px;background:#fff0ed;color:#c34643;font-size:10px;font-style:normal;font-weight:700}
+.node-redline-grid-v69{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}.node-redline-grid-v69 label>span{display:block;margin-bottom:6px;color:#6e5660;font-size:11px}.node-redline-grid-v69 select,.node-redline-grid-v69 input{width:100%;height:40px;border:1px solid #e2cfd0;border-radius:8px;background:#fff;color:#384b65;padding:0 11px;box-sizing:border-box;outline:none}.node-redline-grid-v69 select:focus,.node-redline-grid-v69 input:focus{border-color:#ed7772;box-shadow:0 0 0 3px rgba(237,119,114,.1)}.node-number-field-v69{position:relative}.node-number-field-v69 input{padding-right:40px}.node-number-field-v69 em{position:absolute;right:12px;top:11px;color:#a17d7f;font-size:11px;font-style:normal}.node-redline-v69>p{margin:11px 0 0;color:#96787c;font-size:10px;line-height:1.6}.node-redline-v69>p i{margin-right:5px;color:#d65050;font-style:normal}
+@media(max-width:820px){.node-redline-grid-v69{grid-template-columns:1fr}}
