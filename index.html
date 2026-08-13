@@ -2855,7 +2855,7 @@ renderLogicAnnotations();
   ['chainProvinceV47','chainCityV47','chainDistrictV47'].forEach(function(id){document.getElementById(id).onchange=function(){var base=document.getElementById('chainProvinceV47').value==='全国'?1864000:document.getElementById('chainCityV47').value==='全部城市'?186420:18642;document.getElementById('chainRangeCompanyCountV47').textContent=base.toLocaleString()+' 家'}});
   window.runChainEnterpriseLinkV47=function(){var types=document.querySelectorAll('#chainTypeOptionsV47 button.active');if(!types.length){toast('请至少选择一种企业类型');return}var button=document.getElementById('runChainEnterpriseBtnV47'),targets=enterpriseBatch?activeKnowledgeRows.map(function(item){return item.row}):[knowledgeBaseConfigs.chain.rows[enterpriseTargetIndex]];button.disabled=true;button.textContent='AI 正在识别并匹配…';setTimeout(function(){targets.filter(Boolean).forEach(function(row){var current=parseInt(String(row.companies).replace(/\D/g,''),10)||0;row.companies=(current+12)+' 家';row.lastLinkRegion=document.getElementById('chainProvinceV47').value+' / '+document.getElementById('chainCityV47').value});button.disabled=false;button.textContent='开始企业上链';closeChainEnterpriseRangeV47();renderKnowledgeList();toast('企业上链完成：已识别主营产品并更新节点关联企业')},900)};
   var previousOpenKnowledge=window.openKnowledgeBase;window.openKnowledgeBase=function(type){var result=previousOpenKnowledge.apply(this,arguments),batch=document.getElementById('batchChainEnterpriseBtnV47');if(batch)batch.style.display=type==='chain'?'inline-flex':'none';document.getElementById('knowledgeList').classList.toggle('chain-library-v47',type==='chain');return result};
-  var previousRender=window.renderKnowledgeList;window.renderKnowledgeList=function(){var result=previousRender.apply(this,arguments);if(activeKnowledgeType!=='chain')return result;var rows=document.querySelectorAll('#kbTableBody tr');rows.forEach(function(tr,position){var item=activeKnowledgeRows[position];if(!item)return;var cell=tr.lastElementChild;cell.innerHTML='<div class="chain-row-actions-v47"><button type="button" onclick="event.stopPropagation();editChainGraphV47('+item.index+')">编辑</button><button type="button" onclick="event.stopPropagation();copyChainGraphV47('+item.index+')">复制</button><button type="button" onclick="event.stopPropagation();deleteChainGraphV47('+item.index+')">删除</button><button type="button" onclick="event.stopPropagation();openChainEnterpriseRangeV47('+item.index+',false)">企业上链</button></div>'});return result};
+  var previousRender=window.renderKnowledgeList;window.renderKnowledgeList=function(){var result=previousRender.apply(this,arguments);if(activeKnowledgeType!=='chain')return result;var rows=document.querySelectorAll('#kbTableBody tr');rows.forEach(function(tr,position){var item=activeKnowledgeRows[position];if(!item)return;var cell=tr.lastElementChild,weakCell=tr.children[5];if(weakCell){weakCell.classList.add('chain-weak-static-v67');weakCell.onclick=function(event){event.stopPropagation()}}cell.innerHTML='<div class="chain-row-actions-v47"><button type="button" onclick="event.stopPropagation();openKnowledgeDetail('+item.index+')">编辑</button><button type="button" onclick="event.stopPropagation();copyChainGraphV47('+item.index+')">复制</button><button type="button" onclick="event.stopPropagation();deleteChainGraphV47('+item.index+')">删除</button><button type="button" onclick="event.stopPropagation();openChainEnterpriseRangeV47('+item.index+',false)">企业上链</button></div>'});return result};
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.knowledgeList){prototypeLogicAnnotations.knowledgeList.interactions.push(['产业链列表操作','编辑进入图谱构建画布；复制生成副本；删除需二次确认；企业上链进入范围配置。','单条与批量企业上链均支持地区范围和企业类型多选。']);prototypeLogicAnnotations.knowledgeList.interactions.push(['产业链节点业务修正','在图谱构建画布拖动节点改变环节或顺序，点击节点编辑、删除。','保存后更新产业链结构、节点数和薄弱环节，不保留手工构建入口。'])}
 })();
 </script>
@@ -3139,7 +3139,13 @@ renderLogicAnnotations();
 <script src="v64.js?v=1"></script>
 
 <link rel="stylesheet" href="v65.css?v=3">
-<script src="v65.js?v=3"></script>
+<script src="v65.js?v=4"></script>
 
 <link rel="stylesheet" href="v66.css?v=1">
-<script src="v66.js?v=1"></script>
+<script src="v66.js?v=2"></script>
+
+<link rel="stylesheet" href="v67.css?v=3">
+<script src="v67.js?v=4"></script>
+
+<link rel="stylesheet" href="v68.css?v=1">
+<script src="v68.js?v=1"></script>

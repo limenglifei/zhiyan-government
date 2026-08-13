@@ -1,0 +1,6 @@
+.chain-weak-static-v67{cursor:default!important}
+.chain-weak-static-v67 em{color:#7d4d18!important;background:#fff7e8!important;border:1px solid #ffe2af;border-radius:6px;padding:4px 7px}
+#chainCompanyManagerV49 .chain-company-summary-v49{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+#chainCompanyManagerV49 thead th:nth-child(6){min-width:112px}
+#chainCompanyAddModalV65 .chain-add-lead-v65{display:none!important}
+@media(max-width:960px){#chainCompanyManagerV49 .chain-company-summary-v49{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
