@@ -1,0 +1,23 @@
+/* v74: investment radar service arrows and report table refinement */
+.chain-service-band-v64 .service-stage-v64::before,
+.chain-service-band-v65 .service-stage-v64::before {
+  display: none !important;
+  content: none !important;
+}
+
+#chainReportAllGapV72 {
+  display: none !important;
+}
+
+#chainReportRecommendV72 th:nth-child(1) { width: 42px; }
+#chainReportRecommendV72 th:nth-child(2) { width: 190px; }
+#chainReportRecommendV72 th:nth-child(3) { width: 100px; }
+#chainReportRecommendV72 th:nth-child(4) { width: 150px; }
+#chainReportRecommendV72 th:nth-child(5) { width: 140px; }
+#chainReportRecommendV72 th:nth-child(6) { width: 80px; }
+#chainReportRecommendV72 th:nth-child(7) { width: 130px; }
+#chainReportRecommendV72 th:nth-child(8) { width: 210px; }
+
+#chainReportV58 .report-actions-v58 {
+  justify-content: flex-end;
+}
