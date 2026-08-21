@@ -1,0 +1,67 @@
+/* v75: node enterprise modal and combined whole-chain report */
+#nodeCompanyModal.local-layout-v75 .node-company-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+#nodeCompanyModal.local-layout-v75 .prototype-modal-body {
+  overflow-x: auto !important;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+#nodeCompanyModal.local-layout-v75 .local-table-v72 {
+  width: 100% !important;
+  min-width: 1180px !important;
+  table-layout: fixed !important;
+}
+
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(1) { width: 190px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(2) { width: 120px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(3) { width: 100px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(4) { width: 120px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(5) { width: 130px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(6) { width: 135px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(7) { width: 205px !important; }
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:nth-child(8) { width: 145px !important; }
+
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:last-child,
+#nodeCompanyModal.local-layout-v75 .local-table-v72 td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: #fff;
+  box-shadow: -8px 0 14px rgba(35, 58, 91, .06);
+}
+
+#nodeCompanyModal.local-layout-v75 .local-table-v72 th:last-child {
+  background: #fafbfd;
+}
+
+.combined-chain-report-v75 {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.combined-chain-report-v75 > header {
+  padding: 18px 18px 0;
+}
+
+.combined-chain-report-v75 > .gap-cards-v58 {
+  padding: 14px 18px 18px;
+}
+
+.combined-chain-report-v75 .combined-recommend-v75 {
+  margin: 0 !important;
+  border: 0 !important;
+  border-top: 1px solid #e4ebf3 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.combined-chain-report-v75 .gap-card-v58.active-v72 {
+  background: #f4f8ff;
+}
+
+@media (max-width: 900px) {
+  #nodeCompanyModal.local-layout-v75 .node-company-summary { grid-template-columns: 1fr !important; }
+}
