@@ -2,6 +2,7 @@
   'use strict';
   var latestFile=null;
   var currentParse=null;
+  var pendingMatchTimer=null;
 
   function esc(v){return String(v==null?'':v).replace(/[&<>\"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]})}
   function notify(v){if(typeof window.toast==='function')window.toast(v)}
@@ -52,7 +53,7 @@
     currentParse=parseSource(source);document.getElementById('policySourceNameV79').textContent=source.kind==='file'?source.name:'已输入政策全文';document.getElementById('policySourceMetaV79').textContent=source.kind==='file'?'附件已解析 · '+Math.max(1,Math.round((source.size||1024)/1024))+' KB':'政策全文已解析 · '+String(source.text||'').length.toLocaleString()+' 字';
     var map={pv79Title:'title',pv79Category:'category',pv79Date:'date',pv79Org:'org',pv79Level:'level',pv79Region:'region',pv79Industry:'industry',pv79Body:'body',pv79Attachment:'attachment'};Object.keys(map).forEach(function(id){document.getElementById(id).value=currentParse[map[id]]});renderProjects();openModal('policyParseModalV79');
   }
-  window.closePolicyParseV79=function(){closeModal('policyParseModalV79')};
+  window.closePolicyParseV79=function(){if(pendingMatchTimer!==null){window.clearTimeout(pendingMatchTimer);pendingMatchTimer=null}closeModal('policyParseModalV79')};
 
   function collectParse(){
     currentParse.title=field('pv79Title');currentParse.category=field('pv79Category');currentParse.date=field('pv79Date');currentParse.org=field('pv79Org');currentParse.level=field('pv79Level');currentParse.region=field('pv79Region');currentParse.industry=field('pv79Industry');currentParse.body=field('pv79Body');currentParse.attachment=field('pv79Attachment');
@@ -80,7 +81,38 @@
   function mountMatch(){
     var fileInput=document.getElementById('supportPolicyFileInput'),composer=document.getElementById('supportPolicyComposerV45');if(fileInput)fileInput.addEventListener('change',function(){var f=this.files&&this.files[0];if(f)latestFile={name:f.name,size:f.size,type:f.type,active:true}});
     var previous=window.runSupportMatch;if(typeof previous!=='function')return;
-    window.runSupportMatch=function(){var text=composer?composer.value.trim():'',hasFile=latestFile&&latestFile.active,isFullText=!hasFile&&(text.length>55||/[\r\n]/.test(text));if(hasFile&&composer&&!text){composer.value=latestFile.name;text=latestFile.name}var source=hasFile?{kind:'file',name:latestFile.name,size:latestFile.size,type:latestFile.type,text:text}:isFullText?{kind:'text',text:text}:null;var result=previous.apply(this,arguments);if(source){if(hasFile)latestFile.active=false;setTimeout(function(){closeModal('policyParseModalV78');openParse(source)},1200)}return result};
+    window.runSupportMatch=function(){
+      var text=composer?composer.value.trim():'',hasFile=latestFile&&latestFile.active,isFullText=!hasFile&&(text.length>55||/[\r\n]/.test(text));
+      if(hasFile&&composer&&!text){composer.value=latestFile.name;text=latestFile.name}
+      var source=hasFile?{kind:'file',name:latestFile.name,size:latestFile.size,type:latestFile.type,text:text}:isFullText?{kind:'text',text:text}:null;
+      if(!source)return previous.apply(this,arguments);
+
+      if(hasFile)latestFile.active=false;
+      /*
+       * 旧版附件流程会延迟打开归档/解析弹窗。这里只屏蔽两个旧弹窗计时器，
+       * 保留基础匹配的 800ms 计算任务，并由 v80 的待确认状态隐藏其结果。
+       */
+      var nativeSetTimeout=window.setTimeout;
+      window.setTimeout=function(callback,delay){
+        if(delay===1050||delay===1080)return 0;
+        var timer=nativeSetTimeout.apply(window,arguments);
+        if(delay===800)pendingMatchTimer=timer;
+        return timer;
+      };
+      var result;
+      try{
+        result=previous.apply(this,arguments);
+      }finally{
+        window.setTimeout=nativeSetTimeout;
+      }
+
+      closeModal('policyParseModalV78');
+      var legacyArchive=document.getElementById('policyArchiveModalV77');
+      if(legacyArchive){legacyArchive.classList.remove('open');legacyArchive.setAttribute('aria-hidden','true')}
+      /* 同一点击事件内完成结构化解析并打开确认层，不等待匹配结果渲染。 */
+      openParse(source);
+      return result;
+    };
   }
   function extendNotes(){if(typeof prototypeLogicAnnotations==='undefined')return;prototypeLogicAnnotations.support.interactions.push(['全文解析与项目选择','粘贴政策全文或上传附件后点击匹配。','AI 解析政策文件并拆解多个项目；用户至少勾选一个项目，申报条件、补贴政策和申报时间按项目独立展示并参与匹配。'])}
 
