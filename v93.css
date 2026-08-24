@@ -1,0 +1,14 @@
+/* v93 · 审核通过/驳回二次确认弹窗始终置顶 */
+#policyAuditModalV78{
+  z-index:9999!important;
+  isolation:isolate;
+}
+#policyAuditModalV78.open{
+  display:flex!important;
+}
+#policyAuditModalV78 .policy-audit-dialog-v78{
+  position:relative;
+  z-index:1;
+  box-shadow:0 28px 80px rgba(17,35,62,.28);
+}
+
