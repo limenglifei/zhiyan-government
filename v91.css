@@ -1,0 +1,2 @@
+/* v91 · 政策入库审核任务信息层级精简 */
+.policy-task-overview-v80.without-status-v91{grid-template-columns:repeat(3,minmax(0,1fr))}.policy-project-actions-v90 .edit{display:none!important}@media(max-width:760px){.policy-task-overview-v80.without-status-v91{grid-template-columns:1fr 1fr}}@media(max-width:480px){.policy-task-overview-v80.without-status-v91{grid-template-columns:1fr}}
