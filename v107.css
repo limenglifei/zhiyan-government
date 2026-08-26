@@ -1,0 +1,10 @@
+#dueReport .due-report-head {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 18px;
+}
+
+#dashboard .industry-map-card .map-kpis {
+  display: none !important;
+}

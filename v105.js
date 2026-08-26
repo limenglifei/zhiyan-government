@@ -142,21 +142,7 @@
         };
       }
 
-      var rows = section.querySelectorAll('.due-trend-table-v99 tbody tr');
-      rows.forEach(function (row) {
-        var cell = row.querySelector('td');
-        if (!cell || cell.querySelector('[data-due-finance-v105="row"]')) return;
-        var metric = cell.childNodes.length ? String(cell.childNodes[0].textContent || cell.textContent).trim() : cell.textContent.trim();
-        if (!metric) return;
-        var button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'due-finance-row-source-v105';
-        button.setAttribute('data-due-finance-v105', 'row');
-        button.textContent = '溯源';
-        button.title = '查看“' + metric + '”的来源';
-        button.onclick = function (event) { event.stopPropagation(); window.openDueFinanceSourcesV105(metric); };
-        cell.appendChild(button);
-      });
+      section.querySelectorAll('.due-finance-row-source-v105').forEach(function (button) { button.remove(); });
       updateAnnotationsV105();
     } finally {
       applyingV105 = false;
@@ -167,11 +153,11 @@
     if (typeof window.prototypeLogicAnnotations === 'undefined' || !window.prototypeLogicAnnotations.dueReport) return;
     var fields = window.prototypeLogicAnnotations.dueReport.fields || [];
     fields = fields.filter(function (item) { return item[0] !== '经营与财务来源溯源'; });
-    fields.push(['经营与财务来源溯源', '模块级查看全部来源，单项指标可独立溯源；弹窗按相关性展示多个年报、税务公开资料及原文链接。', '公开年报、税务公开信息、联网资料', '随报告数据快照更新']);
+    fields.push(['经营与财务来源溯源', '在模块右上角统一查看经营与财务数据来源；弹窗按相关性展示多个年报、税务公开资料及原文链接。', '公开年报、税务公开信息、联网资料', '随报告数据快照更新']);
     window.prototypeLogicAnnotations.dueReport.fields = fields;
     var interactions = window.prototypeLogicAnnotations.dueReport.interactions || [];
     interactions = interactions.filter(function (item) { return item[0] !== '财务指标溯源'; });
-    interactions.push(['财务指标溯源', '点击经营与财务模块右上角来源标识，或点击单个指标旁的“溯源”。', '展示全部或该指标关联的多条来源，支持逐条打开原始资料。']);
+    interactions.push(['财务指标溯源', '点击经营与财务模块右上角来源标识。', '统一展示该模块关联的多条来源，支持逐条打开原始资料。']);
     window.prototypeLogicAnnotations.dueReport.interactions = interactions;
   }
 

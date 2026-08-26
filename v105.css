@@ -45,24 +45,6 @@
   font-weight: 600;
 }
 
-.due-finance-row-source-v105 {
-  margin-left: 8px;
-  padding: 2px 7px;
-  border: 1px solid #c8dcff;
-  border-radius: 10px;
-  background: #f3f7ff;
-  color: #216ed6;
-  font-size: 11px;
-  line-height: 1.4;
-  cursor: pointer;
-  vertical-align: 1px;
-}
-
-.due-finance-row-source-v105:hover {
-  border-color: #629bf2;
-  background: #e9f2ff;
-}
-
 .due-finance-modal-v105 .prototype-modal {
   width: min(1040px, calc(100vw - 48px));
   max-height: 86vh;
