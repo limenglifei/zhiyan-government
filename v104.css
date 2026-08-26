@@ -1,0 +1,260 @@
+/* v104: due-diligence evidence drill-down and Word/PDF export */
+.due-field-online-v104 {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 7px;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 12px;
+  background: #eef5ff;
+  color: #176fdc;
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.due-field-online-v104 i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2e7ced;
+  color: #fff;
+  font-size: 7px;
+  font-style: normal;
+}
+
+.due-field-online-v104:hover,
+.due-online-source-v100:hover {
+  box-shadow: 0 4px 12px rgba(35, 111, 218, .16);
+  transform: translateY(-1px);
+}
+
+.due-evidence-modal-v104 .prototype-modal {
+  width: min(920px, 96vw);
+  max-height: 88vh;
+}
+
+.due-evidence-modal-v104 .prototype-modal-body {
+  overflow: auto;
+}
+
+.due-evidence-summary-v104 {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 13px;
+  padding: 12px 14px;
+  border: 1px solid #dce8f8;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f5f9ff, #fbfdff);
+  color: #3b526e;
+  font-size: 8px;
+  line-height: 1.7;
+}
+
+.due-evidence-summary-v104 b {
+  flex: 0 0 auto;
+  color: #176fdc;
+}
+
+.due-source-list-v104 {
+  display: grid;
+  gap: 10px;
+}
+
+.due-source-card-v104 {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px;
+  border: 1px solid #dfe7f1;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.due-source-card-v104 > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #eef5ff;
+  color: #176fdc;
+  font-size: 8px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.due-source-card-v104 h3 {
+  margin: 0;
+  color: #233a57;
+  font-size: 10px;
+}
+
+.due-source-card-v104 small {
+  display: block;
+  margin-top: 5px;
+  color: #8794a6;
+  font-size: 7px;
+}
+
+.due-source-card-v104 p {
+  margin: 9px 0 0;
+  color: #53677f;
+  font-size: 8px;
+  line-height: 1.75;
+}
+
+.due-source-card-v104 a,
+.due-team-card-v104 a,
+.due-change-card-v104 a,
+.due-relation-news-v104 a {
+  color: #176fdc;
+  font-size: 8px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.due-source-card-v104 a:hover,
+.due-team-card-v104 a:hover,
+.due-change-card-v104 a:hover,
+.due-relation-news-v104 a:hover { text-decoration: underline; }
+
+.due-change-list-v104,
+.due-team-list-v104 {
+  display: grid;
+  gap: 10px;
+}
+
+.due-change-card-v104 {
+  display: grid;
+  grid-template-columns: 94px 90px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 14px;
+  border: 1px solid #dfe7f1;
+  border-radius: 10px;
+  background: #fff;
+  color: #51657d;
+  font-size: 8px;
+}
+
+.due-change-card-v104 time { color: #7b899b; }
+.due-change-card-v104 strong { color: #7358ce; }
+.due-change-card-v104.add strong { color: #14895f; }
+.due-change-card-v104.exit strong { color: #cf7043; }
+
+.due-team-list-v104 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.due-team-card-v104 {
+  padding: 15px;
+  border: 1px solid #dfe7f1;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.due-team-card-v104 header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.due-team-card-v104 h3 { margin: 0; color: #243a57; font-size: 11px; }
+.due-team-card-v104 header span { color: #176fdc; font-size: 8px; font-weight: 800; }
+.due-team-card-v104 dl { margin: 12px 0; }
+.due-team-card-v104 dl > div { display: grid; grid-template-columns: 62px 1fr; gap: 8px; margin: 8px 0; }
+.due-team-card-v104 dt { color: #8b97a7; font-size: 7px; }
+.due-team-card-v104 dd { margin: 0; color: #4b6078; font-size: 8px; line-height: 1.55; }
+
+.due-relation-switch-v104 {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 13px;
+  padding: 2px 1px 6px;
+}
+
+.due-relation-switch-v104 button {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #d7e1ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #5f7187;
+  font-size: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.due-relation-switch-v104 button.active {
+  border-color: #2b78e7;
+  background: #edf5ff;
+  color: #176fdc;
+  box-shadow: 0 5px 14px rgba(33, 110, 218, .12);
+}
+
+.due-relation-company-v104 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+  padding: 11px 13px;
+  border-radius: 9px;
+  background: #f6f9fd;
+}
+
+.due-relation-company-v104 b { color: #243a57; font-size: 10px; }
+.due-relation-company-v104 span { color: #7c8da1; font-size: 8px; }
+
+.due-relation-news-list-v104 { display: grid; gap: 9px; }
+.due-relation-news-v104 {
+  padding: 13px 14px;
+  border: 1px solid #e0e7f0;
+  border-radius: 10px;
+  background: #fff;
+}
+.due-relation-news-v104 header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.due-relation-news-v104 h3 { margin: 0; color: #263d5a; font-size: 10px; }
+.due-relation-news-v104 small { display: block; margin-top: 5px; color: #8794a6; font-size: 7px; }
+.due-relation-news-v104 p { margin: 9px 0 0; color: #53677f; font-size: 8px; line-height: 1.7; }
+.due-relation-news-v104 p b { color: #263d5a; }
+
+.due-download-modal-v104 .prototype-modal { width: min(580px, 94vw); }
+.due-format-grid-v104 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.due-format-card-v104 {
+  padding: 18px;
+  border: 1px solid #dfe7f1;
+  border-radius: 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: .18s ease;
+}
+.due-format-card-v104:hover { border-color: #6fa5ec; background: #f6faff; transform: translateY(-2px); }
+.due-format-card-v104 i { display: block; margin-bottom: 12px; color: #2676e8; font-size: 24px; font-style: normal; }
+.due-format-card-v104 b { display: block; color: #243a57; font-size: 11px; }
+.due-format-card-v104 span { display: block; margin-top: 6px; color: #7f8da0; font-size: 8px; line-height: 1.6; }
+
+@media (max-width: 760px) {
+  .due-source-card-v104 { grid-template-columns: 1fr; }
+  .due-source-card-v104 > span { justify-self: start; }
+  .due-change-card-v104 { grid-template-columns: 1fr; }
+  .due-team-list-v104 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .due-format-grid-v104 { grid-template-columns: 1fr; }
+}
