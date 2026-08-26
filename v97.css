@@ -1,0 +1,22 @@
+/* v97: restore the existing due-diligence status filter after the list heading was removed. */
+#dueDiligence .followed-investments .card-title > .due-status-filter-v70 {
+  display: flex !important;
+  margin-left: 12px !important;
+}
+
+#dueDiligence .followed-investments .card-title {
+  justify-content: flex-end !important;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  #dueDiligence .followed-investments .card-title {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  #dueDiligence .followed-investments .card-title > .due-status-filter-v70 {
+    margin-left: 0 !important;
+  }
+}
+
