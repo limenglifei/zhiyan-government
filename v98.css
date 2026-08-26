@@ -1,0 +1,5 @@
+/* v98: remove the redundant total-count badge to the left of the due-status filter. */
+#dueDiligence .followed-investments #followedInvestmentCount {
+  display: none !important;
+}
+
