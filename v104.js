@@ -214,6 +214,7 @@
     }
     if (options.onlineOnly !== false) field.classList.add('due-online-only-v101');
     var value = field.querySelector('dd');
+    if (value && options.valueText) value.textContent = options.valueText;
     if (value) value.insertAdjacentHTML('beforeend', triggerHtmlV104(type, triggerLabel, options.relation));
   }
 
@@ -342,6 +343,9 @@
     var report = document.getElementById('dueEvidenceReportV99');
     if (summary) holder.appendChild(summary.cloneNode(true));
     if (report) holder.appendChild(report.cloneNode(true));
+    if ((document.getElementById('dueReport') || {}).classList && document.getElementById('dueReport').classList.contains('due-network-off')) {
+      holder.querySelectorAll('.due-online-only-v101').forEach(function (node) { node.remove(); });
+    }
     holder.querySelectorAll('button,.due-online-source-v100,.due-field-online-v104,.due-source-footer-v99').forEach(function (node) { node.remove(); });
     return holder.innerHTML;
   }
@@ -431,7 +435,7 @@
       var chain = findSectionV104('产业链定位与关联度');
       var innovation = findSectionV104(['技术实力与市场地位', '技术、知识产权与市场地位']);
       decorateFieldV104(basic, ['主营产品 / 服务', '主营产品/服务'], 'products', '联网 · 3条信源');
-      decorateFieldV104(equity, '控制权稳定性', 'control', '联网 · 2条变更', { removeOldOrigin: true });
+      decorateFieldV104(equity, '控制权稳定性', 'control', '联网 · 2条变更', { removeOldOrigin: true, valueText: '总体稳定；近两年存在 2 条非控制性股东进退记录，实际控制人未变' });
       decorateFieldV104(equity, ['核心团队背景', '核心团队'], 'team', '联网 · 3人', { removeOldOrigin: true });
       decorateFieldV104(chain, ['主要供应商（3 家）', '主要供应商'], 'suppliers', '联网 · 3家', { relation: 'suppliers' });
       decorateFieldV104(chain, ['主要客户（3 家）', '主要客户'], 'customers', '联网 · 3家', { relation: 'customers' });
