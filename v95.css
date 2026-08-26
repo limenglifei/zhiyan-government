@@ -1,0 +1,20 @@
+/* v95: sticky node-company table headers */
+#nodeCompanyModal .node-company-modal .prototype-modal-body {
+  position: relative;
+  max-height: min(48vh, 520px);
+  overflow: auto !important;
+}
+
+#nodeCompanyModal .node-company-table thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 7 !important;
+  background: #f4f7fc !important;
+  box-shadow: 0 1px 0 #dfe7f0, 0 8px 14px rgba(30, 64, 110, 0.08);
+}
+
+#nodeCompanyModal.local-layout-v75 .local-table-v72 thead th:last-child,
+#nodeCompanyModal.recommend-layout-v69 .node-company-table thead th:last-child {
+  z-index: 9 !important;
+}
+
