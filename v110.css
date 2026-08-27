@@ -1,0 +1,108 @@
+/* v110: 1.2x report typography and tax-credit profile field */
+
+/* Report header and summary */
+#dueReport .due-report-head label { font-size: 8.4px !important; }
+#dueReport .detail-back button { font-size: 10.8px !important; }
+#dueReport .detail-back span { font-size: 9.6px !important; }
+#dueReport .due-report-head > div:last-child > button { font-size: 12px !important; }
+#dueReport .due-report-head > div:last-child > .due-network-switch-v101 { font-size: 9.6px !important; }
+#dueReport .due-network-switch-v101,
+#dueReport .due-history-button-v77 { font-size: 9.6px !important; }
+#dueReport .due-history-button-v77 em { font-size: 8.4px !important; }
+#dueReport .due-report-head h1 { font-size: 20.4px !important; }
+#dueReport .due-report-head p { font-size: 8.4px !important; line-height: 1.65; }
+#dueReport .due-contact-v61 span { font-size: 9.6px !important; }
+#dueReport .due-contact-v61 b,
+#dueReport .due-contact-v61 a { font-size: 10.8px !important; }
+#dueReport .due-report-score b { font-size: 45.6px !important; }
+#dueReport .due-report-score span,
+#dueReport .due-report-score em { font-size: 9.6px !important; }
+#dueReport .due-report-summary h2 { font-size: 18px !important; }
+#dueReport .due-report-summary p { font-size: 10.8px !important; }
+#dueReport .due-report-tags span { font-size: 8.4px !important; }
+#dueReport .due-summary-provenance-v99 > span,
+#dueReport .due-source-footer-v99 > span,
+#dueReport .due-source-chip-v99,
+#dueReport .due-trace-button-v99 { font-size: 9.6px !important; }
+
+/* Report sections, facts, tables and analysis */
+#dueReport .due-evidence-section-v99 h2 { font-size: 16.8px !important; }
+#dueReport .due-evidence-section-v99 header p,
+#dueReport .due-live-badge-v99 { font-size: 9.6px !important; }
+#dueReport .due-section-number-v99 { font-size: 10.8px !important; }
+#dueReport .due-section-state-v99 { font-size: 8.4px !important; }
+#dueReport .due-fact-v99 dt { font-size: 8.4px !important; }
+#dueReport .due-fact-v99 dd { font-size: 10.8px !important; }
+#dueReport .due-fact-v99 dd small { font-size: 8.4px !important; }
+#dueReport .due-field-origin-v99 { font-size: 7.2px !important; }
+#dueReport .due-analysis-v99 > i { font-size: 9.6px !important; }
+#dueReport .due-analysis-v99 b { font-size: 10.8px !important; }
+#dueReport .due-analysis-v99 p { font-size: 9.6px !important; }
+#dueReport .due-trend-table-v99 th,
+#dueReport .due-trend-table-v99 td,
+#dueReport .due-risk-table-v99 th,
+#dueReport .due-risk-table-v99 td,
+#dueReport .due-score-table-v99 th,
+#dueReport .due-score-table-v99 td { font-size: 9.6px !important; }
+#dueReport .due-action-steps-v99 article span { font-size: 9.6px !important; }
+#dueReport .due-action-steps-v99 article b { font-size: 10.8px !important; }
+#dueReport .due-action-steps-v99 article p { font-size: 8.4px !important; }
+
+/* Source markers retained inside report facts */
+#dueReport .due-online-source-v100,
+#dueReport .due-field-online-v104,
+#dueReport .due-news-link-v101 { font-size: 8.4px !important; }
+#dueReport .due-field-online-v104 i { font-size: 8.4px !important; }
+
+/* Risk metric cards */
+#dueReport .due-risk-metrics-v108 article span { font-size: 9.6px !important; }
+#dueReport .due-risk-metrics-v108 article b { font-size: 26.4px !important; }
+#dueReport .due-risk-metrics-v108 article b small { font-size: 9.6px !important; }
+
+/* Expansion event overview and cards */
+#dueReport .due-expansion-overview-v109 > div:first-child b { font-size: 13.2px !important; }
+#dueReport .due-expansion-overview-v109 > div:first-child span,
+#dueReport .due-expansion-overview-tags-v109 span { font-size: 9.6px !important; }
+#dueReport .due-expansion-overview-tags-v109 strong,
+#dueReport .due-event-count-v109 b { font-size: 14.4px !important; }
+#dueReport .due-event-type-v109 { font-size: 10.8px !important; }
+#dueReport .due-event-count-v109 { font-size: 9.6px !important; }
+#dueReport .due-landing-signals-v99 article > b { font-size: 12px !important; }
+#dueReport .due-landing-signals-v99 article > em { font-size: 8.4px !important; }
+#dueReport .due-landing-signals-v99 article > button { font-size: 8.4px !important; }
+
+/* Report guidance and sticky actions */
+#dueReport .due-report-guidance-copy h2 { font-size: 15.6px !important; }
+#dueReport .due-report-guidance-copy p { font-size: 9.6px !important; }
+#dueReport .due-report-guidance-actions button { font-size: 12px !important; }
+
+/* Report-only evidence dialogs are also part of the reading experience. */
+.due-news-modal-v101 .prototype-modal header label,
+.due-evidence-modal-v104 .prototype-modal header label,
+.due-finance-modal-v105 .prototype-modal header label { font-size: 8.4px !important; }
+.due-news-modal-v101 .prototype-modal header h2,
+.due-evidence-modal-v104 .prototype-modal header h2,
+.due-finance-modal-v105 .prototype-modal header h2 { font-size: 20.4px !important; }
+.due-news-item-v101 b { font-size: 12px !important; }
+.due-news-item-v101 span { font-size: 8.4px !important; }
+.due-news-item-v101 em,
+.due-news-item-v101 p { font-size: 9.6px !important; }
+.due-evidence-summary-v104,
+.due-source-card-v104 p,
+.due-source-card-v104 a,
+.due-team-card-v104 a,
+.due-change-card-v104,
+.due-relation-news-v104 a,
+.due-relation-news-v104 p { font-size: 9.6px !important; }
+.due-source-card-v104 > span,
+.due-relation-switch-v104 button,
+.due-relation-company-v104 span { font-size: 9.6px !important; }
+.due-source-card-v104 h3,
+.due-relation-company-v104 b,
+.due-relation-news-v104 h3 { font-size: 12px !important; }
+.due-source-card-v104 small,
+.due-team-card-v104 dt,
+.due-relation-news-v104 small { font-size: 8.4px !important; }
+.due-team-card-v104 h3 { font-size: 13.2px !important; }
+.due-team-card-v104 header span,
+.due-team-card-v104 dd { font-size: 9.6px !important; }
