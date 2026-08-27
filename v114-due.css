@@ -1,0 +1,43 @@
+.due-next-form-v111:has(#dueNextMatterPanelV114) {
+  display: grid;
+  gap: 14px;
+}
+
+.due-next-matter-v114[hidden] {
+  display: none !important;
+}
+
+.due-next-matter-v114 label {
+  display: grid;
+  gap: 7px;
+}
+
+.due-next-matter-v114 textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 10px 12px;
+  border: 1px solid #d9e2ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #30465f;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.due-next-matter-v114 textarea:focus {
+  border-color: #2779e8;
+  outline: 3px solid rgba(39, 121, 232, .1);
+}
+
+.due-next-matter-v114 textarea[aria-invalid="true"] {
+  border-color: #dc5a61;
+  background: #fff8f7;
+  outline: 3px solid rgba(220, 90, 97, .1);
+}
+
+.due-next-matter-v114 small {
+  color: #8b97a7;
+  font-size: 10px;
+  line-height: 1.55;
+}
