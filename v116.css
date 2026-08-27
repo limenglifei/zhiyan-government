@@ -1,0 +1,59 @@
+/* v116: industry-chain summary, advantage links and separated node strength */
+#kbDetailBody .chain-summary-field-v116 dd,
+#kbDetailBody .chain-advantage-field-v116 dd,
+#kbDetailBody .chain-weak-field-v116 dd {
+  line-height: 1.75;
+}
+#kbDetailBody .chain-advantage-field-v116 {
+  border-color: #b8e9dc;
+  background: linear-gradient(135deg, #f5fffb, #f2f8ff);
+}
+#kbDetailBody .chain-advantage-field-v116 dt { color: #087d64; }
+#kbDetailBody .chain-weak-field-v116 {
+  border-color: #f2d2c9;
+  background: #fffaf8;
+}
+
+#graphNodeEditModalV47 .graph-node-edit-form-v47 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#graphNodeEditModalV47 .graph-node-edit-form-v47 > label:first-child {
+  grid-column: 1 / -1;
+}
+#graphNodeEditModalV47 .graph-node-strength-field-v116 select {
+  border-color: #a9c7ef;
+  background: #f7fbff;
+}
+
+#graphBuilderModal .graph-preview-node .graph-node-meta-v116 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#graphBuilderModal .graph-node-meta-v116 em {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+}
+#graphBuilderModal .graph-node-meta-v116 em.advantage {
+  color: #087d64;
+  background: #dcf8ee;
+  border: 1px solid #9de2cf;
+}
+#graphBuilderModal .graph-node-meta-v116 em.weak {
+  color: #c45131;
+  background: #fff0eb;
+  border: 1px solid #f4b8a7;
+}
+#graphBuilderModal .graph-preview-node.node-advantage-v116 { border-color: #9edcc9; }
+#graphBuilderModal .graph-preview-node.node-weak-v116 { border-color: #f0ac99; }
+
+@media (max-width: 720px) {
+  #graphNodeEditModalV47 .graph-node-edit-form-v47 { grid-template-columns: 1fr; }
+  #graphNodeEditModalV47 .graph-node-edit-form-v47 > label:first-child { grid-column: auto; }
+}
