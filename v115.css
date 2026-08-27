@@ -1,0 +1,60 @@
+/* v115: direct chain editor, restored radar workspace, five-list due workbench */
+#investment.investment-home-active-v113 > #investmentChainMount,
+#investment.investment-home-active-v113 > .radar-empty,
+#investment.investment-home-active-v113 > #leadResults {
+  display: block !important;
+}
+#investment > .investment-home-v113 { display: none !important; }
+
+#dueDiligence .due-kpis {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+#dueDiligence .due-workflow-tab-v111.all i {
+  background: #e8f2ff;
+  color: #226fd6;
+}
+#dueDiligence .due-workflow-tab-v111.all.active {
+  border-color: #77a9ea;
+  box-shadow: 0 10px 24px rgba(34, 111, 214, .13);
+}
+#dueDiligence .due-status-filter-v70 { display: none !important; }
+
+#chainGraphEditorV114 .chain-graph-page-mount-v114 {
+  background: transparent;
+}
+#chainGraphEditorV114 #graphBuilderModal.graph-builder-page-mode-v114 .graph-builder-dialog {
+  height: calc(100vh - 145px);
+  min-height: 650px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#chainGraphEditorV114 .graph-builder-dialog > header {
+  display: none !important;
+}
+#chainGraphEditorV114 .graph-builder-body {
+  overflow: hidden;
+  border: 0;
+  border-top: 1px solid #e3eaf3;
+  background: #fff;
+}
+#chainGraphEditorV114 .graph-builder-settings {
+  border-radius: 0;
+}
+#chainGraphEditorV114 .graph-builder-dialog > footer {
+  background: #fff;
+  border-radius: 0;
+}
+
+@media (max-width: 1120px) {
+  #dueDiligence .due-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 720px) {
+  #dueDiligence .due-kpis { grid-template-columns: 1fr 1fr !important; }
+  #chainGraphEditorV114 #graphBuilderModal.graph-builder-page-mode-v114 .graph-builder-dialog {
+    height: auto;
+    min-height: 0;
+  }
+}
+#dueDiligence .followed-investments .card-title > .due-status-filter-v70 { display: none !important; }
