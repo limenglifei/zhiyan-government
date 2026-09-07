@@ -102,7 +102,7 @@
     isOpen = true;
     trigger.setAttribute('aria-expanded', 'true');
     position();
-    search.focus();
+    search.focus({ preventScroll: true });
   }
 
   function applyChecked() {
@@ -173,7 +173,14 @@
       }
     }, true);
     document.addEventListener('scroll', function (event) {
-      if (isOpen && !panel.contains(event.target)) close(false);
+      if (!isOpen || panel.contains(event.target)) return;
+      var rect = trigger.getBoundingClientRect();
+      var bodyRect = document.querySelector('#profileModal .profile-modal-body').getBoundingClientRect();
+      if (rect.bottom <= Math.max(bodyRect.top, 0) || rect.top >= Math.min(bodyRect.bottom, window.innerHeight)) {
+        close(false);
+      } else {
+        position();
+      }
     }, true);
     window.addEventListener('resize', position);
     mounted = true;
@@ -194,4 +201,3 @@
   };
   mount();
 })();
-
