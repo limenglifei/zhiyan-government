@@ -1,0 +1,41 @@
+#support .support-policy-input,#support.matched .support-policy-input{grid-template-columns:minmax(0,1fr) auto auto!important;max-width:940px}
+#support .support-policy-input input{min-width:0;font-size:14px}
+#support .support-policy-input button{font-size:14px;white-space:nowrap}
+#supportScopeBtn{display:flex;align-items:center;justify-content:center;gap:7px;background:#f3f7ff;border-color:#b8cef0;color:#246bd0}
+#supportScopeBtn.scope-active{background:#eaf3ff;border-color:#2673df}
+#supportScopeBtn svg{width:16px;height:16px;flex:none}
+.support-scope-summary{max-width:940px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;font-size:14px;color:#67788e;line-height:1.6}
+#support.matched .support-scope-summary{max-width:none;justify-content:flex-start;margin:12px 0 0}
+.support-scope-summary button{border:1px solid #cfdef2;border-radius:6px;background:#f4f8ff;color:#2767be;padding:4px 8px;font-size:14px;max-width:100%;overflow-wrap:anywhere}
+.support-scope-summary .scope-clear{border:0;background:none;color:#758297}
+.scope-dialog{width:min(960px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:0;border:1px solid #dbe5f2;border-radius:16px;color:#17233b;background:#fff;box-shadow:0 28px 100px #071d4540;overflow:auto}
+.scope-dialog::backdrop{background:#0b1c3980}
+.scope-dialog header{padding:22px 26px 18px;border-bottom:1px solid #e5eaf1;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.scope-dialog h2{font-size:22px;margin:0 0 8px}.scope-dialog header p{font-size:14px;color:#66778e;margin:0;line-height:1.7}
+.scope-close{border:0;background:#f2f5fa;color:#66778e;border-radius:8px;width:34px;height:34px;flex:none;font-size:22px}
+.scope-form-body{padding:20px 26px;display:grid;grid-template-columns:1fr 1fr;gap:22px 28px}
+.scope-field{border:0;padding:0;margin:0;min-width:0}.scope-field legend{font-size:15px;font-weight:700;margin-bottom:11px;padding:0}.scope-field legend span{font-size:13px;color:#8391a4;font-weight:400;margin-left:8px}
+.scope-field.scope-wide{grid-column:1/-1}.scope-region{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.scope-region label{font-size:14px;color:#758397}.scope-dialog select,.scope-dialog input[type=number]{height:40px;width:100%;min-width:0;border:1px solid #d6dfea;border-radius:7px;background:#fff;padding:0 10px;font-size:14px;color:#27364e}
+.scope-region select{display:block;margin-top:7px}.scope-dialog select:disabled{background:#f5f7fa;color:#97a2b1}
+.scope-choices{display:flex;flex-wrap:wrap;gap:8px}.scope-choice{display:inline-flex;align-items:center;position:relative}
+.scope-choice input{position:absolute;opacity:0;width:1px;height:1px}.scope-choice span{display:block;border:1px solid #dce4ef;border-radius:7px;padding:8px 11px;background:#fff;color:#64738a;font-size:14px;cursor:pointer}
+.scope-choice input:checked+span{color:#196de6;border-color:#80acec;background:#edf5ff}.scope-choice input:checked+span:before{content:'✓ ';font-weight:700}
+.scope-choice input:focus-visible+span,.scope-dialog :focus-visible,#supportScopeBtn:focus-visible,.support-scope-summary button:focus-visible{outline:3px solid #91b9f4;outline-offset:2px}
+.scope-number-range{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:10px;font-size:14px;color:#77869b}
+.scope-field p{font-size:13px;color:#7b8b9f;line-height:1.6;margin:8px 0 0}
+.scope-error{margin:0 26px 16px;color:#c93c47;font-size:14px}.scope-error:empty{display:none}
+.scope-dialog footer{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5eaf1;padding:16px 26px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.scope-preview{margin-right:auto;font-size:14px;color:#63748b}.scope-preview b{color:#196de6;font-size:20px}.scope-dialog footer button{font-size:14px}.scope-reset{border:0;background:none;color:#62768f;padding:8px 0}
+.support-company-scope{margin-top:6px;color:#7b8799;font-size:12px;line-height:1.6}.support-profile-scope{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.support-profile-scope span{font-size:12px;padding:4px 7px;background:#f3f6fa;border-radius:5px;color:#66778d}
+@media(max-width:900px){#support .support-policy-input,#support.matched .support-policy-input{grid-template-columns:1fr 1fr!important}#support .support-policy-input input{grid-column:1/-1}.scope-form-body{grid-template-columns:1fr}.scope-field.scope-wide{grid-column:auto}}
+@media(max-width:560px){.scope-dialog{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:10px}.scope-dialog header,.scope-form-body{padding:18px}.scope-region{grid-template-columns:1fr}.scope-dialog footer{padding:14px 18px;gap:10px}.scope-preview{width:100%}.scope-error{margin:0 18px 16px}}
+/* Extend the current policy composer, attachment upload and result layout. */
+#support .support-policy-input,#support.matched .support-policy-input{grid-template-columns:minmax(0,1fr) 54px auto auto!important;align-items:end}
+#support .support-policy-input #supportScopeBtn{height:54px!important;padding:0 16px!important;border-radius:12px;font-size:14px}
+#support.matched .support-policy-input #supportScopeBtn{height:46px!important}
+#support .support-scope-summary{margin-top:12px}
+#support .support-scope-summary:empty{display:none}
+#support .support-composer-text-v45{font-size:14px}
+@media(max-width:1000px){#support .support-policy-input,#support.matched .support-policy-input{grid-template-columns:54px minmax(0,1fr) minmax(0,1fr)!important}#support .support-composer-field-v45{grid-column:1/-1}#support .support-policy-input>#supportMatchBtn{grid-column:auto;width:100%}#support .support-policy-input #supportScopeBtn{width:100%;height:54px!important}#support.matched .support-policy-input #supportScopeBtn{height:46px!important}}
+@media(max-width:540px){#support .support-policy-input>#supportMatchBtn{grid-column:1/-1!important}#support .support-policy-input,#support.matched .support-policy-input{grid-template-columns:54px minmax(0,1fr)!important}}
