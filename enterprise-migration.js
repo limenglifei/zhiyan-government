@@ -77,6 +77,11 @@
         <div class="migration-total" aria-live="polite"><b id="migrationTotal">28</b><span>家企业</span></div>
         <div class="migration-net">本月净迁入<strong>+${total('in') - total('out')} 家</strong></div>
         <ol class="migration-ranking" id="migrationRanking"></ol>
+        <section class="migration-insight" aria-labelledby="migrationInsightHeading">
+          <h4 id="migrationInsightHeading"><span aria-hidden="true">✦</span> AI 总结与解读</h4>
+          <p id="migrationInsightText" aria-live="polite" aria-atomic="true"></p>
+          <small>基于本月演示数据</small>
+        </section>
         <div class="migration-selection" id="migrationSelection" aria-live="polite">悬停查看数量，点击节点或地区聚焦流向。</div>
       </aside>
     </div>`;
@@ -85,6 +90,26 @@
 
   function currentRows() { return movements.filter(item => item[direction] > 0).sort((a, b) => b[direction] - a[direction]); }
   function flowLabel(item) { return direction === 'in' ? item.city + ' → ' + home.name : home.name + ' → ' + item.city; }
+  function renderInsight(rows) {
+    const count = total(direction), isIncoming = direction === 'in';
+    if (!count) {
+      q('#migrationInsightText').textContent = `本月暂无企业${isIncoming ? '迁入' : '迁出'}记录。`;
+      return;
+    }
+    const leading = rows.slice(0, 3);
+    const leadingCount = leading.reduce((sum, item) => sum + item[direction], 0);
+    const cities = leading.map(item => `${shortName(item.city)}（${item[direction]}家）`).join('、');
+    const share = value => (value / count * 100).toFixed(1) + '%';
+    const deltaProvinces = [310000, 320000, 330000, 340000];
+    const deltaCount = rows.filter(item => deltaProvinces.includes(item.province)).reduce((sum, item) => sum + item[direction], 0);
+    const net = total('in') - total('out');
+    const netNote = net > 0 ? `同期净迁入${net}家，整体保持净流入。` : net < 0 ? `同期净迁出${Math.abs(net)}家，整体呈净流出。` : '同期迁入迁出数量持平。';
+    const leadNote = leading.length === 3 ? `，前三城市合计占${share(leadingCount)}` : '';
+    const regionNote = deltaCount ? (isIncoming ? `长三角地区贡献${deltaCount}家（${share(deltaCount)}）；` : `其中${deltaCount}家流向长三角地区（${share(deltaCount)}）；`) : '';
+    q('#migrationInsightText').textContent = (isIncoming
+      ? `本月${count}家企业迁入${home.name}，来源覆盖${rows.length}个城市，主要来自${cities}${leadNote}。`
+      : `本月${count}家企业从${home.name}迁出，流向${rows.length}个城市，主要迁往${cities}${leadNote}。`) + regionNote + netNote;
+  }
   function curve(item) {
     const outer = point(item.coordinate), inner = point(home.coordinate);
     const from = direction === 'in' ? outer : inner, to = direction === 'in' ? inner : outer;
@@ -187,7 +212,7 @@
       button.addEventListener('focus', () => { hovered = button.dataset.migrationRow; updateFocus(); });
       button.addEventListener('blur', () => { hovered = null; updateFocus(); });
     });
-    renderMap(rows); updateFocus(); syncMotion();
+    renderInsight(rows); renderMap(rows); updateFocus(); syncMotion();
     vitality.querySelector('.move-card.in').classList.toggle('migration-active', isIncoming);
     vitality.querySelector('.move-card.out').classList.toggle('migration-active', !isIncoming);
   }

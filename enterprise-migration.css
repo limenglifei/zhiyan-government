@@ -61,6 +61,11 @@
 .migration-rank-button em>i { display:block; height:100%; background:var(--migration-accent); opacity:.72; border-radius:3px; }
 .migration-rank-button strong { font-size:14px; color:#40546d; font-weight:600; }
 .migration-rank-button small { display:block; font-size:11px; color:#94a0af; text-align:right; margin-top:4px; }
+.migration-insight { margin-top:18px; padding:14px 13px; border:1px solid #e1e9ef; border-radius:10px; background:var(--migration-soft); }
+.migration-insight h4 { display:flex; align-items:center; gap:6px; margin:0 0 9px; font-size:14px; font-weight:600; color:#34445c; }
+.migration-insight h4>span { color:var(--migration-accent); font-size:19px; line-height:1; }
+.migration-insight p { margin:0; font-size:13px; line-height:1.85; color:#52637a; overflow-wrap:break-word; }
+.migration-insight small { display:block; margin-top:9px; color:#7d8ba0; font-size:11px; }
 .migration-selection { margin-top:auto; padding-top:13px; font-size:12px; color:#7d8ba0; line-height:1.8; }
 .migration-selection button { display:block; border:0; padding:4px 0; background:none; color:#2673df; font-size:12px; }
 .enterprise-migration button:focus-visible { outline:3px solid #94b7ef; outline-offset:2px; }
