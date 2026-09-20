@@ -1,0 +1,66 @@
+/* Keep the approved logo artwork intact; crop its transparent canvas in the UI. */
+.side .brand.brand-industrial {
+  gap: 0;
+}
+.brand-industrial .brand-identity {
+  width: 190px;
+  max-width: 100%;
+  min-width: 0;
+}
+.brand-industrial .brand-logo {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1900 / 344;
+  overflow: hidden;
+}
+.brand-industrial .brand-logo img,
+.brand-industrial .brand-logo::after {
+  position: absolute;
+  left: -7.2105263%;
+  top: -55.2325581%;
+  width: 114.3157895%;
+  height: 210.4651163%;
+  max-width: none;
+}
+.brand-industrial .brand-logo img {
+  display: block;
+}
+/* White wordmark for the navy sidebar; the original blue/cyan chain stays visible. */
+.brand-industrial .brand-logo::after {
+  content: "";
+  pointer-events: none;
+  background: #fff;
+  -webkit-mask: url("assets/zhiyan-industry-logo.png") 0 0 / 100% 100% no-repeat;
+  mask: url("assets/zhiyan-industry-logo.png") 0 0 / 100% 100% no-repeat;
+  clip-path: inset(0 0 0 37%);
+}
+.brand-industrial #brandSubtitle {
+  margin: 6px 0 0 35.5%;
+  color: #a9bcd8;
+  font-size: 9px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .brand.brand-industrial .brand-identity {
+    display: block;
+    width: 44px;
+  }
+  .brand-industrial .brand-logo {
+    width: 44px;
+    height: 25px;
+    aspect-ratio: auto;
+  }
+  .brand-industrial .brand-logo img {
+    width: 153.1px;
+    height: 51.0333px;
+    left: -9.6567px;
+    top: -13.3923px;
+  }
+  .brand-industrial .brand-logo::after,
+  .brand-industrial #brandSubtitle {
+    display: none;
+  }
+}
