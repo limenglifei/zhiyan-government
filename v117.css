@@ -1,0 +1,228 @@
+/* v117: intellectual-property fields and per-project condition collection */
+#profileModal .profile-ip-v117 { padding-top: 24px; }
+#profileModal .profile-ip-head-v117 {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 2px;
+}
+#profileModal .profile-ip-head-v117 > div { display: flex; align-items: center; gap: 10px; }
+#profileModal .profile-ip-head-v117 > div > i {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  color: #216fd9;
+  background: #eaf3ff;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 800;
+}
+#profileModal .profile-ip-head-v117 span,
+#profileModal .profile-ip-head-v117 b,
+#profileModal .profile-ip-head-v117 small { display: block; }
+#profileModal .profile-ip-head-v117 b { color: #26364d; font-size: 12px; }
+#profileModal .profile-ip-head-v117 small { margin-top: 4px; color: #8793a5; font-size: 8px; font-weight: 400; }
+#profileModal .profile-ip-head-v117 > em {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid #c8dbf4;
+  border-radius: 999px;
+  color: #2673df;
+  background: #f4f8ff;
+  font-size: 8px;
+  font-style: normal;
+}
+
+.project-condition-backdrop-v117 {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(16, 28, 45, .56);
+}
+.project-condition-backdrop-v117.open { display: flex; }
+.project-condition-dialog-v117 {
+  width: min(930px, 96vw);
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 24px 85px rgba(16, 33, 57, .28);
+}
+.project-condition-dialog-v117 > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 24px 17px;
+  border-bottom: 1px solid #e6ebf2;
+}
+.project-condition-dialog-v117 > header label { color: #2673df; font-size: 8px; letter-spacing: 1.2px; }
+.project-condition-dialog-v117 > header h2 { margin: 5px 0; color: #23344b; font-size: 18px; }
+.project-condition-dialog-v117 > header p { max-width: 720px; margin: 0; color: #7d899b; font-size: 9px; line-height: 1.55; }
+.project-condition-close-v117 { border: 0; color: #8d99aa; background: transparent; font-size: 24px; line-height: 1; cursor: pointer; }
+.project-condition-body-v117 { overflow: auto; display: grid; gap: 14px; padding: 18px 24px 24px; }
+.project-condition-hero-v117 {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #cfe0f5;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff, #f2f7ff);
+}
+.project-condition-hero-v117 > i {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #176bd9;
+  background: #e5f0ff;
+  font-size: 19px;
+  font-style: normal;
+  font-weight: 800;
+}
+.project-condition-hero-v117.tone-amber > i { color: #ab6223; background: #fff0e1; }
+.project-condition-hero-v117.tone-green > i { color: #0e8461; background: #e4f7f0; }
+.project-condition-hero-v117.tone-purple > i { color: #6750c7; background: #ede9ff; }
+.project-condition-hero-v117 span { color: #2673df; font-size: 8px; font-weight: 700; }
+.project-condition-hero-v117 h3 { margin: 4px 0; color: #24354d; font-size: 14px; }
+.project-condition-hero-v117 p { margin: 0; color: #758397; font-size: 9px; line-height: 1.55; }
+.project-condition-hero-v117 > em {
+  padding: 6px 10px;
+  border: 1px solid #bfd7f5;
+  border-radius: 999px;
+  color: #236fdc;
+  background: #fff;
+  font-size: 8px;
+  font-style: normal;
+  white-space: nowrap;
+}
+.project-known-v117,
+.project-condition-form-v117 { overflow: hidden; border: 1px solid #dfe6ef; border-radius: 9px; background: #fff; }
+.project-known-v117 > header,
+.project-condition-form-v117 > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e8edf3;
+  background: #f8fafc;
+}
+.project-known-v117 > header b,
+.project-condition-form-v117 > header b { color: #33445b; font-size: 10px; }
+.project-known-v117 > header span,
+.project-condition-form-v117 > header span { color: #7d899b; font-size: 8px; }
+.project-condition-form-v117 > header i { color: #e45c63; font-style: normal; }
+.project-known-v117 > div { display: flex; flex-wrap: wrap; gap: 7px; padding: 13px 16px; }
+.project-known-v117 em {
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #157656;
+  background: #eaf8f2;
+  font-size: 8px;
+  font-style: normal;
+}
+.project-condition-form-v117 > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px 38px;
+  padding: 17px 18px 20px;
+}
+.project-condition-field-v117 {
+  display: grid;
+  grid-template-columns: 174px minmax(0, 1fr);
+  align-items: center;
+}
+.project-condition-field-v117.wide { grid-column: 1 / -1; }
+.project-condition-field-v117 > span { padding-right: 12px; color: #586679; font-size: 9px; text-align: right; }
+.project-condition-field-v117 > span i { color: #e45c63; font-style: normal; }
+.project-condition-field-v117 input,
+.project-condition-field-v117 select,
+.project-condition-field-v117 textarea {
+  width: 100%;
+  border: 1px solid #d2dbe6;
+  border-radius: 6px;
+  color: #26364c;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+  outline: none;
+}
+.project-condition-field-v117 input,
+.project-condition-field-v117 select { height: 40px; padding: 0 12px; }
+.project-condition-field-v117 textarea { min-height: 72px; padding: 10px 12px; line-height: 1.6; resize: vertical; }
+.project-condition-field-v117 input:focus,
+.project-condition-field-v117 select:focus,
+.project-condition-field-v117 textarea:focus { border-color: #2675e5; box-shadow: 0 0 0 2px rgba(38, 117, 229, .1); }
+.project-condition-file-v117 {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 47px;
+  padding: 7px 10px;
+  border: 1px dashed #b8c9dd;
+  border-radius: 7px;
+  background: #f8fbff;
+}
+.project-condition-file-v117 input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.project-condition-file-v117 b { padding: 7px 10px; border-radius: 5px; color: #216fd9; background: #eaf3ff; font-size: 8px; }
+.project-condition-file-v117 small { color: #7e8b9e; font-size: 8px; }
+.project-condition-dialog-v117 > footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 14px 24px;
+  border-top: 1px solid #e7ecf2;
+  background: #fff;
+}
+.project-condition-dialog-v117 > footer > div { display: grid; gap: 3px; margin-right: auto; }
+.project-condition-dialog-v117 > footer > div b { color: #30445e; font-size: 9px; }
+.project-condition-dialog-v117 > footer > div span { color: #8b97a7; font-size: 8px; }
+.project-condition-dialog-v117 > footer button { padding: 9px 15px; }
+#enterprisePolicy .project-condition-saved-v117 {
+  display: inline-flex;
+  margin-top: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #087f5e;
+  background: #e7f8f1;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 700;
+}
+#enterprisePolicy .policy-project.project-condition-complete-v117 { border-color: #a9d9ca; box-shadow: 0 10px 30px rgba(23, 111, 84, .08); }
+#enterprisePolicy .diag.fail { color: #d94855; }
+
+@media (max-width: 860px) {
+  .project-condition-form-v117 > div { grid-template-columns: 1fr; }
+  .project-condition-field-v117.wide { grid-column: auto; }
+}
+@media (max-width: 620px) {
+  .project-condition-backdrop-v117 { padding: 8px; }
+  .project-condition-dialog-v117 > header,
+  .project-condition-body-v117,
+  .project-condition-dialog-v117 > footer { padding-left: 14px; padding-right: 14px; }
+  .project-condition-hero-v117 { grid-template-columns: 42px 1fr; }
+  .project-condition-hero-v117 > i { width: 42px; height: 42px; }
+  .project-condition-hero-v117 > em { grid-column: 1 / -1; justify-self: start; }
+  .project-condition-form-v117 > div { padding: 14px; }
+  .project-condition-field-v117 { grid-template-columns: 1fr; gap: 7px; }
+  .project-condition-field-v117 > span { padding: 0; text-align: left; }
+  .project-condition-dialog-v117 > footer > div { display: none; }
+}
