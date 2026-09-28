@@ -1,0 +1,25 @@
+/* v122: pending enterprises include registration region, industry and legal representative. */
+#support .support-home-grid-v45 .pending-support-table {
+  min-width: 1040px;
+  table-layout: fixed;
+}
+#support .support-home-grid-v45 .pending-support-table th,
+#support .support-home-grid-v45 .pending-support-table td {
+  padding: 14px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+#support .support-home-grid-v45 .pending-support-table th:nth-child(1) { width: 29%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(2) { width: 23%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(3) { width: 15%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(4) { width: 8%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(5) { width: 15%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(6) { width: 10%; }
+#support .support-home-grid-v45 .pending-company-cell { gap: 10px; }
+#support .support-home-grid-v45 .pending-company-cell > div { min-width: 0; }
+#support .support-home-grid-v45 .pending-company-cell b { max-width: none; font-size: 12px; }
+#support .support-home-grid-v45 .pending-project-button-v45 { padding: 6px 10px; font-size: 11px; }
+#support .support-home-grid-v45 .pending-missing-v122 { color: #98a3b3; }
+#support .support-home-grid-v45 .pending-support-table-wrap { overscroll-behavior-x: contain; }
