@@ -1,0 +1,14 @@
+/* v120: simplify the support homepage and scope dialog. */
+#support .support-home-grid-v45 { display: block; }
+#support .support-home-grid-v45 > .support-feed-card-v43 { display: none; }
+#support .support-home-grid-v45 .pending-support-section { width: 100%; padding: 22px; }
+#support .support-home-grid-v45 .pending-support-table-wrap { max-height: none; }
+#support .support-home-grid-v45 .pending-company-cell b { max-width: none; }
+#support .support-home-grid-v45 .pending-support-table th:first-child { width: 52%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(2) { width: 30%; }
+#supportScopeDialog .scope-form-body { gap: 20px 24px; }
+#supportScopeDialog #scopeIndustryOptions { min-width: 0; }
+@media (max-width: 560px) {
+  #support .support-home-grid-v45 .pending-support-section { padding: 16px; }
+  #support .support-home-grid-v45 .pending-company-cell b { max-width: 150px; }
+}
