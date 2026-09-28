@@ -640,7 +640,7 @@ const companies=[
 {n:'海工精密传感器有限公司',i:'高端传感器 · 科创园',s:93,l:'感',h:['专精特新小巨人','高新技术企业'],r:'4.6亿元',rd:'12.7%',p:'64项',status:'unenjoyed'},
 {n:'智联现代物流有限公司',i:'现代服务业 · 临港园区',s:82,l:'联',h:['省级示范企业','数字化标杆'],r:'9.3亿元',rd:'4.2%',p:'12项',status:'enjoyed'}
 ];
-let ci=0,supportFilter='all',supportPage=1;const supportPageSize=5;
+let ci=0,supportFilter='all',supportPage=1;const supportPageSize=6;
 function getSupportCompanies(){return companies.map((c,index)=>({c,index})).filter(x=>supportFilter==='all'||(supportFilter==='high'&&x.c.s>=90)||x.c.status===supportFilter)}
 function setSupportFilter(filter){supportFilter=filter;supportPage=1;document.querySelectorAll('[data-support-filter]').forEach(b=>b.classList.toggle('active',b.dataset.supportFilter===filter));const list=getSupportCompanies();if(list.length)ci=list[0].index;renderCompanies()}
 function setSupportPage(page){supportPage=page;const list=getSupportCompanies();if(list.length)ci=list[(page-1)*supportPageSize].index;renderCompanies();document.getElementById('companyList').scrollIntoView({behavior:'smooth',block:'start'})}
@@ -3211,3 +3211,5 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="v119.css?v=119">
 <script src="v119.js?v=119"></script>
 <link rel="stylesheet" href="v120.css?v=120">
+<link rel="stylesheet" href="v121.css?v=121">
+<script src="v121.js?v=121"></script>
