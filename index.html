@@ -256,17 +256,17 @@
   <section class="enterprise-match-landing" id="epMatchLanding"><div class="ep-landing-orb">企</div><h2>输入企业，发现可申报政策机会</h2><p>AI 将融合企业工商、经营、研发、知识产权和历史荣誉数据，逐项诊断政策申报条件</p><div class="ep-landing-steps"><span><i>1</i>识别企业画像</span><strong>→</strong><span><i>2</i>解析政策条件</span><strong>→</strong><span><i>3</i>计算匹配度</span><strong>→</strong><span><i>4</i>生成申报建议</span></div><div class="ep-company-examples"><label>最近查询：</label><button onclick="chooseEnterprise(this)">海州智造科技有限公司</button><button onclick="chooseEnterprise(this)">海州精工智能装备有限公司</button><button onclick="chooseEnterprise(this)">华芯微电子（海州）有限公司</button></div></section>
   <section class="card ep-search enterprise-input-card"><label>输入企业名称</label><div class="input-row"><input id="epSearch" placeholder="输入企业名称或统一社会信用代码"><button class="primary" id="enterpriseMatchBtn" onclick="runEnterprisePolicyMatch()">✦ 一键匹配政策</button></div></section>
   <div class="ep-overview-grid">
-    <section class="card">
-      <div class="ep-company"><i class="company-logo">智</i><div><h2>海州智造科技有限公司</h2><p>新能源汽车零部件 · 经开区 · 成长型企业</p></div><div class="company-profile-actions"><button class="secondary company-profile-btn" id="openProfileModal">✎ 完善企业画像</button><span class="profile-complete"><b id="profileCompleteness">92%</b>画像完整度</span></div></div>
+    <section class="card ep-profile-v118" aria-label="企业画像">
+      <div class="ep-company"><i class="company-logo">智</i><div><label class="ep-profile-label-v118">企业画像</label><h2>海州智造科技有限公司</h2><p>新能源汽车零部件 · 经开区 · 成长型企业</p></div><div class="company-profile-actions"><button class="secondary company-profile-btn" id="openProfileModal">✎ 完善企业画像</button><span class="profile-complete"><b id="profileCompleteness">92%</b>画像完整度</span></div></div>
       <div class="ep-honors"><label>企业资质与荣誉</label><div><em class="tag">◆ 省级专精特新</em><em class="tag">◆ 高新技术企业</em><em class="tag">◆ 科技型中小企业</em><em class="tag">◆ 创新型中小企业</em></div></div>
       <div class="kpis"><div><b>5.2亿元</b><span>营业收入</span></div><div><b>8.6%</b><span>研发投入占比</span></div><div><b>23项</b><span>有效专利</span></div><div><b>A级</b><span>纳税信用</span></div></div>
       <div class="cultivate"><b>AI 画像完整度提示</b><p>研发人员占比、主导产品市占率证明仍需人工确认。完善后将重新计算申报条件与成功率。</p><button onclick="openEnterpriseProfile()">立即补充信息 →</button></div>
     </section>
-    <section class="card ep-match-summary">
-      <div class="ep-summary-head"><div><label>企业可申报项目</label><h2>政策匹配结果</h2></div><span>更新于 10:26</span></div>
+    <section class="card ep-match-summary" aria-label="政策匹配概况">
+      <div class="ep-summary-head"><h2>匹配概况</h2><div class="ep-summary-actions-v118"><span>更新于 10:26</span><button class="secondary" onclick="downloadPolicyReport()">↓ 下载匹配报告</button></div></div>
       <div class="ep-summary-body">
         <div class="match-orbit"><div><b id="matchedPolicyCount">38</b><span>项</span><small>政策可申报</small></div></div>
-        <div class="match-benefits"><p><i class="red-dot"></i><span>高匹配政策</span><b>8 项</b></p><p><i class="orange-dot"></i><span>资金奖补类</span><b>16 项</b></p><p><i class="blue-dot"></i><span>税费减免类</span><b>6 项</b></p><p><i class="green-dot"></i><span>预计可争取资金</span><b>326 万元</b></p><button class="primary" onclick="downloadPolicyReport()">↓ 下载匹配报告</button></div>
+        <div class="match-benefits"><p><i class="red-dot"></i><span>高匹配政策</span><b>8 项</b></p><p><i class="orange-dot"></i><span>资金奖补类</span><b>16 项</b></p><p><i class="blue-dot"></i><span>税费减免类</span><b>6 项</b></p><p><i class="green-dot"></i><span>预计可争取资金</span><b>326 万元</b></p></div>
       </div>
     </section>
   </div>
@@ -3204,3 +3204,4 @@ function renderLogicAnnotations() {}
 <script src="enterprise-migration.js?v=20260911-ai"></script>
 <link rel="stylesheet" href="v117.css?v=117">
 <script src="v117.js?v=117"></script>
+<link rel="stylesheet" href="v118.css?v=118">
