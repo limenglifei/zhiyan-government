@@ -2450,21 +2450,11 @@ function renderLogicAnnotations() {}
   pendingSection.innerHTML='<div class="pending-support-head"><div><h2>待扶持企业名单</h2><p>AI 识别高匹配且存在应享未享政策的企业，可查看每家企业可申报项目</p></div><div class="pending-support-actions"><span>待跟进 <b>23</b> 家 · 可报项目 <b>68</b> 项</span><button class="secondary" type="button" onclick="exportPendingSupportList()">⇩ 导出待扶持名单</button></div></div><div class="pending-support-table-wrap"><table class="pending-support-table"><thead><tr><th>企业名称</th><th>政策匹配度</th><th>应享未享</th><th>可申报项目</th><th>跟进负责人</th><th>操作</th></tr></thead><tbody id="pendingSupportRows"></tbody></table></div>';
   infoPanels.parentNode.insertBefore(pendingSection,infoPanels);
 
-  function pendingCompanyFields(item){
-    var parts=item.industry.split(' · ');
-    var profiles=typeof knowledgeBaseConfigs!=='undefined'?knowledgeBaseConfigs.company.rows:[];
-    var profile=profiles.find(function(row){return row.title===item.name})||{};
-    return {region:profile.region||parts[1]||'待补充',industry:parts[0]||'待补充',legal:profile.legal||'待补充'};
-  }
-  function escapePendingText(value){return String(value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
   function renderPendingRows(){
-    pendingSection.querySelector('thead').innerHTML='<tr><th scope="col">企业名称</th><th scope="col">企业注册地区</th><th scope="col">所属行业</th><th scope="col">法人</th><th scope="col">可申报政策项目</th><th scope="col">跟进负责人</th></tr>';
     document.getElementById('pendingSupportRows').innerHTML=pendingCompanies.map(function(item,index){
-      var fields=pendingCompanyFields(item);
-      return '<tr><td><div class="pending-company-cell"><i>'+escapePendingText(item.name.slice(0,1))+'</i><div><b title="'+escapePendingText(item.name)+'">'+escapePendingText(item.name)+'</b></div></div></td><td>'+escapePendingText(fields.region)+'</td><td>'+escapePendingText(fields.industry)+'</td><td class="'+(fields.legal==='待补充'?'pending-missing-v122':'')+'">'+escapePendingText(fields.legal)+'</td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+item.projects+'个可报项目 →</button></td><td>'+escapePendingText(item.contact)+'</td></tr>';
+      return '<tr><td><div class="pending-company-cell"><i>'+item.name.slice(0,1)+'</i><div><b>'+item.name+'</b><span>'+item.industry+'</span></div></div></td><td><span class="pending-match-score">'+item.match+'%</span></td><td><em class="pending-unclaimed">'+item.unclaimed+' 项</em></td><td><em class="pending-project-count">'+item.projects+' 个可报项目</em></td><td>'+item.contact+'</td><td><div class="pending-row-actions"><button type="button" onclick="openPendingCompanyProjects('+index+')">查看可报项目 →</button></div></td></tr>';
     }).join('');
   }
-  window.renderPendingSupportRowsV122=renderPendingRows;
   renderPendingRows();
 
   var noticeSeeds=[
@@ -2536,18 +2526,14 @@ function renderLogicAnnotations() {}
     openDetail(item.title,isNotice?'APPLICATION NOTICE DETAIL':'PUBLICATION DETAIL',body);
   };
   window.exportPendingSupportList=function(){
-    var rows=[['企业名称','企业注册地区','所属行业','法人','政策匹配度','应享未享项目数','可申报项目数','跟进负责人']].concat(pendingCompanies.map(function(item){
-      var fields=pendingCompanyFields(item);
-      return [item.name,fields.region,fields.industry,fields.legal,item.match+'%',item.unclaimed,item.projects,item.contact];
-    }));
-    var csv=rows.map(function(row){return row.map(function(value){return '"'+String(value).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+    var csv='企业名称,所属行业,政策匹配度,应享未享项目数,可申报项目数,跟进负责人\n'+pendingCompanies.map(function(item){return [item.name,item.industry,item.match+'%',item.unclaimed,item.projects,item.contact].join(',')}).join('\n');
     var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='政策精准扶持-待扶持企业名单.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},500);if(typeof toast==='function')toast('待扶持企业名单已导出');
   };
   document.getElementById('supportDetailBackdropV43').addEventListener('click',function(event){if(event.target===this)closeSupportDetailV43()});
 
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
-    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示企业注册地区、所属行业、法人、可报项目数和跟进负责人；缺失法人显示待补充。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
-    prototypeLogicAnnotations.support.interactions.push(['查看可报项目','点击待扶持企业“可申报政策项目”列的项目数量。','下钻展示该企业可申报项目、单项匹配度和条件诊断摘要。']);
+    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示匹配度、未享项目数、可报项目数和跟进负责人。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
+    prototypeLogicAnnotations.support.interactions.push(['查看可报项目','点击待扶持企业操作列的“查看可报项目”。','下钻展示该企业可申报项目、单项匹配度和条件诊断摘要。']);
     prototypeLogicAnnotations.support.interactions.push(['通知与公示上滑加载','申报通知和最新公示列表每次加载20条，滚动至列表底部自动加载下一批。','点击单条进入详情，不再设置“查看全部”入口。']);
   }
 })();
@@ -2717,11 +2703,15 @@ function renderLogicAnnotations() {}
     Array.from(panels.children).forEach(function(card){grid.appendChild(card)});
     panels.remove();
     pending.querySelector('.pending-support-head').innerHTML='<div><h2>待扶持企业名单</h2><p>高匹配且存在可申报项目的重点企业</p></div><button class="pending-compact-export-v45" type="button" onclick="exportPendingSupportList()" title="导出待扶持名单">⇩</button>';
-    window.renderPendingSupportRowsV122();
+    pending.querySelector('thead').innerHTML='<tr><th>企业名称</th><th>可申报政策项目</th><th>跟进负责人</th></tr>';
+    var compactRows=[
+      ['海州智造科技有限公司','4个可报项目','王敏'],['华芯微电子（海州）有限公司','5个可报项目','李睿'],['恒泰高端装备制造有限公司','4个可报项目','周宁'],['云创工业软件有限公司','3个可报项目','陈航'],['新源固态电池有限公司','5个可报项目','赵雪'],['海州精密传感科技有限公司','3个可报项目','孙悦'],['智航机器人科技有限公司','4个可报项目','林峰'],['海州生物医药股份有限公司','3个可报项目','吴桐'],['东岳动力科技有限公司','4个可报项目','蒋晨'],['绿能循环材料有限公司','3个可报项目','许岩']
+    ];
+    document.getElementById('pendingSupportRows').innerHTML=compactRows.map(function(row,index){return '<tr><td><div class="pending-company-cell"><i>'+row[0].slice(0,1)+'</i><div><b title="'+row[0]+'">'+row[0]+'</b></div></div></td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+row[1]+' →</button></td><td>'+row[2]+'</td></tr>'}).join('');
   }
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
     prototypeLogicAnnotations.support.interactions.push(['轻量政策输入','统一大输入框支持政策名称联想和政策全文粘贴，右侧附件按钮支持上传PDF、Word、TXT及Markdown。','用户输入、附件和项目库候选统一进入政策解析与企业匹配流程。']);
-    prototypeLogicAnnotations.support.interactions.push(['首页待扶持名单','展示企业名称、企业注册地区、所属行业、法人、可申报项目和负责人。','点击项目数量下钻申报明细，导出同步包含企业注册地区、所属行业和法人；缺失法人显示待补充。']);
+    prototypeLogicAnnotations.support.interactions.push(['首页三列工作台','待扶持企业、申报通知、最新公示并排展示。','待扶持企业仅保留企业名称、可申报项目和负责人，点击项目数量下钻申报明细。']);
   }
 })();
 </script>
@@ -3223,31 +3213,3 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="v120.css?v=120">
 <link rel="stylesheet" href="v121.css?v=121">
 <script src="v121.js?v=121"></script>
-
-<style id="pending-support-v122-style">
-/* v122: pending enterprises include registration region, industry and legal representative. */
-#support .support-home-grid-v45 .pending-support-table {
-  min-width: 1040px;
-  table-layout: fixed;
-}
-#support .support-home-grid-v45 .pending-support-table th,
-#support .support-home-grid-v45 .pending-support-table td {
-  padding: 14px 12px;
-  font-size: 12px;
-  line-height: 1.6;
-  vertical-align: middle;
-  overflow-wrap: anywhere;
-}
-#support .support-home-grid-v45 .pending-support-table th:nth-child(1) { width: 29%; }
-#support .support-home-grid-v45 .pending-support-table th:nth-child(2) { width: 23%; }
-#support .support-home-grid-v45 .pending-support-table th:nth-child(3) { width: 15%; }
-#support .support-home-grid-v45 .pending-support-table th:nth-child(4) { width: 8%; }
-#support .support-home-grid-v45 .pending-support-table th:nth-child(5) { width: 15%; }
-#support .support-home-grid-v45 .pending-support-table th:nth-child(6) { width: 10%; }
-#support .support-home-grid-v45 .pending-company-cell { gap: 10px; }
-#support .support-home-grid-v45 .pending-company-cell > div { min-width: 0; }
-#support .support-home-grid-v45 .pending-company-cell b { max-width: none; font-size: 12px; }
-#support .support-home-grid-v45 .pending-project-button-v45 { padding: 6px 10px; font-size: 11px; }
-#support .support-home-grid-v45 .pending-missing-v122 { color: #98a3b3; }
-#support .support-home-grid-v45 .pending-support-table-wrap { overscroll-behavior-x: contain; }
-</style>
