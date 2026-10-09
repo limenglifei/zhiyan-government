@@ -864,7 +864,7 @@ const knowledgeBaseConfigs={
   {title:'海州高新区科技创新券管理办法',sub:'政策编号：海高科〔2026〕31号',category:'政策法规',level:'区级',org:'海州高新区管委会',date:'2026-07-12',industry:'科技服务 / 高新技术',status:'有效'},
   {title:'工业设备更新和技术改造政策解读',sub:'一图读懂设备更新奖补政策',category:'政策资讯',level:'市级',org:'海州市发展改革委',date:'2026-07-10',industry:'制造业',status:'有效'}]},
  company:{title:'企业库',count:'186.4万',description:'查看企业工商、行业、经营、创新、产业链关系与荣誉资质画像',icon:'企',columns:['企业名称','统一社会信用代码','所属行业','注册地区','注册资本','荣誉标签'],categories:['新能源汽车','高端装备','新一代信息技术','新材料','生物医药'],rows:[
-  {title:'海州智造科技有限公司',sub:'新能源汽车零部件 · 成长型企业',code:'91320115MA28H6X92K',category:'新能源汽车',level:'市级',region:'江苏省 / 海州市 / 经开区',capital:'7.58亿元',honor:'省级专精特新 / 高新技术企业',legal:'陈启明',date:'2016-08-18',revenue:'4亿～10亿'},
+  {title:'海州智造科技有限公司',sub:'新能源汽车零部件 · 成长型企业',code:'91320115MA28H6X92K',category:'新能源汽车',level:'市级',region:'江苏省 / 海州市 / 经开区',capital:'7.58亿元',honor:'省级专精特新 / 高新技术企业',legal:'陈启明',date:'2016-08-18',revenue:'4亿～10亿',revenueWan:'52000'},
   {title:'华芯微电子（海州）有限公司',sub:'功率半导体 · 链主企业',code:'91320115MA27C8L31P',category:'新一代信息技术',level:'市级',region:'江苏省 / 海州市 / 高新区',capital:'12.80亿元',honor:'制造业单项冠军 / 中国大企业创新100强',legal:'周志远',date:'2014-05-12',revenue:'10亿～20亿'},
   {title:'恒泰高端装备制造有限公司',sub:'工业母机 · 专精特新小巨人',code:'91320115MA23N7J64A',category:'高端装备',level:'市级',region:'江苏省 / 海州市 / 临港区',capital:'5.20亿元',honor:'国家级专精特新小巨人 / 单项冠军培育',legal:'李海峰',date:'2012-03-26',revenue:'4亿～10亿'},
   {title:'海州新能源材料股份有限公司',sub:'锂电材料 · 上市后备企业',code:'91320115MA19K3P88D',category:'新材料',level:'省级',region:'江苏省 / 海州市 / 化工园区',capital:'9.60亿元',honor:'绿色工厂 / 高新技术企业',legal:'王雪梅',date:'2017-11-09',revenue:'10亿～20亿'},
@@ -892,7 +892,7 @@ const knowledgeBaseConfigs={
   {title:'云创工业软件完成B轮融资并发布新一代工业智能平台',sub:'融资与产品发布',category:'企业动态',level:'区级',date:'2026-07-20 14:40',org:'科创海州',region:'海州软件园',product:'工业智能平台',sentiment:'正面',people:'孙铭泽',companies:'云创工业软件有限公司',body:'云创工业软件完成5亿元B轮融资，同步发布面向离散制造场景的新一代工业智能平台。',url:'https://example.gov.cn/company/yunchuang'}]}
 };
 function policyKnowledgeDetail(r){return [{title:'政策文件基础信息',fields:[['标题',r.title,true],['文件分类',r.category],['发布时间',r.date],['发文来源（机构）',r.org],['级别',r.level],['适用行业（名称+code）',r.industry],['正文','本文件围绕产业高质量发展和企业梯度培育明确申报对象、支持标准、办理流程与监督要求。申报主体应对材料真实性负责，各级主管部门按程序完成形式审查、专家评审和结果公示。',true],['附件','申报通知.pdf；申报材料模板.docx；指标说明.xlsx',true],['有效期开始日期','2026-07-20'],['有效期结束日期','2027-07-19'],['网报开始时间','2026-08-01'],['网报结束时间','2026-08-31'],['纸报开始时间','2026-08-20'],['纸报结束时间','2026-09-05'],['原文链接','<a href="#" onclick="event.preventDefault()">https://gov.example.cn/policy/2026/118</a>',true],['关联项目','省级专精特新中小企业认定；制造业数字化转型专项资金',true]]}]}
-function companyKnowledgeDetail(r){return [{title:'工商注册信息',fields:[['企业名称',r.title,true],['企业社会信用代码',r.code],['法人',r.legal],['注册资本',r.capital],['注册地址（详细地址）','海州市长安区航天中路388号',true],['注册地-省名称','江苏省'],['注册地-市名称','海州市'],['注册地-区名称',r.region.split(' / ')[2]],['注册地-省code','320000'],['注册地-市code','320900'],['注册地-区code','320971'],['成立日期',r.date],['成立年限',((new Date('2026-07-24')-new Date(r.date))/31536000000).toFixed(1)+'年']]},{title:'行业与产业链关系',fields:[['企业国行 1级 名称','制造业'],['企业国行 2级 名称','汽车制造业'],['企业国行 3级 名称','汽车零部件及配件制造'],['企业国行 4级 名称','汽车电子零部件制造'],['企业国行 1级 code','C'],['企业国行 2级 code','36'],['企业国行 3级 code','367'],['企业国行 4级 code','3670'],['主营产品','车规级控制器、智能传感器、功率器件',true],['挂靠产业链节点','新能源汽车产业链 / 车规级芯片；智能座舱产业链 / 域控制器',true],['企业和产业节点关系强度','车规级芯片 92%；智能座舱 86%；汽车电子 81%',true],['企业荣誉标签',r.honor+' / 中国战略性新兴产业领军企业100强 / 中国大企业创新100强',true]]},{title:'经营与创新指标',fields:[['上年度营业收入区间',r.revenue],['上年度营收增长率','18.6%'],['上年度研发费用总额','4,472万元'],['上年度利润总额','7,346万元'],['上年度净利润','6,289万元'],['上年度纳税总额','3,158万元'],['当前社保人数','486人'],['发明专利数','23项'],['研发投入占比','8.6%'],['当前研发人员数量','62人']]},{title:'资产与设备指标',fields:[['上年度资产总额','89,500万元'],['上年度固定资产总额','26,800万元'],['上年度资产负债率','36.8%'],['上年度累计设备原值','19,500万元']]}]}
+function companyKnowledgeDetail(r){return [{title:'工商注册信息',fields:[['企业名称',r.title,true],['企业社会信用代码',r.code],['法人',r.legal],['注册资本',r.capital],['注册地址（详细地址）','海州市长安区航天中路388号',true],['注册地-省名称','江苏省'],['注册地-市名称','海州市'],['注册地-区名称',r.region.split(' / ')[2]],['注册地-省code','320000'],['注册地-市code','320900'],['注册地-区code','320971'],['成立日期',r.date],['成立年限',((new Date('2026-07-24')-new Date(r.date))/31536000000).toFixed(1)+'年']]},{title:'行业与产业链关系',fields:[['企业国行 1级 名称','制造业'],['企业国行 2级 名称','汽车制造业'],['企业国行 3级 名称','汽车零部件及配件制造'],['企业国行 4级 名称','汽车电子零部件制造'],['企业国行 1级 code','C'],['企业国行 2级 code','36'],['企业国行 3级 code','367'],['企业国行 4级 code','3670'],['主营产品','车规级控制器、智能传感器、功率器件',true],['挂靠产业链节点','新能源汽车产业链 / 车规级芯片；智能座舱产业链 / 域控制器',true],['企业和产业节点关系强度','车规级芯片 92%；智能座舱 86%；汽车电子 81%',true],['企业荣誉标签',r.honor+' / 中国战略性新兴产业领军企业100强 / 中国大企业创新100强',true]]},{title:'经营与创新指标',fields:[['上年度营业收入',r.revenueWan!=null?r.revenueWan+'万元':r.revenue],['上年度营收增长率','18.6%'],['上年度研发费用总额','4,472万元'],['上年度利润总额','7,346万元'],['上年度净利润','6,289万元'],['上年度纳税总额','3,158万元'],['当前社保人数','486人'],['发明专利数','23项'],['研发投入占比','8.6%'],['当前研发人员数量','62人']]},{title:'资产与设备指标',fields:[['上年度资产总额','89,500万元'],['上年度固定资产总额','26,800万元'],['上年度资产负债率','36.8%'],['上年度累计设备原值','19,500万元']]}]}
 function projectKnowledgeDetail(r){return [{title:'政策项目详情',fields:[['标题',r.title,true],['项目分类',r.category],['适用行业（名称+code）',r.industry],['归口部门（机构）',r.org],['级别',r.level],['申报条件',r.condition,true],['优惠政策',r.benefit,true],['最高补贴金额',r.amount],['网报开始时间','2026-08-01'],['网报结束时间',r.deadline],['纸报开始时间','2026-08-20'],['纸报结束时间','2026-09-05'],['原文链接','<a href="#" onclick="event.preventDefault()">https://gov.example.cn/project/2026</a>',true],['关联文件','年度申报通知；项目申报指南；材料模板',true]]}]}
 function newsKnowledgeDetail(r){return [{title:'新闻舆情详情',fields:[['标题',r.title,true],['发布时间',r.date],['发布机构',r.org],['正文',r.body,true],['涉及人物',r.people],['涉及地区',r.region],['涉及产品',r.product],['涉及机构/公司',r.companies,true],['原文链接','<a href="'+r.url+'" target="_blank">'+r.url+'</a>',true]]}]}
 function chainKnowledgeDetail(r){return [{title:'产业链基础信息',fields:[['产业链名称',r.title,true],['主导产业',r.category],['产业链结构',r.sub,true],['产业链节点数量',r.nodes+'个'],['链上企业数量',r.companies],['本地配套率',r.rate],['产业链完整度',r.score],['链主及重点企业',r.lead,true],['关键薄弱环节',r.weak,true],['模型更新时间','2026-07-24 08:00'],['数据来源','企业库、项目库、供需关系、产业研究报告与业务修正',true]]}]}
@@ -2126,7 +2126,7 @@ function renderLogicAnnotations() {}
       <label><span>主营产品</span><div class="chip-input"><em>讯飞智能办公本 ×</em><em class="more">＋4</em><input aria-label="添加主营产品" placeholder="＋ 添加产品"></div></label>\
     </div>\
     <div class="profile-grid profile-section">\
-      <label><span><i>*</i> 上年度营业收入</span><select id="profileRevenue" required><option value="">请选择</option><option>1000万以下</option><option>1000万～2000万</option><option>2000万～5000万</option><option>5000万～1亿</option><option>1亿～2亿</option><option>2亿～4亿</option><option>4亿～10亿</option><option>10亿～20亿</option><option>20亿以上</option></select></label>\
+      <label><span><i>*</i> 上年度营业收入</span><div class="unit-input"><input id="profileRevenue" type="number" min="0" step="any" inputmode="decimal" placeholder="请输入" required><b>万元</b></div></label>\
       <label><span>上年度营收增长率</span><div class="unit-input"><input id="profileRevenueGrowth" inputmode="decimal" placeholder="请输入"><b>%</b></div></label>\
       <label><span>上年度研发费用总额</span><div class="unit-input"><input id="profileRdExpense" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
       <label><span>上年度利润总额</span><div class="unit-input"><input id="profileTotalProfit" inputmode="decimal" placeholder="请输入"><b>万元</b></div></label>\
@@ -2161,7 +2161,7 @@ function renderLogicAnnotations() {}
       if(typeof toast==='function')toast('请选择所属行业');industry.focus();return;
     }
     if(!revenue.value){
-      if(typeof toast==='function')toast('请选择上年度营业收入');revenue.focus();return;
+      if(typeof toast==='function')toast('请输入上年度营业收入（万元）');revenue.focus();return;
     }
     return previousSaveEnterpriseProfile.apply(this,arguments);
   };
@@ -3107,10 +3107,10 @@ function renderLogicAnnotations() {}
 
 <script src="v83.js?v=83"></script>
 
-<script src="v84.js?v=20260923-ip"></script>
+<script src="v84.js?v=20261009-revenue"></script>
 
 <link rel="stylesheet" href="v85.css?v=85">
-<script src="v85.js?v=20260907-fields"></script>
+<script src="v85.js?v=20261009-revenue"></script>
 
 <link rel="stylesheet" href="v86.css?v=86">
 <script src="v86.js?v=86"></script>

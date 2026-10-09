@@ -10,7 +10,7 @@
     footer.innerHTML='<p>补充信息将先用于重新计算本次政策匹配结果，请选择是否同步申请更新企业库正式画像</p><button class="secondary" type="button" onclick="closeEnterpriseProfile()">取消</button><button class="secondary profile-once-v85" type="button" onclick="submitEnterpriseProfileV85(false)">仅本次匹配使用</button><button class="primary" type="button" onclick="submitEnterpriseProfileV85(true)">本次使用并更新企业库画像</button>';
   }
   window.submitEnterpriseProfileV85=function(apply){
-    var industry=document.getElementById('profileIndustry'),revenue=document.getElementById('profileRevenue');if(!industry||!industry.value){notify('请选择所属行业');if(industry)industry.focus();return}if(!revenue||!revenue.value){notify('请选择上年度营业收入');if(revenue)revenue.focus();return}
+    var industry=document.getElementById('profileIndustry'),revenue=document.getElementById('profileRevenue');if(!industry||!industry.value){notify('请选择所属行业');if(industry)industry.focus();return}if(!revenue||!revenue.value){notify('请输入上年度营业收入（万元）');if(revenue)revenue.focus();return}
     if(window.saveEnterpriseProfile()===false)return;setTimeout(function(){window.useProfileSnapshotV84(apply)},360);
   };
   var previousUse=window.useProfileSnapshotV84;
