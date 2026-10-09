@@ -5,13 +5,10 @@
   function esc(value){return String(value==null?'':value).replace(/[&<>\"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]})}
   function mountProfileActions(){
     var modal=document.getElementById('profileModal'),footer=modal&&modal.querySelector('.profile-modal>footer');if(!footer)return;
-    var other=document.getElementById('profileOtherPolicyInfoV84');if(other){var label=other.closest('label');if(label)label.remove()}
-    var extra=modal.querySelector('.profile-extra-v84');if(extra)extra.classList.add('proof-only-v85');
-    footer.innerHTML='<p>补充信息将先用于重新计算本次政策匹配结果，请选择是否同步申请更新企业库正式画像</p><button class="secondary" type="button" onclick="closeEnterpriseProfile()">取消</button><button class="secondary profile-once-v85" type="button" onclick="submitEnterpriseProfileV85(false)">仅本次匹配使用</button><button class="primary" type="button" onclick="submitEnterpriseProfileV85(true)">本次使用并更新企业库画像</button>';
+    footer.innerHTML='<p>确认后将使用补充信息更新政策匹配结果</p><button class="secondary" type="button" onclick="closeEnterpriseProfile()">取消</button><button class="primary" type="button" onclick="submitEnterpriseProfileV85()">确定并更新匹配结果</button>';
   }
-  window.submitEnterpriseProfileV85=function(apply){
-    var industry=document.getElementById('profileIndustry'),revenue=document.getElementById('profileRevenue');if(!industry||!industry.value){notify('请选择所属行业');if(industry)industry.focus();return}if(!revenue||!revenue.value){notify('请输入上年度营业收入（万元）');if(revenue)revenue.focus();return}
-    if(window.saveEnterpriseProfile()===false)return;setTimeout(function(){window.useProfileSnapshotV84(apply)},360);
+  window.submitEnterpriseProfileV85=function(){
+    return window.saveEnterpriseProfile();
   };
   var previousUse=window.useProfileSnapshotV84;
   if(typeof previousUse==='function')window.useProfileSnapshotV84=function(apply){var result=previousUse.apply(this,arguments);if(apply&&typeof knowledgeBaseConfigs!=='undefined'){var task=knowledgeBaseConfigs.company.rows.find(function(row){return row.profileReviewTaskV84&&row.reviewStatus==='pending'});if(task){task.fields=task.fields.filter(function(field){return field.key!=='otherInfo'});task.sub='企业画像更新审核任务 · '+task.fields.length+' 个字段待核验';task.conflictSummary=task.fields.filter(function(field){return field.conflict}).length+' 个字段存在冲突或重点复核提示'}}return result};
@@ -36,5 +33,5 @@
   var previousRender=window.renderKnowledgeList;if(typeof previousRender==='function')window.renderKnowledgeList=function(){var result=previousRender.apply(this,arguments);applyCompanyAuditFilter();return result};
   var previousDetail=window.openKnowledgeDetail;if(typeof previousDetail==='function')window.openKnowledgeDetail=function(index){var result=previousDetail.apply(this,arguments);enhanceCompanyReviewDetail(index);return result};
   mountProfileActions();mountCompanyAuditFilter();mountProofModal();
-  if(typeof prototypeLogicAnnotations!=='undefined'){prototypeLogicAnnotations.enterprisePolicy.interactions.push(['画像信息一次提交','在完善企业信息弹窗底部直接选择使用方式。','选择仅本次匹配或本次使用并更新企业库画像，不再二次弹窗确认；证明材料随画像更新审核任务保存。']);prototypeLogicAnnotations.knowledgeList.interactions.push(['企业画像审核记录筛选与材料预览','进入企业库选择审核状态并查看画像更新任务。','待审核任务统一显示“待审核”；证明材料可点击预览，审核进度使用“保存”按钮暂存。'])}
+  if(typeof prototypeLogicAnnotations!=='undefined'){prototypeLogicAnnotations.enterprisePolicy.interactions.push(['画像信息一次提交','在完善企业信息弹窗底部点击确定并更新匹配结果。','校验必填信息后关闭弹窗，保存补充信息快照并直接更新匹配结果。']);prototypeLogicAnnotations.knowledgeList.interactions.push(['企业画像审核记录筛选与材料预览','进入企业库选择审核状态并查看画像更新任务。','待审核任务统一显示“待审核”；证明材料可点击预览，审核进度使用“保存”按钮暂存。'])}
 })();
