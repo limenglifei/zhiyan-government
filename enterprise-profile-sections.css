@@ -1,0 +1,49 @@
+/* Enterprise profile: missing information first; collected information collapses. */
+#profileModal .profile-info-section { margin: 20px 0; border: 1px solid #dfe7f1; border-radius: 12px; background: #fff; overflow: hidden; }
+#profileModal .profile-info-pending { border-color: #bdd5f6; }
+#profileModal .profile-info-heading { display: flex; align-items: center; gap: 12px; padding: 18px 20px; margin: 0; border: 0; background: #f8fafd; text-align: left; }
+#profileModal .profile-info-pending > .profile-info-heading { background: #f1f7ff; }
+#profileModal .profile-section-number { display: grid; place-items: center; flex: 0 0 34px; height: 34px; border-radius: 9px; color: #2673df; background: #e1eeff; font-size: 13px; font-weight: 700; }
+#profileModal .profile-info-heading > div { flex: 1; min-width: 0; }
+#profileModal .profile-info-heading h3 { display: flex; align-items: center; gap: 10px; margin: 0; color: #243750; font-size: 15px; font-weight: 700; line-height: 1.5; }
+#profileModal .profile-info-heading p { margin: 4px 0 0; color: #7c899c; font-size: 11px; line-height: 1.5; }
+#profileModal .profile-section-count { padding: 2px 8px; border-radius: 12px; color: #507197; background: #e8eef6; font-size: 10px; font-weight: 500; white-space: nowrap; }
+#profileModal .profile-section-fields { padding: 22px 20px; gap: 18px 28px; border: 0; }
+#profileModal .profile-section-fields:empty { display: none; }
+#profileModal .profile-section-fields label { min-width: 0; grid-template-columns: 140px minmax(0,1fr); }
+#profileModal .profile-section-fields label > span { font-size: 11px; line-height: 1.6; }
+#profileModal .profile-section-fields input, #profileModal .profile-section-fields select { font-size: 11px; }
+#profileModal .profile-section-fields textarea { display: block; width: 100%; min-height: 78px; padding: 10px 12px; border: 1px solid #d4deea; border-radius: 7px; font: inherit; font-size: 11px; color: #30435d; resize: vertical; }
+#profileModal .profile-section-fields .enterprise-profile-honors-field { grid-template-columns: 140px minmax(0,1fr); }
+#profileModal .profile-other-info { margin: 0 20px 22px; padding-top: 18px; border-top: 1px solid #e8edf5; }
+#profileModal .profile-other-info > label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: #42546d; font-size: 12px; font-weight: 600; }
+#profileModal .profile-other-info > label > span { color: #97a3b3; font-size: 10px; font-weight: 400; }
+#profileModal .profile-other-info textarea { display: block; box-sizing: border-box; width: 100%; min-height: 100px; padding: 12px; border: 1px solid #d4deea; border-radius: 8px; background: #fff; color: #30435d; font: inherit; font-size: 12px; line-height: 1.7; resize: vertical; }
+#profileModal .profile-other-info textarea:focus, #profileModal .profile-section-fields textarea:focus { outline: 2px solid #bdd5f6; outline-offset: 1px; border-color: #2673df; }
+#profileModal .profile-fields-complete { margin: 18px 20px; color: #77869b; font-size: 11px; }
+#profileModal .profile-fields-complete[hidden] { display: none; }
+#profileModal .profile-info-collected > summary { list-style: none; cursor: pointer; }
+#profileModal .profile-info-collected > summary::-webkit-details-marker { display: none; }
+#profileModal .profile-info-collected > summary:focus-visible { outline: 2px solid #2673df; outline-offset: -3px; }
+#profileModal .profile-section-toggle { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; color: #2673df; font-size: 11px; }
+#profileModal .profile-section-toggle i { font-style: normal; font-size: 18px; }
+#profileModal .profile-collapse-copy { display: none; }
+#profileModal .profile-info-collected[open] .profile-expand-copy { display: none; }
+#profileModal .profile-info-collected[open] .profile-collapse-copy { display: inline; }
+#profileModal .profile-info-collected[open] .profile-section-toggle i { transform: rotate(180deg); }
+@media (max-width: 800px) {
+  #profileModal .profile-section-fields { grid-template-columns: 1fr; gap: 16px; }
+  #profileModal .profile-info-heading { padding: 15px; gap: 10px; }
+  #profileModal .profile-section-toggle { gap: 5px; }
+  #profileModal .profile-info-heading h3 { font-size: 14px; }
+}
+@media (max-width: 480px) {
+  #profileModal .profile-modal-body { padding: 0 14px; }
+  #profileModal .profile-governance-v84 { margin: 0 -14px; padding: 12px 14px; }
+  #profileModal .profile-section-fields { padding: 16px 14px; }
+  #profileModal .profile-section-fields label, #profileModal .profile-section-fields .enterprise-profile-honors-field { grid-template-columns: 1fr; gap: 6px; text-align: left; }
+  #profileModal .profile-section-fields label > span { text-align: left; }
+  #profileModal .profile-info-heading p { font-size: 10px; }
+  #profileModal .profile-section-number { flex-basis: 28px; height: 28px; font-size: 11px; }
+  #profileModal .profile-other-info { margin: 0 14px 18px; }
+}
