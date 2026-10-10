@@ -1,0 +1,5 @@
+/* Keep the search forms on the landing pages, outside the matching results. */
+#enterprisePolicy.matched .enterprise-input-card,
+#support.matched .support-input-hero {
+  display: none !important;
+}

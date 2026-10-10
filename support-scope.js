@@ -105,7 +105,7 @@ function openSupportScope(){fillSupportScopeDraft(supportScope);document.getElem
 function closeSupportScope(){document.getElementById('supportScopeDialog').close();document.getElementById('supportScopeBtn').focus()}
 function resetSupportScopeDraft(){fillSupportScopeDraft(emptySupportScope())}
 function applySupportScope(event){event.preventDefault();const draft=readSupportScopeDraft();supportScope=draft;refreshSupportScopeResults();closeSupportScope();toast('扶持范围已更新')}
-function updateSupportScopeStats(){const list=scopedSupportCompanies(),counts={all:list.length,high:list.filter(({c})=>c.s>=90).length,unenjoyed:list.filter(({c})=>c.status==='unenjoyed').length,enjoyed:list.filter(({c})=>c.status==='enjoyed').length};document.querySelectorAll('[data-support-filter]').forEach(button=>button.querySelector('b').textContent=counts[button.dataset.supportFilter]);document.querySelector('#support .support-result-actions>span').textContent=`扶持范围内 ${list.length} 家 · 原型演示数据`}
+function updateSupportScopeStats(){const list=scopedSupportCompanies(),counts={all:list.length,recommended:0,high:0,attention:0};list.forEach(({c})=>counts[getSupportRecommendation(c.s)]++);document.querySelectorAll('[data-support-filter]').forEach(button=>button.querySelector('b').textContent=counts[button.dataset.supportFilter]);document.querySelector('#support .support-result-actions>span').textContent=`扶持范围内 ${list.length} 家 · 原型演示数据`}
 function initializeSupportScope(){
   const groups=[['scopeHonorOptions','honors',supportHonorOptions]];
   groups.forEach(([id,name,values])=>document.getElementById(id).innerHTML=values.map(value=>`<label class="scope-choice"><input type="checkbox" name="${name}" value="${supportEscape(value)}"><span>${supportEscape(value)}</span></label>`).join(''));
@@ -132,7 +132,7 @@ window.renderCompanies=function(){
   return result;
 };
 
-window.exportSupportList=function(){const list=getSupportCompanies();if(!list.length){toast('当前筛选下暂无可导出的企业');return}const policy=document.getElementById('supportResultTitle').textContent,scope=supportScopeEntries().map(([,label])=>label).join('；')||'不限',filter={all:'全部匹配企业',high:'高匹配企业',unenjoyed:'应享未享',enjoyed:'已享受政策'}[supportFilter];downloadTextFile('政策精准扶持企业名单.txt','政策精准扶持企业名单（原型演示数据）\n'+policy+'\n扶持范围：'+scope+'\n结果分类：'+filter+'\n共 '+list.length+' 家\n\n'+list.map(({c},i)=>`${i+1}. ${c.n}｜${c.province}/${c.city}/${c.district}｜${supportIndustryName(c.nationalIndustryCode)}｜社保 ${c.employees} 人｜成立 ${supportCompanyYears(c)} 年｜${c.businessStatus}｜${c.h.join('、')}｜匹配度 ${c.s}%`).join('\n'))};
+window.exportSupportList=function(){const list=getSupportCompanies();if(!list.length){toast('当前筛选下暂无可导出的企业');return}const policy=document.getElementById('supportResultTitle').textContent,scope=supportScopeEntries().map(([,label])=>label).join('；')||'不限',filter=supportFilterLabels[supportFilter];downloadTextFile('政策精准扶持企业名单.txt','政策精准扶持企业名单（原型演示数据）\n'+policy+'\n扶持范围：'+scope+'\n结果分类：'+filter+'\n共 '+list.length+' 家\n\n'+list.map(({c},i)=>`${i+1}. ${c.n}｜${c.province}/${c.city}/${c.district}｜${supportIndustryName(c.nationalIndustryCode)}｜社保 ${c.employees} 人｜成立 ${supportCompanyYears(c)} 年｜${c.businessStatus}｜${c.h.join('、')}｜匹配度 ${c.s}%`).join('\n'))};
 
 const scopeHeroDescription=document.querySelector('#support .support-input-hero>p');
 if(scopeHeroDescription)scopeHeroDescription.textContent='选择扶持范围，精准筛选企业；支持政策名称、政策全文及附件匹配。';
