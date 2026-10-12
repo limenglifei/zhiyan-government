@@ -11,8 +11,9 @@
     var combo=document.createElement('div');combo.className='ep-search-combo-v70';
     combo.innerHTML='<div class="ep-mode-select-wrap-v70"><span>匹配模式</span><select id="epModeSelectV70" onchange="changeEpModeV70(this.value)"><option value="foreign">外商引进</option><option value="local">本地培育</option></select></div><i></i>';
     row.insertBefore(combo,input);combo.appendChild(input);
-    window.changeEpModeV70=function(mode){if(typeof setEpModeV68==='function')setEpModeV68(mode);var label=q('#enterprisePolicy .enterprise-input-card>label');if(label)label.textContent=mode==='local'?'为本地企业智能匹配政策':'为拟招引企业智能匹配政策'};
-    changeEpModeV70('foreign');
+    window.changeEpModeV70=function(mode){if(typeof setEpModeV68==='function')setEpModeV68(mode)};
+    var list=q('#epFollowedCompanyList');
+    changeEpModeV70(list&&list.dataset.mode||'foreign');
   }
 
   /* 整体产业链报告：先打开可视化生成中间页，再进入报告 */

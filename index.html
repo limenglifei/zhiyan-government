@@ -1938,6 +1938,7 @@ function renderLogicAnnotations() {}
 
   function renderFollowedPolicyCompanies(){
     var rows=document.getElementById('epFollowedCompanyRows');
+    if(!rows)return;
     rows.innerHTML=followedCompanies.map(function(item,index){
       var generated=item.status==='generated';
       return '<tr><td><b>'+item.name+'</b><span>重点跟进企业</span></td><td>'+item.track+'</td><td>'+item.region+'</td><td>'+item.followedAt+'</td><td><em class="ep-report-status '+(generated?'generated':'pending')+'">'+(generated?'已经生成':'待生成')+'</em></td><td>'+item.reportTime+'</td><td><button type="button" class="ep-followed-action '+(generated?'report-ready':'generate')+'" onclick="openTrackedPolicyReport('+index+')">'+(generated?'查看匹配报告':'生成匹配报告')+'</button></td></tr>';
@@ -3069,14 +3070,14 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="v67.css?v=3">
 <script src="v67.js?v=4"></script>
 
-<link rel="stylesheet" href="v68.css?v=1">
-<script src="v68.js?v=1"></script>
+<link rel="stylesheet" href="v68.css?v=20261012">
+<script src="v68.js?v=20261012"></script>
 
 <link rel="stylesheet" href="v69.css?v=1">
 <script src="v69.js?v=1"></script>
 
 <link rel="stylesheet" href="v70.css?v=1">
-<script src="v70.js?v=1"></script>
+<script src="v70.js?v=20261012"></script>
 
 <link rel="stylesheet" href="v71.css?v=1">
 <script src="v71.js?v=1"></script>

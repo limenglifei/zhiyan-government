@@ -3,7 +3,7 @@
   var q=function(s){return document.querySelector(s)};
   var qa=function(s){return Array.from(document.querySelectorAll(s))};
   var esc=function(v){return String(v==null?'':v).replace(/[&<>\"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]})};
-  var epMode='foreign', epFollowFilter='all';
+  var epMode='foreign';
   var followed=[
     {name:'海州智造科技有限公司',track:'新能源汽车零部件',region:'海州市经开区',type:'local',followedAt:'2026-07-18 09:26',status:'generated',reportTime:'2026-07-18 10:05'},
     {name:'海州精工智能装备有限公司',track:'高端装备制造',region:'海州市高新区',type:'local',followedAt:'2026-07-21 14:12',status:'pending',reportTime:'—'},
@@ -23,28 +23,30 @@
   window.setEpModeV68=function(mode){
     epMode=mode==='local'?'local':'foreign';
     qa('#epModeSwitchV68 button').forEach(function(b){b.classList.toggle('active',b.dataset.mode===epMode)});
+    var select=q('#epModeSelectV70');if(select)select.value=epMode;
+    var label=q('#enterprisePolicy .enterprise-input-card>label');if(label)label.textContent=epMode==='local'?'为本地企业智能匹配政策':'为拟招引企业智能匹配政策';
     var input=q('#epSearch'),meta=modeMeta();
     if(input)input.placeholder=meta.hint;
     var note=q('#epModeNoteV68');if(note)note.innerHTML='<b>'+meta.name+'</b><span>'+(epMode==='foreign'?'侧重识别外地目标企业可享的落地奖励、人才、研发及产业扶持政策。':'侧重识别本地企业申报机会、条件缺口和培育提升路径。')+'</span>';
-    window.filterEpFollowedV68(epMode==='foreign'?'foreign':'local');
+    renderFollowed();
   };
   function setupModes(){
-    var card=q('#enterprisePolicy .enterprise-input-card');if(!card||q('#epModeSwitchV68'))return;
+    var card=q('#enterprisePolicy .enterprise-input-card');if(!card||q('#epModeSwitchV68')||q('#epModeSelectV70'))return;
     card.insertAdjacentHTML('afterbegin','<div class="ep-mode-head-v68"><div><span>企业政策匹配模式</span><div class="ep-mode-switch-v68" id="epModeSwitchV68"><button type="button" class="active" data-mode="foreign" onclick="setEpModeV68(\'foreign\')"><i>引</i><b>外商引进模式</b><small>为拟招引企业匹配落地支持政策</small></button><button type="button" data-mode="local" onclick="setEpModeV68(\'local\')"><i>培</i><b>本地培育模式</b><small>为本地企业匹配申报与培育政策</small></button></div></div><div class="ep-mode-note-v68" id="epModeNoteV68"></div></div>');
-    setEpModeV68('foreign');
+    setEpModeV68(epMode);
   }
   function renderFollowed(){
     var section=q('#epFollowedCompanyList');if(!section)return;
-    var counts={all:followed.length,local:followed.filter(function(x){return x.type==='local'}).length,foreign:followed.filter(function(x){return x.type==='foreign'}).length};
-    var list=followed.map(function(x,i){return Object.assign({index:i},x)}).filter(function(x){return epFollowFilter==='all'||x.type===epFollowFilter});
-    section.innerHTML='<div class="ep-followed-head-v68"><div><h2>我重点跟进的企业</h2><p>按本地培育与外地招商分类管理，跟踪政策匹配报告生成进度</p></div><span>共 '+counts.all+' 家重点企业</span></div>'+
-      '<div class="ep-followed-metrics-v68">'+
-      '<button class="'+(epFollowFilter==='all'?'active':'')+'" onclick="filterEpFollowedV68(\'all\')"><i>全</i><span>全部重点跟进<b>'+counts.all+'</b></span><em>查看全部企业</em></button>'+
-      '<button class="'+(epFollowFilter==='local'?'active':'')+'" onclick="filterEpFollowedV68(\'local\')"><i>培</i><span>本地培育名单<b>'+counts.local+'</b></span><em>海州市企业</em></button>'+
-      '<button class="'+(epFollowFilter==='foreign'?'active':'')+'" onclick="filterEpFollowedV68(\'foreign\')"><i>招</i><span>外地招商名单<b>'+counts.foreign+'</b></span><em>拟招引企业</em></button></div>'+
+    var local=epMode==='local';
+    var title=local?'本地培育名单':'外地招商名单';
+    var description=local?'跟进本地企业申报机会与培育进度，查看或生成政策匹配报告':'跟进外地拟招引企业落地支持机会，查看或生成政策匹配报告';
+    var list=followed.map(function(x,i){return Object.assign({index:i},x)}).filter(function(x){return x.type===epMode});
+    section.dataset.mode=epMode;
+    section.setAttribute('aria-labelledby','epFollowedListTitleV68');
+    section.innerHTML='<div class="ep-followed-head-v68"><div><h2 id="epFollowedListTitleV68">'+title+'</h2><p>'+description+'</p></div><span>共 '+list.length+' 家企业</span></div>'+
       '<div class="ep-followed-table-v68"><table><thead><tr><th>企业名称</th><th>名单分类</th><th>重点赛道</th><th>所在地区</th><th>匹配报告状态</th><th>报告更新时间</th><th>操作</th></tr></thead><tbody>'+list.map(function(item){var done=item.status==='generated';return '<tr><td><b>'+esc(item.name)+'</b><span>纳入跟进：'+item.followedAt+'</span></td><td><em class="ep-list-type-v68 '+item.type+'">'+(item.type==='local'?'本地培育':'外地招商')+'</em></td><td>'+esc(item.track)+'</td><td>'+esc(item.region)+'</td><td><em class="ep-report-status '+(done?'generated':'pending')+'">'+(done?'已经生成':'待生成')+'</em></td><td>'+esc(item.reportTime)+'</td><td><button class="ep-followed-action '+(done?'report-ready':'generate')+'" onclick="openTrackedPolicyReportV68('+item.index+')">'+(done?'查看匹配报告':'生成匹配报告')+'</button></td></tr>'}).join('')+'</tbody></table></div>';
   }
-  window.filterEpFollowedV68=function(filter){epFollowFilter=['all','local','foreign'].indexOf(filter)>-1?filter:'all';renderFollowed()};
+  window.filterEpFollowedV68=function(filter){setEpModeV68(filter==='local'||filter==='foreign'?filter:epMode)};
   window.openTrackedPolicyReportV68=function(index){
     var item=followed[index];if(!item)return;
     setEpModeV68(item.type);
