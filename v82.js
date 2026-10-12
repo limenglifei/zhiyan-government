@@ -39,7 +39,7 @@
     if(!projectTabs[index])return;activeProject=index;renderProjectTabs();applyProjectSample(index);var model=projectModel(projectTabs[index],index);updateStats(model);
     if(typeof supportFilter!=='undefined')supportFilter='all';if(typeof supportPage!=='undefined')supportPage=1;if(typeof ci!=='undefined')ci=0;
     document.querySelectorAll('#support [data-support-filter]').forEach(function(button){button.classList.toggle('active',button.dataset.supportFilter==='all')});
-    var title=document.getElementById('supportResultTitle');if(title)title.textContent=projectTabs[index].name+' · 企业匹配结果';
+    var title=document.getElementById('supportResultTitle');if(title)title.textContent=projectTabs[index].name+'政策精准扶持名单';
     if(typeof renderCompanies==='function')renderCompanies();
   };
   var previousConfirm=window.confirmParsedPolicyV79;

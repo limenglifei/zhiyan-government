@@ -105,7 +105,7 @@ function openSupportScope(){fillSupportScopeDraft(supportScope);document.getElem
 function closeSupportScope(){document.getElementById('supportScopeDialog').close();document.getElementById('supportScopeBtn').focus()}
 function resetSupportScopeDraft(){fillSupportScopeDraft(emptySupportScope())}
 function applySupportScope(event){event.preventDefault();const draft=readSupportScopeDraft();supportScope=draft;refreshSupportScopeResults();closeSupportScope();toast('扶持范围已更新')}
-function updateSupportScopeStats(){const list=scopedSupportCompanies(),counts={all:list.length,recommended:0,high:0,attention:0};list.forEach(({c})=>counts[getSupportRecommendation(c.s)]++);document.querySelectorAll('[data-support-filter]').forEach(button=>button.querySelector('b').textContent=counts[button.dataset.supportFilter]);document.querySelector('#support .support-result-actions>span').textContent=`扶持范围内 ${list.length} 家 · 原型演示数据`}
+function updateSupportScopeStats(){const list=scopedSupportCompanies(),counts={all:list.length,recommended:0,high:0,attention:0};list.forEach(({c})=>counts[getSupportRecommendation(c.s)]++);document.querySelectorAll('[data-support-filter]').forEach(button=>button.querySelector('b').textContent=counts[button.dataset.supportFilter]);document.querySelector('#support .support-result-actions>span').textContent=`匹配企业 ${list.length} 家 · 原型演示数据`}
 function initializeSupportScope(){
   const groups=[['scopeHonorOptions','honors',supportHonorOptions]];
   groups.forEach(([id,name,values])=>document.getElementById(id).innerHTML=values.map(value=>`<label class="scope-choice"><input type="checkbox" name="${name}" value="${supportEscape(value)}"><span>${supportEscape(value)}</span></label>`).join(''));
@@ -124,7 +124,7 @@ window.renderCompanies=function(){
   const result=previousScopeRenderCompanies.apply(this,arguments);
   updateSupportScopeStats();
   const list=getSupportCompanies(),pageRows=list.slice((supportPage-1)*supportPageSize,supportPage*supportPageSize);
-  if(!list.length){document.getElementById('companyList').innerHTML='<div class="empty" style="padding:36px 20px;text-align:center">暂无符合当前筛选的企业<br><button class="secondary" style="margin-top:14px" onclick="openSupportScope()">调整扶持范围</button></div>';return result}
+  if(!list.length){document.getElementById('companyList').innerHTML='<div class="empty" style="padding:36px 20px;text-align:center">暂无符合当前筛选的企业<br>请切换结果分类，或返回首页重新匹配。</div>';return result}
   document.querySelectorAll('#companyList>button').forEach((button,index)=>{const company=pageRows[index]?.c;if(!company)return;const text=document.createElement('div');text.className='support-company-scope';text.textContent=`社保 ${company.employees} 人 · 成立 ${supportCompanyYears(company)} 年 · ${company.businessStatus}`;button.querySelector('small').insertAdjacentElement('afterend',text)});
   const company=companies[ci],head=document.querySelector('#companyProfile .profile-head');
   if(company&&head)head.insertAdjacentHTML('afterend',`<div class="support-profile-scope"><span>${supportEscape(company.province+' / '+company.city+' / '+company.district)}</span><span>社保 ${company.employees} 人</span><span>成立 ${supportCompanyYears(company)} 年</span><span>${supportEscape(company.businessStatus)}</span></div>`);
