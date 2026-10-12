@@ -1,0 +1,112 @@
+/* Shared landing-page geometry; matched results and due reports keep their own layout. */
+#dueDiligence,
+#enterprisePolicy:not(.matched),
+#support:not(.matched) {
+  --home-input-padding: 34px;
+}
+
+#dueDiligence .due-search-hero,
+#enterprisePolicy:not(.matched) .enterprise-match-landing,
+#enterprisePolicy:not(.matched) .enterprise-input-card,
+#support:not(.matched) .support-input-hero {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  padding-left: var(--home-input-padding);
+  padding-right: var(--home-input-padding);
+  text-align: left;
+}
+
+/* Keep the landing copy on the same inset as its bordered input card. */
+#enterprisePolicy:not(.matched) .enterprise-match-landing {
+  border: 1px solid transparent;
+}
+
+#dueDiligence .due-search,
+#enterprisePolicy:not(.matched) .enterprise-input-card .input-row,
+#support:not(.matched) .support-policy-input,
+#support:not(.matched) .support-composer-field-v45 {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#dueDiligence .due-search input {
+  min-width: 0;
+}
+
+#dueDiligence .due-search-hero > div,
+#dueDiligence .due-search-hero h2,
+#dueDiligence .due-search-hero p,
+#enterprisePolicy:not(.matched) .enterprise-match-landing h2,
+#enterprisePolicy:not(.matched) .enterprise-match-landing p,
+#support:not(.matched) .support-input-hero > label,
+#support:not(.matched) .support-input-hero > h2,
+#support:not(.matched) .support-input-hero > p {
+  min-width: 0;
+  text-align: left;
+}
+
+#enterprisePolicy:not(.matched) .ep-landing-orb,
+#support:not(.matched) .support-input-icon {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#enterprisePolicy:not(.matched) .ep-landing-steps,
+#enterprisePolicy:not(.matched) .ep-company-examples,
+#support:not(.matched) .hot-policy-list {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  text-align: left;
+}
+
+#enterprisePolicy:not(.matched) .enterprise-input-card .ep-company-examples {
+  margin-top: 14px;
+  align-items: center;
+}
+
+#enterprisePolicy:not(.matched) .ep-company-examples > label {
+  flex: 0 0 auto;
+}
+
+#enterprisePolicy:not(.matched) .ep-company-examples > button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+#enterprisePolicy:not(.matched) .ep-followed-company-list,
+#support:not(.matched) .support-home-grid-v45 {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+@media (max-width: 760px) {
+  #dueDiligence,
+  #enterprisePolicy:not(.matched),
+  #support:not(.matched) {
+    --home-input-padding: 18px;
+  }
+
+  #enterprisePolicy:not(.matched) .ep-mode-select-wrap-v70 {
+    width: 120px;
+    flex-basis: 120px;
+    padding: 0 12px;
+  }
+
+  #enterprisePolicy:not(.matched) .ep-search-combo-v70 #epSearch {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #enterprisePolicy:not(.matched) .ep-landing-steps {
+    gap: 8px;
+  }
+}
