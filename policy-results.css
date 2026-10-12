@@ -3,3 +3,33 @@
 #support.matched .support-input-hero {
   display: none !important;
 }
+
+
+/* The pending list exposes enterprise details from the same data as its export. */
+#support .support-home-grid-v45 .pending-support-table {
+  min-width: 1050px;
+  table-layout: auto;
+}
+#support .support-home-grid-v45 .pending-support-table th,
+#support .support-home-grid-v45 .pending-support-table td {
+  width: auto;
+  padding: 14px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+#support .support-home-grid-v45 .pending-support-table th:first-child { width: 25%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(2) { width: 8%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(3) { width: 23%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(4) { width: 16%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(5) { width: 12%; }
+#support .support-home-grid-v45 .pending-support-table th:nth-child(6) { width: 16%; }
+#support .support-home-grid-v45 .pending-company-cell b { font-size: 12px; }
+#support .pending-project-button-v45 { padding: 7px 10px; font-size: 12px; }
+#support .support-home-grid-v45 .pending-support-table-wrap {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#support.matched .support-policy-input,
+#support.matched #supportPolicyComposerV45 {
+  display: none !important;
+}

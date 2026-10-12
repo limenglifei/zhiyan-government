@@ -3,140 +3,138 @@
   var support = document.getElementById('support');
   var list = document.getElementById('companyList');
   var profile = document.getElementById('companyProfile');
-  if (!support || !list || !profile || document.getElementById('supportCompanyDetailV121')) return;
+  var layout = support && support.querySelector('.match-layout');
+  if (!layout || !list || !profile || layout.dataset.resultLayoutV121) return;
+  layout.dataset.resultLayoutV121 = 'split';
 
-  var dialog = document.createElement('dialog');
-  dialog.id = 'supportCompanyDetailV121';
-  dialog.className = 'support-company-dialog-v121';
-  dialog.setAttribute('aria-labelledby', 'supportCompanyDetailTitleV121');
-  dialog.innerHTML = '<header><div><h2 id="supportCompanyDetailTitleV121">企业匹配详情</h2><p id="supportCompanyDetailPolicyV121"></p></div><button type="button" aria-label="关闭企业匹配详情">×</button></header><div class="support-company-dialog-body-v121"></div>';
-  support.appendChild(dialog);
-  dialog.querySelector('.support-company-dialog-body-v121').appendChild(profile);
-  var activeIndex = null;
-  var previousOverflow = '';
-  var locked = false;
-  var restoreFocus = true;
-  var resumeAfterAssignment = false;
+  var listPanel = document.createElement('section');
+  listPanel.className = 'card support-company-list-panel-v121';
+  listPanel.setAttribute('aria-labelledby', 'supportCompanyListTitleV121');
+  listPanel.innerHTML = '<header><div><h3 id="supportCompanyListTitleV121">扶持企业名单</h3><span id="supportCompanyCountV121" aria-live="polite"></span></div><label class="support-company-search-v121"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="supportCompanySearchV121" type="search" autocomplete="off" placeholder="搜索企业名称或行业" aria-label="搜索扶持企业名称或行业"></label></header>';
+  var detailPanel = document.createElement('section');
+  detailPanel.className = 'card support-company-detail-panel-v121';
+  detailPanel.setAttribute('aria-labelledby', 'supportCompanyDetailTitleV121');
+  detailPanel.innerHTML = '<header><h3 id="supportCompanyDetailTitleV121">企业匹配详情</h3><span>政策条件诊断</span></header>';
+  layout.appendChild(listPanel);
+  layout.appendChild(detailPanel);
+  listPanel.appendChild(list);
+  detailPanel.appendChild(profile);
+  list.setAttribute('aria-label', '扶持企业名单');
+  profile.setAttribute('aria-label', '当前企业政策匹配详情');
+  profile.tabIndex = 0;
+
+  var actions = support.querySelector('.support-result-actions');
+  var scopeButton = document.createElement('button');
+  scopeButton.id = 'supportResultScopeBtnV121';
+  scopeButton.type = 'button';
+  scopeButton.className = 'secondary';
+  scopeButton.setAttribute('aria-haspopup', 'dialog');
+  scopeButton.setAttribute('aria-controls', 'supportScopeDialog');
+  scopeButton.textContent = '扶持范围';
+  scopeButton.addEventListener('click', function () { window.openSupportScope(); });
+  if (actions) actions.insertBefore(scopeButton, actions.querySelector('button'));
+  var scopeSummary = document.createElement('div');
+  scopeSummary.id = 'supportResultScopeSummaryV121';
+  scopeSummary.className = 'support-scope-summary';
+  scopeSummary.setAttribute('aria-live', 'polite');
+  var resultTitle = support.querySelector('.support-result-title');
+  if (resultTitle) resultTitle.insertAdjacentElement('afterend', scopeSummary);
+
+  var search = document.getElementById('supportCompanySearchV121');
+  var keyword = '';
   var assignments = new Map();
-
-  function assignmentKey() {
-    var company = companies[ci];
-    return company ? JSON.stringify([company.n, document.getElementById('supportResultTitle').textContent]) : '';
-  }
-  function restoreCardFocus() {
-    var card = list.querySelector('[data-support-company-index="' + activeIndex + '"]');
-    if (card) card.focus({ preventScroll: true });
-  }
-  function unlock() {
-    if (!locked) return;
-    document.body.style.overflow = previousOverflow;
-    locked = false;
-  }
-  function showDetails() {
-    if (dialog.open) return;
-    document.getElementById('supportCompanyDetailPolicyV121').textContent = document.getElementById('supportResultTitle').textContent;
-    previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    locked = true;
-    restoreFocus = true;
-    dialog.showModal();
-    dialog.querySelector('.support-company-dialog-body-v121').scrollTop = 0;
-  }
-  function closeDetails(focus) {
-    restoreFocus = focus !== false;
-    unlock();
-    dialog.close();
-  }
-  dialog.querySelector('header > button').addEventListener('click', function () { closeDetails(); });
-  dialog.addEventListener('cancel', function (event) { event.preventDefault(); closeDetails(); });
-  dialog.addEventListener('close', function () { if (dialog.open) return; unlock(); if (restoreFocus && !resumeAfterAssignment) restoreCardFocus(); });
-  dialog.addEventListener('click', function (event) {
-    if (event.target !== dialog) return;
-    var box = dialog.getBoundingClientRect();
-    if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) closeDetails();
+  var lastRows = '';
+  var lastSelection = '';
+  var previousGetCompanies = window.getSupportCompanies;
+  window.getSupportCompanies = function () {
+    var rows = previousGetCompanies.apply(this, arguments);
+    if (!keyword) return rows;
+    return rows.filter(function (item) {
+      return [item.c.n, item.c.i, item.c.industry].join(' ').toLocaleLowerCase().indexOf(keyword) > -1;
+    });
+  };
+  search.addEventListener('input', function () {
+    keyword = search.value.trim().toLocaleLowerCase();
+    supportPage = 1;
+    window.renderCompanies();
   });
 
-  function openDetails(index) {
+  function assignmentKey(company) {
+    var title = document.getElementById('supportResultTitle');
+    return company ? JSON.stringify([company.n, title ? title.textContent : '']) : '';
+  }
+  function restoreAssignment() {
+    var button = profile.querySelector(':scope > button.primary');
+    if (!button) return;
+    var manager = assignments.get(assignmentKey(companies[ci]));
+    button.textContent = manager ? '✓ 已加入扶持名单 · ' + manager : '加入政策扶持名单';
+    if (manager) button.dataset.manager = manager;
+    else delete button.dataset.manager;
+  }
+  function updateScopeControls() {
+    var sourceLabel = document.getElementById('supportScopeBtnLabel');
+    var sourceSummary = document.getElementById('supportScopeSummary');
+    var sourceButton = document.getElementById('supportScopeBtn');
+    scopeButton.textContent = sourceLabel ? sourceLabel.textContent : '扶持范围';
+    scopeButton.classList.toggle('scope-active', !!(sourceButton && sourceButton.classList.contains('scope-active')));
+    scopeSummary.innerHTML = sourceSummary ? sourceSummary.innerHTML : '';
+  }
+  function selectCompany(index) {
     if (!getSupportCompanies().some(function (item) { return item.index === index; })) return;
-    activeIndex = index;
     ci = index;
     window.renderCompanies();
-    showDetails();
+    var selected = list.querySelector('[data-support-company-index="' + index + '"]');
+    if (selected) selected.focus({ preventScroll: true });
   }
-  function decorateCards() {
-    var rows = getSupportCompanies().slice((supportPage - 1) * supportPageSize, supportPage * supportPageSize);
+  function decorateRows() {
+    var rows = getSupportCompanies();
+    var pageRows = rows.slice((supportPage - 1) * supportPageSize, supportPage * supportPageSize);
+    document.getElementById('supportCompanyCountV121').textContent = '共 ' + rows.length + ' 家';
     Array.from(list.querySelectorAll(':scope > button')).forEach(function (button, position) {
-      var item = rows[position];
+      var item = pageRows[position];
       if (!item) return;
-      var logo = button.querySelector('.company-logo');
-      var copy = button.children[1];
-      var score = button.querySelector('.score');
-      var tags = button.querySelector('.company-card-tags');
-      var meta = button.querySelector('.company-card-meta');
-      var scope = button.querySelector('.support-company-scope');
-      var identity = document.createElement('div');
-      identity.className = 'support-company-identity-v121';
-      identity.appendChild(copy.querySelector('b'));
-      identity.appendChild(copy.querySelector('small'));
-      var head = document.createElement('span');
-      head.className = 'support-company-head-v121';
-      head.appendChild(logo);
-      head.appendChild(identity);
-      var footer = document.createElement('span');
-      footer.className = 'support-company-footer-v121';
-      var action = document.createElement('span');
-      action.className = 'support-company-view-v121';
-      action.textContent = '查看匹配详情 →';
-      footer.appendChild(score);
-      footer.appendChild(action);
-      button.replaceChildren(head);
-      if (tags) button.appendChild(tags);
-      if (scope) button.appendChild(scope);
-      if (meta) button.appendChild(meta);
-      button.appendChild(footer);
       button.type = 'button';
-      button.classList.remove('selected');
-      button.classList.add('support-company-card-v121');
+      button.classList.add('support-company-row-v121');
+      button.classList.toggle('selected', item.index === ci);
       button.dataset.supportCompanyIndex = String(item.index);
-      button.setAttribute('aria-haspopup', 'dialog');
-      button.setAttribute('aria-controls', dialog.id);
-      button.setAttribute('aria-label', '查看' + item.c.n + '的政策匹配详情');
+      button.setAttribute('aria-pressed', String(item.index === ci));
+      button.setAttribute('aria-controls', 'companyProfile');
+      button.setAttribute('aria-label', item.c.n + '，匹配度 ' + item.c.s + '%，查看匹配详情');
       button.removeAttribute('onclick');
-      button.addEventListener('click', function () { openDetails(item.index); });
+      button.addEventListener('click', function () { selectCompany(item.index); });
     });
-    var assigned = assignments.get(assignmentKey());
-    var assignmentButton = profile.querySelector(':scope > button.primary');
-    if (assigned && assignmentButton) {
-      assignmentButton.textContent = '✓ 已加入扶持名单 · ' + assigned;
-      assignmentButton.dataset.manager = assigned;
-    }
+    restoreAssignment();
+    updateScopeControls();
+    return pageRows.map(function (item) { return item.index; }).join(',') + ':' + supportPage;
   }
   var previousRender = window.renderCompanies;
   window.renderCompanies = function () {
+    var listScroll = list.scrollTop;
+    var detailScroll = profile.scrollTop;
     var result = previousRender.apply(this, arguments);
-    decorateCards();
+    var rows = decorateRows();
+    var selection = assignmentKey(companies[ci]);
+    list.scrollTop = rows === lastRows ? listScroll : 0;
+    profile.scrollTop = selection === lastSelection ? detailScroll : 0;
+    lastRows = rows;
+    lastSelection = selection;
     return result;
   };
 
-  // Suspend the native detail dialog while the existing assignment overlay is active.
-  var previousOpenAssignment = window.openSupportAssignmentV53;
-  if (typeof previousOpenAssignment === 'function') window.openSupportAssignmentV53 = function () {
-    resumeAfterAssignment = dialog.open;
-    if (resumeAfterAssignment) closeDetails(false);
-    return previousOpenAssignment.apply(this, arguments);
-  };
-  var previousCloseAssignment = window.closeSupportAssignmentV53;
-  if (typeof previousCloseAssignment === 'function') window.closeSupportAssignmentV53 = function () {
-    var result = previousCloseAssignment.apply(this, arguments);
-    if (resumeAfterAssignment) { resumeAfterAssignment = false; showDetails(); }
-    return result;
-  };
+  // Keep the existing owner assignment flow and retain its state when rows are switched.
   var previousConfirmAssignment = window.confirmSupportAssignmentV53;
   if (typeof previousConfirmAssignment === 'function') window.confirmSupportAssignmentV53 = function () {
+    var key = assignmentKey(companies[ci]);
     var result = previousConfirmAssignment.apply(this, arguments);
     var button = profile.querySelector(':scope > button.primary');
-    if (button && button.dataset.manager) assignments.set(assignmentKey(), button.dataset.manager);
+    if (button && button.dataset.manager) assignments.set(key, button.dataset.manager);
     return result;
   };
+  var policyTitle = document.getElementById('supportResultTitle');
+  if (policyTitle) new MutationObserver(restoreAssignment).observe(policyTitle, { childList: true, characterData: true, subtree: true });
+  var scopeDialog = document.getElementById('supportScopeDialog');
+  if (scopeDialog) scopeDialog.addEventListener('close', function () {
+    if (support.classList.contains('matched')) scopeButton.focus({ preventScroll: true });
+  });
   window.renderCompanies();
 })();

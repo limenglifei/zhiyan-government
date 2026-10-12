@@ -2436,26 +2436,36 @@ function renderLogicAnnotations() {}
   if(!support||!infoPanels||document.getElementById('pendingSupportSection'))return;
 
   var pendingCompanies=[
-    {name:'海州智造科技有限公司',industry:'汽车零部件 · 经开区',match:96,unclaimed:4,contact:'王敏',projects:4},
-    {name:'华芯微电子（海州）有限公司',industry:'功率半导体 · 高新区',match:94,unclaimed:3,contact:'李睿',projects:5},
-    {name:'恒泰高端装备制造有限公司',industry:'工业母机 · 临港区',match:93,unclaimed:3,contact:'周宁',projects:4},
-    {name:'云创工业软件有限公司',industry:'工业软件 · 软件园',match:91,unclaimed:2,contact:'陈航',projects:3},
-    {name:'新源固态电池有限公司',industry:'新能源材料 · 高新区',match:90,unclaimed:4,contact:'赵雪',projects:5},
-    {name:'海州精密传感科技有限公司',industry:'智能传感器 · 经开区',match:89,unclaimed:2,contact:'孙悦',projects:3},
-    {name:'智航机器人科技有限公司',industry:'具身智能 · 科创园',match:88,unclaimed:3,contact:'林峰',projects:4},
-    {name:'海州生物医药股份有限公司',industry:'创新药 · 生物医药园',match:87,unclaimed:2,contact:'吴桐',projects:3},
-    {name:'东岳动力科技有限公司',industry:'动力电池 · 经开区',match:86,unclaimed:3,contact:'蒋晨',projects:4},
-    {name:'绿能循环材料有限公司',industry:'资源循环 · 临港区',match:85,unclaimed:2,contact:'许岩',projects:3}
+    {name:'海州智造科技有限公司',industry:'汽车零部件 · 经开区',match:96,unclaimed:4,projects:4},
+    {name:'华芯微电子（海州）有限公司',industry:'功率半导体 · 高新区',match:94,unclaimed:3,projects:5},
+    {name:'恒泰高端装备制造有限公司',industry:'工业母机 · 临港区',match:93,unclaimed:3,projects:4},
+    {name:'云创工业软件有限公司',industry:'工业软件 · 软件园',match:91,unclaimed:2,projects:3},
+    {name:'新源固态电池有限公司',industry:'新能源材料 · 高新区',match:90,unclaimed:4,projects:5},
+    {name:'海州精密传感科技有限公司',industry:'智能传感器 · 经开区',match:89,unclaimed:2,projects:3},
+    {name:'智航机器人科技有限公司',industry:'具身智能 · 科创园',match:88,unclaimed:3,projects:4},
+    {name:'海州生物医药股份有限公司',industry:'创新药 · 生物医药园',match:87,unclaimed:2,projects:3},
+    {name:'东岳动力科技有限公司',industry:'动力电池 · 经开区',match:86,unclaimed:3,projects:4},
+    {name:'绿能循环材料有限公司',industry:'资源循环 · 临港区',match:85,unclaimed:2,projects:3}
   ];
+  var pendingCompanyProfiles=typeof knowledgeBaseConfigs!=='undefined'&&knowledgeBaseConfigs.company?knowledgeBaseConfigs.company.rows:[];
+  pendingCompanies.forEach(function(company){
+    var profile=pendingCompanyProfiles.find(function(row){return row.title===company.name})||{};
+    var parts=company.industry.split(' · ');
+    company.legal=profile.legal||'暂无';
+    company.registeredAddress=profile.region||('海州市 / '+(parts[1]||'暂无'));
+    company.industry=parts[0];
+    company.phone=profile.phone||profile.telephone||'暂无';
+  });
+  function escapePendingSupport(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
   var pendingSection=document.createElement('section');
   pendingSection.id='pendingSupportSection';
   pendingSection.className='card pending-support-section';
-  pendingSection.innerHTML='<div class="pending-support-head"><div><h2>待扶持企业名单</h2><p>AI 识别高匹配且存在应享未享政策的企业，可查看每家企业可申报项目</p></div><div class="pending-support-actions"><span>待跟进 <b>23</b> 家 · 可报项目 <b>68</b> 项</span><button class="secondary" type="button" onclick="exportPendingSupportList()">⇩ 导出待扶持名单</button></div></div><div class="pending-support-table-wrap"><table class="pending-support-table"><thead><tr><th>企业名称</th><th>政策匹配度</th><th>应享未享</th><th>可申报项目</th><th>跟进负责人</th><th>操作</th></tr></thead><tbody id="pendingSupportRows"></tbody></table></div>';
+  pendingSection.innerHTML='<div class="pending-support-head"><div><h2>待扶持企业名单</h2><p>AI 识别高匹配且存在应享未享政策的企业，可查看每家企业可申报项目</p></div><div class="pending-support-actions"><span>待跟进 <b>23</b> 家 · 可报项目 <b>68</b> 项</span><button class="secondary" type="button" onclick="exportPendingSupportList()">⇩ 导出待扶持名单</button></div></div><div class="pending-support-table-wrap"><table class="pending-support-table"><thead><tr><th>企业名称</th><th>法人</th><th>注册地</th><th>行业</th><th>联系电话</th><th>可申报政策项目</th></tr></thead><tbody id="pendingSupportRows"></tbody></table></div>';
   infoPanels.parentNode.insertBefore(pendingSection,infoPanels);
 
   function renderPendingRows(){
     document.getElementById('pendingSupportRows').innerHTML=pendingCompanies.map(function(item,index){
-      return '<tr><td><div class="pending-company-cell"><i>'+item.name.slice(0,1)+'</i><div><b>'+item.name+'</b><span>'+item.industry+'</span></div></div></td><td><span class="pending-match-score">'+item.match+'%</span></td><td><em class="pending-unclaimed">'+item.unclaimed+' 项</em></td><td><em class="pending-project-count">'+item.projects+' 个可报项目</em></td><td>'+item.contact+'</td><td><div class="pending-row-actions"><button type="button" onclick="openPendingCompanyProjects('+index+')">查看可报项目 →</button></div></td></tr>';
+      return '<tr><td><div class="pending-company-cell"><i>'+escapePendingSupport(item.name.slice(0,1))+'</i><div><b title="'+escapePendingSupport(item.name)+'">'+escapePendingSupport(item.name)+'</b></div></div></td><td>'+escapePendingSupport(item.legal)+'</td><td>'+escapePendingSupport(item.registeredAddress)+'</td><td>'+escapePendingSupport(item.industry)+'</td><td>'+escapePendingSupport(item.phone)+'</td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+item.projects+'个可报项目 →</button></td></tr>';
     }).join('');
   }
   renderPendingRows();
@@ -2519,7 +2529,7 @@ function renderLogicAnnotations() {}
     var company=pendingCompanies[index];if(!company)return;
     var projects=(typeof knowledgeBaseConfigs!=='undefined'?knowledgeBaseConfigs.project.rows.filter(function(row){return row.participates!==false}):[]).slice(0,company.projects);
     if(projects.length<company.projects&&typeof knowledgeBaseConfigs!=='undefined')projects=knowledgeBaseConfigs.project.rows.slice(0,company.projects);
-    var body='<div class="support-detail-meta-v43"><span>政策匹配度 '+company.match+'%</span><span>应享未享 '+company.unclaimed+' 项</span><span>负责人 '+company.contact+'</span></div><div class="support-project-list-v43">'+projects.map(function(project,i){return '<article class="support-project-item-v43"><div><b>'+project.title+'</b><span>'+project.level+' · '+project.org+' · '+project.category+'</span><span>申报条件诊断：核心条件基本符合，建议补充项目备案及上年度经营材料。</span></div><aside><strong>'+(company.match-i*2)+'%</strong><em>可申报</em></aside></article>'}).join('')+'</div>';
+    var body='<div class="support-detail-meta-v43"><span>政策匹配度 '+company.match+'%</span><span>应享未享 '+company.unclaimed+' 项</span><span>法人 '+escapePendingSupport(company.legal)+'</span><span>注册地 '+escapePendingSupport(company.registeredAddress)+'</span><span>行业 '+escapePendingSupport(company.industry)+'</span><span>联系电话 '+escapePendingSupport(company.phone)+'</span></div><div class="support-project-list-v43">'+projects.map(function(project,i){return '<article class="support-project-item-v43"><div><b>'+project.title+'</b><span>'+project.level+' · '+project.org+' · '+project.category+'</span><span>申报条件诊断：核心条件基本符合，建议补充项目备案及上年度经营材料。</span></div><aside><strong>'+(company.match-i*2)+'%</strong><em>可申报</em></aside></article>'}).join('')+'</div>';
     openDetail(company.name+' · 可申报政策项目','PENDING SUPPORT PROJECTS',body);
   };
   window.openSupportFeedDetail=function(type,index){
@@ -2529,13 +2539,14 @@ function renderLogicAnnotations() {}
     openDetail(item.title,isNotice?'APPLICATION NOTICE DETAIL':'PUBLICATION DETAIL',body);
   };
   window.exportPendingSupportList=function(){
-    var csv='企业名称,所属行业,政策匹配度,应享未享项目数,可申报项目数,跟进负责人\n'+pendingCompanies.map(function(item){return [item.name,item.industry,item.match+'%',item.unclaimed,item.projects,item.contact].join(',')}).join('\n');
+    var csvCell=function(value){return '"'+String(value).replace(/"/g,'""')+'"'};
+    var csv='企业名称,法人,注册地,行业,联系电话,政策匹配度,应享未享项目数,可申报项目数\n'+pendingCompanies.map(function(item){return [item.name,item.legal,item.registeredAddress,item.industry,item.phone,item.match+'%',item.unclaimed,item.projects].map(csvCell).join(',')}).join('\n');
     var blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='政策精准扶持-待扶持企业名单.csv';a.click();setTimeout(function(){URL.revokeObjectURL(url)},500);if(typeof toast==='function')toast('待扶持企业名单已导出');
   };
   document.getElementById('supportDetailBackdropV43').addEventListener('click',function(event){if(event.target===this)closeSupportDetailV43()});
 
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
-    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示匹配度、未享项目数、可报项目数和跟进负责人。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
+    prototypeLogicAnnotations.support.fields.push(['待扶持企业名单','筛选高匹配且存在应享未享项目的本地企业，展示企业名称、法人、注册地、行业、联系电话和可申报项目。','企业库、参与匹配项目库、政策享受记录、匹配诊断结果','每次匹配任务完成后更新']);
     prototypeLogicAnnotations.support.interactions.push(['查看可报项目','点击待扶持企业操作列的“查看可报项目”。','下钻展示该企业可申报项目、单项匹配度和条件诊断摘要。']);
     prototypeLogicAnnotations.support.interactions.push(['通知与公示上滑加载','申报通知和最新公示列表每次加载20条，滚动至列表底部自动加载下一批。','点击单条进入详情，不再设置“查看全部”入口。']);
   }
@@ -2636,9 +2647,6 @@ function renderLogicAnnotations() {}
   composer.className='support-composer-field-v45';
   composer.innerHTML='<textarea class="support-composer-text-v45" id="supportPolicyComposerV45" placeholder="请输入政策名称，或直接粘贴政策全文，AI 将自动解析申报对象、条件与奖补标准"></textarea><div class="support-composer-hint-v45"><i>AI</i><span>支持政策项目联想 · 政策全文智能解析</span></div><div class="support-composer-file-v45" id="supportComposerFileV45"><span></span><button type="button" aria-label="移除附件">×</button></div><div class="support-composer-suggestions-v45" id="supportComposerSuggestionsV45"></div>';
   inputRow.insertBefore(composer,hiddenInput.closest('.support-search-autocomplete')||hiddenInput);
-  var upload=document.createElement('button');
-  upload.type='button';upload.id='supportUploadCompactV45';upload.className='support-upload-compact-v45';upload.title='上传政策附件';upload.setAttribute('aria-label','上传政策附件');upload.textContent='📎';
-  inputRow.insertBefore(upload,matchButton);
   var textarea=document.getElementById('supportPolicyComposerV45');
   var suggestionBox=document.getElementById('supportComposerSuggestionsV45');
   var fileChip=document.getElementById('supportComposerFileV45');
@@ -2669,7 +2677,6 @@ function renderLogicAnnotations() {}
   });
   textarea.addEventListener('keydown',function(event){if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();runSupportMatch()}else if(event.key==='Escape')closeSuggestionsV45()});
   textarea.addEventListener('blur',function(){setTimeout(closeSuggestionsV45,160)});
-  upload.onclick=function(){if(fileInput)fileInput.click()};
   if(fileInput)fileInput.addEventListener('change',function(){
     var file=this.files&&this.files[0];if(!file)return;
     fileChip.querySelector('span').textContent=file.name;fileChip.classList.add('show');textarea.placeholder='已选择附件，可继续补充政策名称或说明';
@@ -2683,7 +2690,7 @@ function renderLogicAnnotations() {}
   window.runSupportMatch=function(){
     var value=textarea.value.trim();
     var hasFile=fileInput&&fileInput.files&&fileInput.files.length;
-    if(!value&&!hasFile){if(typeof toast==='function')toast('请输入政策名称、粘贴政策全文或上传政策附件');textarea.focus();return}
+    if(!value&&!hasFile){if(typeof toast==='function')toast('请输入政策名称或粘贴政策全文');textarea.focus();return}
     if(value){
       if(projectMode&&!projectMode.classList.contains('active'))projectMode.click();
       hiddenInput.value=value.length>55||/[\r\n]/.test(value)?'自定义政策全文（'+value.length+'字）':value;
@@ -2704,15 +2711,10 @@ function renderLogicAnnotations() {}
     Array.from(panels.children).forEach(function(card){grid.appendChild(card)});
     panels.remove();
     pending.querySelector('.pending-support-head').innerHTML='<div><h2>待扶持企业名单</h2><p>高匹配且存在可申报项目的重点企业</p></div><button class="pending-compact-export-v45" type="button" onclick="exportPendingSupportList()" title="导出待扶持名单">⇩</button>';
-    pending.querySelector('thead').innerHTML='<tr><th>企业名称</th><th>可申报政策项目</th><th>跟进负责人</th></tr>';
-    var compactRows=[
-      ['海州智造科技有限公司','4个可报项目','王敏'],['华芯微电子（海州）有限公司','5个可报项目','李睿'],['恒泰高端装备制造有限公司','4个可报项目','周宁'],['云创工业软件有限公司','3个可报项目','陈航'],['新源固态电池有限公司','5个可报项目','赵雪'],['海州精密传感科技有限公司','3个可报项目','孙悦'],['智航机器人科技有限公司','4个可报项目','林峰'],['海州生物医药股份有限公司','3个可报项目','吴桐'],['东岳动力科技有限公司','4个可报项目','蒋晨'],['绿能循环材料有限公司','3个可报项目','许岩']
-    ];
-    document.getElementById('pendingSupportRows').innerHTML=compactRows.map(function(row,index){return '<tr><td><div class="pending-company-cell"><i>'+row[0].slice(0,1)+'</i><div><b title="'+row[0]+'">'+row[0]+'</b></div></div></td><td><button type="button" class="pending-project-button-v45" onclick="openPendingCompanyProjects('+index+')">'+row[1]+' →</button></td><td>'+row[2]+'</td></tr>'}).join('');
   }
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.support){
-    prototypeLogicAnnotations.support.interactions.push(['轻量政策输入','统一大输入框支持政策名称联想和政策全文粘贴，右侧附件按钮支持上传PDF、Word、TXT及Markdown。','用户输入、附件和项目库候选统一进入政策解析与企业匹配流程。']);
-    prototypeLogicAnnotations.support.interactions.push(['首页三列工作台','待扶持企业、申报通知、最新公示并排展示。','待扶持企业仅保留企业名称、可申报项目和负责人，点击项目数量下钻申报明细。']);
+    prototypeLogicAnnotations.support.interactions.push(['轻量政策输入','统一大输入框支持政策名称联想和政策全文粘贴。','用户输入和项目库候选统一进入政策解析与企业匹配流程。']);
+    prototypeLogicAnnotations.support.interactions.push(['首页三列工作台','待扶持企业、申报通知、最新公示并排展示。','待扶持企业展示企业名称、法人、注册地、行业、联系电话和可申报项目，点击项目数量下钻申报明细。']);
   }
 })();
 </script>
@@ -3202,7 +3204,7 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="support-industry-picker-v120.css?v=120">
 <script src="support-industry-data-v120.js?v=120"></script>
 <script src="support-industry-picker-v120.js?v=120"></script>
-<script src="support-scope.js?v=20261010"></script>
+<script src="support-scope.js?v=20261012-support"></script>
 <link rel="stylesheet" href="enterprise-migration.css?v=20260911-ai">
 <script src="enterprise-migration-map-data.js?v=20260911"></script>
 <script src="enterprise-migration.js?v=20260911-ai"></script>
@@ -3210,10 +3212,10 @@ function renderLogicAnnotations() {}
 <script src="v117.js?v=117"></script>
 <link rel="stylesheet" href="v118.css?v=118">
 <link rel="stylesheet" href="v119.css?v=119">
-<script src="v119.js?v=119"></script>
+<script src="v119.js?v=20261012-support"></script>
 <link rel="stylesheet" href="v120.css?v=120">
-<link rel="stylesheet" href="v121.css?v=121">
-<script src="v121.js?v=121"></script>
+<link rel="stylesheet" href="v121.css?v=20261012-support">
+<script src="v121.js?v=20261012-support"></script>
 
 <link rel="stylesheet" href="enterprise-profile-sections.css?v=20261010">
-<link rel="stylesheet" href="policy-results.css?v=20261010">
+<link rel="stylesheet" href="policy-results.css?v=20261012-support">
