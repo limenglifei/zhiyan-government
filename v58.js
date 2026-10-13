@@ -5,7 +5,7 @@
   function selectedChainV58(){return typeof chainIndustryData!=='undefined'&&chainIndustryData[activeChainKey]?chainIndustryData[activeChainKey]:chainIndustryData.newenergy}
   function patentRankingV58(){
     var list=document.querySelector('#dashboard .innovation-ranking'),card=list&&list.closest('.ranking-card');if(!card)return;
-    card.classList.add('innovation-ranking-v58');var title=card.querySelector('h2'),sub=card.querySelector('.card-title p');if(title)title.textContent='创新企业榜';if(sub)sub.textContent='按专利总数降序排列 · 单位：项 · 示意数据';
+    card.classList.add('innovation-ranking-v58');var title=card.querySelector('h2'),sub=card.querySelector('.card-title p');if(title)title.textContent='创新企业榜 TOP10';if(sub)sub.textContent='按专利总数降序排列 · 单位：项 · 示意数据';
     var rows=Array.from(list.querySelectorAll('.rank-row'));
     rows.sort(function(a,b){return Number(b.querySelector('strong').textContent)-Number(a.querySelector('strong').textContent)});
     rows.forEach(function(row,index){row.querySelector('i').textContent=index+1;row.classList.toggle('top',index<3);list.appendChild(row)});
