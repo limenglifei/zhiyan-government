@@ -110,3 +110,169 @@
     gap: 8px;
   }
 }
+
+/* Keep the copilot entry on the same left inset as the due diligence entry. */
+#qa {
+  --home-input-padding: 34px;
+}
+
+#qa .qa-landing {
+  max-width: none;
+  min-height: 0;
+  margin: 24px 0 0;
+  padding: 28px var(--home-input-padding) 34px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  background-position: left top;
+}
+
+#qa .qa-landing > h1,
+#qa .qa-landing > p {
+  text-align: left;
+}
+
+#qa .qa-landing-input,
+#qa .qa-landing-examples,
+#qa .qa-landing-proof {
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#qa .qa-landing-proof {
+  padding-left: 0;
+  padding-right: 0;
+  flex-wrap: wrap;
+}
+
+/* The introduction and composer share one card, following precise support. */
+#enterprisePolicy:not(.matched) .enterprise-input-card {
+  margin-top: 24px;
+  padding-top: 28px;
+  padding-bottom: 28px;
+  background: radial-gradient(circle at 20% 20%, #edf5ff, #fff 62%);
+}
+
+#enterprisePolicy:not(.matched) .enterprise-input-card .enterprise-match-landing {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 24px;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+
+#enterprisePolicy:not(.matched) .enterprise-match-landing h2 {
+  margin-top: 16px;
+  font-size: 22px;
+}
+
+#enterprisePolicy:not(.matched) .enterprise-match-landing > p {
+  margin: 9px 0 16px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+#enterprisePolicy .ep-target-region {
+  min-width: 0;
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+#enterprisePolicy .ep-target-region[hidden] {
+  display: none;
+}
+
+#enterprisePolicy .ep-target-region legend {
+  margin-bottom: 10px;
+  padding: 0;
+  color: #60708a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#enterprisePolicy .ep-target-region-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#enterprisePolicy .ep-target-region-fields label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #7d899c;
+  font-size: 11px;
+}
+
+#enterprisePolicy .ep-target-region select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d7e1ee;
+  border-radius: 8px;
+  background: #fff;
+  color: #34445e;
+  font-size: 12px;
+}
+
+#enterprisePolicy .ep-target-region select:focus-visible {
+  outline: 2px solid #377df0;
+  outline-offset: 2px;
+}
+
+#enterprisePolicy .ep-target-region select:disabled {
+  background: #f3f6fa;
+  color: #8a97aa;
+  cursor: not-allowed;
+}
+
+#enterprisePolicy .ep-target-region-summary {
+  margin: 9px 0 0;
+  color: #7d899c;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+#enterprisePolicy .ep-target-region-result {
+  margin: 14px 0 0;
+  color: #60708a;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
+  #qa {
+    --home-input-padding: 18px;
+  }
+
+  #qa .qa-landing {
+    padding-top: 24px;
+  }
+
+  #qa .qa-landing > p {
+    line-height: 1.7;
+  }
+
+  #enterprisePolicy:not(.matched) .enterprise-input-card {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  #enterprisePolicy:not(.matched) .ep-landing-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #enterprisePolicy:not(.matched) .ep-landing-steps strong {
+    display: none;
+  }
+
+  #enterprisePolicy .ep-target-region-fields {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
