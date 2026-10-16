@@ -23,7 +23,7 @@
 .cluster{position:absolute;z-index:3;min-width:128px;padding:10px 12px;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(11,22,40,.83);box-shadow:0 12px 32px rgba(0,0,0,.16)}.cluster:before{content:"";position:absolute;left:10px;top:-23px;width:15px;height:15px;border-radius:50%;background:var(--cluster-color);box-shadow:0 0 0 7px color-mix(in srgb,var(--cluster-color) 16%,transparent),0 0 24px var(--cluster-color)}.cluster b{display:block;font-size:13px}.cluster span{display:block;margin-top:5px;color:#a8b6ca;font-size:12px}.cluster.c1{--cluster-color:#20caeb;left:18%;top:36%}.cluster.c2{--cluster-color:#a88af8;left:52%;top:49%}.cluster.c3{--cluster-color:#37d6a2;right:15%;top:31%}.cluster.c4{--cluster-color:#ffbc35;left:35%;bottom:14%}.cluster.c5{--cluster-color:#ef71bc;right:9%;bottom:12%}
 .map-kpis{position:absolute;left:20px;right:20px;bottom:20px;z-index:4;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.map-kpis span{padding:8px 10px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(255,255,255,.06);color:#d7dfeb;font-size:12px;text-align:center;backdrop-filter:blur(6px)}
 .structure-body{display:flex;flex-direction:column;align-items:center;padding:18px 8px 4px}.industry-donut{position:relative;width:190px;height:190px;border-radius:50%;background:conic-gradient(#27c7dd 0 28%,#7c86f5 28% 52%,#34cb95 52% 70%,#f5a30b 70% 84%,#ef6faf 84% 100%);transform:rotate(-18deg);box-shadow:0 18px 38px rgba(50,91,150,.13)}.industry-donut:before{content:"";position:absolute;inset:39px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #eef2f8}.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;transform:rotate(18deg)}.donut-center b{font-size:24px;color:#12233f}.donut-center span{font-size:12px;color:#8090a8;margin-top:2px}
-.structure-legend{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 12px;margin-top:20px}.structure-legend span{display:flex;align-items:center;gap:7px;color:#566781;font-size:12px}.structure-legend i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}.structure-insight{margin-top:18px;padding:13px 14px;border-radius:12px;background:#f6f8fc;color:#596a83;font-size:12px;line-height:1.65}.structure-insight b{color:#152846}
+.structure-legend{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 12px;margin-top:20px}.structure-legend span{display:flex;align-items:center;gap:7px;color:#566781;font-size:12px}.structure-legend i{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
 
 @media(max-width:1100px){.industry-geo-grid{grid-template-columns:1fr}.industry-map-stage{height:350px}.industry-structure-card .structure-body{display:grid;grid-template-columns:210px 1fr;column-gap:20px}.structure-legend{margin-top:0}}
 @media(max-width:720px){.industry-map-stage{height:430px}.cluster{min-width:112px}.cluster.c1{left:8%;top:35%}.cluster.c2{left:45%;top:50%}.cluster.c3{right:5%;top:24%}.cluster.c4{left:12%;bottom:18%}.cluster.c5{right:7%;bottom:16%}.map-kpis{grid-template-columns:repeat(2,1fr)}.industry-structure-card .structure-body{display:flex}}
@@ -159,7 +159,7 @@
   <link rel="stylesheet" href="v82.css?v=82">
   <link rel="stylesheet" href="v83.css?v=83">
 <link rel="stylesheet" href="v84.css?v=20260907-fields">
-<link rel="stylesheet" href="brand-logo.css?v=20260920"><link rel="stylesheet" href="dashboard-headlines.css?v=20261016-headlines">
+<link rel="stylesheet" href="brand-logo.css?v=20260920"><link rel="stylesheet" href="dashboard-headlines.css?v=20261016-ranking">
 </head><body><div class="shell"><aside class="side">
   <div class="brand brand-industrial"><div class="brand-identity"><span class="brand-logo"><img src="assets/zhiyan-industry-logo.png" alt="智研平台" width="2172" height="724" decoding="async" fetchpriority="high"></span><small id="brandSubtitle">产业智能决策系统</small></div></div>
 
@@ -194,10 +194,7 @@
     </div>
   </section><section class="card dashboard-headlines" id="dashboardHeadlines" aria-labelledby="dashboardHeadlinesTitle">
     <div class="card-title"><div><h2 id="dashboardHeadlinesTitle">今日头条新闻</h2><p>产业与政策资讯 · 共 5 条</p></div></div>
-    <table class="headline-table" aria-label="今日头条新闻列表">
-      <thead><tr><th scope="col">新闻标题：摘要</th><th scope="col">发布机构</th><th scope="col">操作</th></tr></thead>
-      <tbody id="dashboardHeadlineRows"></tbody>
-    </table>
+    <ol class="headline-list" id="dashboardHeadlineRows" aria-label="今日头条新闻榜单"></ol>
   </section></div><div class="industry-geo-grid">
   <section class="card"><div class="card-title"><div><h2>海州市主导产业 GDP 贡献榜</h2><p>按 GDP 贡献率排序 · 本年度累计 · TOP 5</p></div></div><div class="industry-list"><div class="industry-row"><small>01</small><div><b>新能源汽车及零部件</b><span>GDP 贡献额 286.4 亿元</span></div><div class="bar"><i style="width:82%"></i></div><b>34.0%</b></div><div class="industry-row"><small>02</small><div><b>高端装备制造</b><span>GDP 贡献额 218.7 亿元</span></div><div class="bar"><i style="width:67%"></i></div><b>26.0%</b></div><div class="industry-row"><small>03</small><div><b>新一代信息技术</b><span>GDP 贡献额 176.9 亿元</span></div><div class="bar"><i style="width:54%"></i></div><b>21.0%</b></div><div class="industry-row"><small>04</small><div><b>生物医药与健康</b><span>GDP 贡献额 92.6 亿元</span></div><div class="bar"><i style="width:32%"></i></div><b>11.0%</b></div><div class="industry-row"><small>05</small><div><b>现代生产性服务业</b><span>GDP 贡献额 68.0 亿元</span></div><div class="bar"><i style="width:24%"></i></div><b>8.0%</b></div></div></section>
   <section class="card industry-structure-card">
@@ -205,7 +202,6 @@
     <div class="structure-body">
       <div class="industry-donut" role="img" aria-label="电子信息28%，高端装备24%，新材料18%，生物医药14%，现代服务16%"><div class="donut-center"><b>842.6 亿</b><span>产业 GDP</span></div></div>
       <div class="structure-legend"><span><i style="background:#27c7dd"></i>电子信息 28%</span><span><i style="background:#7c86f5"></i>高端装备 24%</span><span><i style="background:#34cb95"></i>新材料 18%</span><span><i style="background:#f5a30b"></i>生物医药 14%</span><span><i style="background:#ef6faf"></i>现代服务 16%</span></div>
-      <div class="structure-insight"><b>AI 研判：</b>电子信息与高端装备合计贡献 52%，产业集聚优势明显；建议进一步提升核心零部件本地化配套率。</div>
     </div>
   </section>
 </div>
@@ -3326,7 +3322,7 @@ function renderLogicAnnotations() {}
 .migration-direction button[aria-pressed="true"] { color:var(--migration-accent); background:#fff; border-color:#e3e9ef; box-shadow:0 2px 6px #19344d08; font-weight:700; }
 .migration-direction b { font-size:13px; padding:1px 6px; border-radius:5px; background:#e9eef5; }
 .migration-direction button[aria-pressed="true"] b { background:var(--migration-soft); }
-.migration-motion { display:flex; align-items:center; gap:6px; border:1px solid #dce4ee; background:#fff; padding:10px 12px; border-radius:8px; color:#607189; font-size:13px; }
+
 .migration-body { display:grid; grid-template-columns:minmax(0,1fr) 250px; align-items:stretch; }
 .migration-map-stage { position:relative; min-width:0; background:#fff; padding:8px 8px 0; }
 .migration-map-stage svg { display:block; width:100%; height:auto; aspect-ratio:1000/680; }
@@ -3394,7 +3390,7 @@ function renderLogicAnnotations() {}
 @media(prefers-reduced-motion:reduce) { .enterprise-migration .migration-pulse { animation:none; } .enterprise-migration * { transition:none; } }
 @media(max-width:1100px) { .migration-body { grid-template-columns:minmax(0,1fr) 220px; } .migration-header { flex-wrap:wrap; } .migration-sidebar { padding:16px 13px; } .migration-ranking { max-height:290px; } }
 @media(max-width:850px) { .migration-body { grid-template-columns:1fr; } .migration-sidebar { border-left:0; border-top:1px solid #e9eef5; } .migration-ranking { display:grid; grid-template-columns:1fr 1fr; gap:0 20px; max-height:240px; } .migration-total { margin:12px 0 5px; } .migration-header { padding:17px; } .migration-map-caption { padding:0 9px 15px; } .migration-selection { margin-top:12px; } }
-@media(max-width:480px) { .migration-controls { width:100%; gap:8px; } .migration-direction { flex:1; } .migration-direction button { flex:1; justify-content:center; padding:8px; font-size:13px; } .migration-motion { padding:10px; } .migration-motion span { display:none; } .migration-tooltip { top:8px; right:8px; min-width:155px; padding:10px; font-size:12px; } .migration-tooltip b { font-size:12px; } .migration-ranking { grid-template-columns:1fr; } .migration-map-caption { flex-wrap:wrap; } }
+@media(max-width:480px) { .migration-controls { width:100%; gap:8px; } .migration-direction { flex:1; } .migration-direction button { flex:1; justify-content:center; padding:8px; font-size:13px; }   .migration-tooltip { top:8px; right:8px; min-width:155px; padding:10px; font-size:12px; } .migration-tooltip b { font-size:12px; } .migration-ranking { grid-template-columns:1fr; } .migration-map-caption { flex-wrap:wrap; } }
 
 /* Separate province focus controls from enterprise detail actions. */
 .migration-rank-row { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:5px; padding:2px 0; }
@@ -3547,7 +3543,6 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
           <button type="button" data-migration-direction="in" aria-pressed="true"><span>↘ 企业迁入</span><b>${total('in')}</b></button>
           <button type="button" data-migration-direction="out" aria-pressed="false"><span>↗ 企业迁出</span><b>${total('out')}</b></button>
         </div>
-        <button type="button" class="migration-motion" aria-label="暂停流向动画"><i aria-hidden="true">Ⅱ</i><span>暂停动效</span></button>
       </div>
     </header>
     <div class="migration-body">
@@ -3746,11 +3741,6 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
     const svg = q('svg'), paused = userPaused || !inViewport || document.hidden;
     card.classList.toggle('motion-paused', paused);
     if (svg) { if (paused) svg.pauseAnimations(); else svg.unpauseAnimations(); }
-    const button = q('.migration-motion');
-    button.setAttribute('aria-label', userPaused ? '播放流向动画' : '暂停流向动画');
-    button.setAttribute('aria-pressed', String(userPaused));
-    button.querySelector('i').textContent = userPaused ? '▷' : 'Ⅱ';
-    button.querySelector('span').textContent = userPaused ? '播放动效' : '暂停动效';
   }
   function render() {
     const rows = currentRows(), regions = provinceRows(rows), count = total(direction), isIncoming = direction === 'in';
@@ -3777,7 +3767,6 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
   }
   function setDirection(next) { if (next === direction) return; direction = next; selected = null; hovered = null; render(); }
   card.querySelectorAll('[data-migration-direction]').forEach(button => button.addEventListener('click', () => setDirection(button.dataset.migrationDirection)));
-  q('.migration-motion').addEventListener('click', () => { userPaused = !userPaused; syncMotion(); });
   ['in', 'out'].forEach(mode => {
     const metric = vitality.querySelector('.move-card.' + mode);
     metric.setAttribute('role', 'button'); metric.tabIndex = 0;
@@ -3941,57 +3930,55 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
 var dashboardHeadlineNews = [
   {
     "title": "七部门关于公布2026年安全应急装备应用推广典型案例名单的通知",
-    "summary": "公布年度典型案例名单，在技术创新、应用落地和政府服务等方面加强支持，推动安全应急装备产业创新发展。",
     "org": "工业和信息化部安全生产司",
     "date": "2026-10-15",
     "url": "https://www.miit.gov.cn/zwgk/zcwj/wjfb/tz/art/2026/art_b5ef31b619ba46499a17e1a0e3c504ce.html"
   },
   {
     "title": "2026年9月汽车工业经济运行情况",
-    "summary": "9月新能源汽车销量182.3万辆，同比增长13.6%，占汽车新车总销量61.6%；汽车整车出口同比增长61.4%。",
     "org": "工业和信息化部装备工业一司",
     "date": "2026-10-12",
     "url": "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_8a878aeeb8a34a5b88975c5bbe94f7bf.html"
   },
   {
     "title": "工业和信息化部办公厅关于公布第二批制造业数字化转型促进中心建设主体名单的通知",
-    "summary": "25家单位进入第二批建设主体名单，将突出人工智能赋能应用，帮助制造业企业特别是中小企业加快数智化转型。",
     "org": "工业和信息化部规划司",
     "date": "2026-10-10",
     "url": "https://www.miit.gov.cn/zwgk/zcwj/wjfb/tz/art/2026/art_8b73e672a24644bebd8d2514a10e1e0f.html"
   },
   {
     "title": "四部门关于开展2026年度享受增值税加计抵减政策的集成电路企业清单制定工作的通知",
-    "summary": "集成电路设计、生产、封测、装备和材料企业可申报清单，申报窗口为10月9日至16日，企业可于11月30日后查询结果。",
     "org": "工业和信息化部电子信息司",
     "date": "2026-09-30",
     "url": "https://www.miit.gov.cn/zwgk/zcwj/wjfb/tz/art/2026/art_7d2e760b4be94217b8f55caec840b30d.html"
   },
   {
     "title": "关于开展2026年度绿色工厂推荐和动态管理工作的通知",
-    "summary": "推荐范围涵盖绿色工厂、绿色供应链领航企业和绿色工业园区，各省级工业和信息化主管部门应于10月30日前报送。",
     "org": "工业和信息化部节能与综合利用司",
     "date": "2026-09-29",
     "url": "https://www.miit.gov.cn/zwgk/zcwj/wjfb/tz/art/2026/art_00dd9284b8c6479dbba8ec8895d1abec.html"
   }
 ];
 (function renderDashboardHeadlines() {
-  var body = document.getElementById('dashboardHeadlineRows');
-  dashboardHeadlineNews.forEach(function (news) {
-    var row = document.createElement('tr');
+  var list = document.getElementById('dashboardHeadlineRows');
+  dashboardHeadlineNews.forEach(function (news, index) {
+    var row = document.createElement('li');
     row.className = 'headline-row';
-    var content = document.createElement('td');
+    var rank = document.createElement('span');
+    rank.className = 'headline-rank';
+    rank.textContent = String(index + 1).padStart(2, '0');
+    rank.setAttribute('aria-hidden', 'true');
+    var content = document.createElement('div');
+    content.className = 'headline-content';
     var title = document.createElement('b');
     title.className = 'headline-title';
     title.textContent = news.title;
-    var summary = document.createElement('span');
-    summary.className = 'headline-summary';
-    summary.textContent = '：' + (news.summary || news.body);
-    content.append(title, summary);
-    var org = document.createElement('td');
+    title.title = news.title;
+    var org = document.createElement('span');
     org.className = 'headline-org';
     org.textContent = news.org;
-    var action = document.createElement('td');
+    org.title = news.org;
+    content.append(title, org);
     var link = document.createElement('a');
     link.className = 'headline-view';
     link.textContent = '查看';
@@ -3999,9 +3986,8 @@ var dashboardHeadlineNews = [
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.setAttribute('aria-label', '查看新闻原文：' + news.title);
-    action.appendChild(link);
-    row.append(content, org, action);
-    body.appendChild(row);
+    row.append(rank, content, link);
+    list.appendChild(row);
   });
 })();
 </script>
