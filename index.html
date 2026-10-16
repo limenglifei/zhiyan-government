@@ -3799,3 +3799,133 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
 <link rel="stylesheet" href="enterprise-profile-sections.css?v=20261010">
 <link rel="stylesheet" href="policy-results.css?v=20261012-support">
 <link rel="stylesheet" href="home-layout.css?v=20261012-home">
+
+<style id="support-hot-policies-styles">
+#support .hot-policy-list { display: none; }
+#support:not(.matched) #supportScopeSummary { display: flex; justify-content: center; max-width: none; margin: 12px 0 22px; padding: 0; font-size: 12px; line-height: 1.6; }
+#supportHotPolicyRecommendations { margin-top: 22px; text-align: left; }
+#supportHotPolicyRecommendations .support-hot-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+#supportHotPolicyRecommendations h3 { margin: 0; color: #203858; font-size: 15px; font-weight: 700; }
+#supportHotPolicyRecommendations .support-hot-hint { color: #8292aa; font-size: 12px; }
+#supportHotPolicyRecommendations .support-hot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-height: 402px; overflow-y: auto; padding: 3px; margin: -3px; scrollbar-width: thin; scrollbar-color: #c4cfdf transparent; }
+#supportHotPolicyRecommendations .support-hot-card { display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: center; gap: 14px; width: 100%; min-width: 0; min-height: 120px; padding: 18px; border: 1px solid #dce5f2; border-radius: 12px; background: #fff; color: #203858; text-align: left; font-family: inherit; cursor: pointer; transition: border-color .18s, background .18s, box-shadow .18s; }
+#supportHotPolicyRecommendations .support-hot-card:hover { border-color: #87b2ff; box-shadow: 0 3px 12px #3279ec0d; }
+#supportHotPolicyRecommendations .support-hot-card[aria-pressed="true"] { border-color: #4285f4; background: #f4f8ff; }
+#supportHotPolicyRecommendations .support-hot-card:focus-visible { outline: 3px solid #91b9f4; outline-offset: 0; }
+#supportHotPolicyRecommendations .support-hot-icon { display: grid; place-items: center; width: 42px; height: 48px; border-radius: 10px; background: #edf4ff; color: #387fff; }
+#supportHotPolicyRecommendations .support-hot-icon svg { width: 25px; height: 25px; }
+#supportHotPolicyRecommendations .support-hot-copy { min-width: 0; }
+#supportHotPolicyRecommendations .support-hot-title { display: block; margin-bottom: 8px; font-size: 14px; line-height: 1.5; font-weight: 700; overflow-wrap: anywhere; }
+#supportHotPolicyRecommendations .support-hot-meta, #supportHotPolicyRecommendations .support-hot-amount { display: block; color: #8494ac; font-size: 12px; line-height: 1.65; overflow-wrap: anywhere; }
+#supportHotPolicyRecommendations .support-hot-amount { margin-top: 3px; color: #6b86ad; }
+#supportHotPolicyRecommendations .support-hot-action { color: #3482ff; font-size: 12px; white-space: nowrap; }
+#supportHotPolicyRecommendations .support-hot-note { margin: 20px 0 0; color: #8798af; font-size: 12px; line-height: 1.6; }
+#supportHotPolicyRecommendations .support-hot-empty { grid-column: 1 / -1; padding: 30px 16px; border: 1px dashed #cedbed; border-radius: 12px; color: #8292aa; font-size: 13px; text-align: center; }
+#support.matched #supportHotPolicyRecommendations { display: none; }
+@media (max-width: 1100px) { #supportHotPolicyRecommendations .support-hot-card { grid-template-columns: 38px minmax(0, 1fr); gap: 10px; padding: 16px; } #supportHotPolicyRecommendations .support-hot-action { grid-column: 2; } #supportHotPolicyRecommendations .support-hot-icon { width: 38px; } }
+@media (max-width: 760px) { #supportHotPolicyRecommendations .support-hot-grid { grid-template-columns: minmax(0, 1fr); max-height: 430px; } #supportHotPolicyRecommendations .support-hot-card { min-height: 126px; } }
+</style>
+<script id="support-hot-policies-script">
+(function () {
+  'use strict';
+  var support = document.getElementById('support');
+  var inputRow = support && support.querySelector('.support-policy-input');
+  var composer = document.getElementById('supportPolicyComposerV45');
+  var input = document.getElementById('supportPolicyInput');
+  if (!inputRow || !composer || !input || document.getElementById('supportHotPolicyRecommendations')) return;
+
+  var section = document.createElement('section');
+  section.id = 'supportHotPolicyRecommendations';
+  section.setAttribute('aria-labelledby', 'supportHotPolicyHeading');
+  section.innerHTML = '<header class="support-hot-heading"><h3 id="supportHotPolicyHeading">热门政策项目推荐</h3><span class="support-hot-hint">选择政策项目，发现精准扶持企业</span></header><div class="support-hot-grid"></div><p class="support-hot-note">推荐来自当前项目库中允许参与匹配的政策项目。</p>';
+  inputRow.insertAdjacentElement('afterend', section);
+  var summary = document.getElementById('supportScopeSummary');
+  if (summary) section.insertAdjacentElement('beforebegin', summary);
+  var grid = section.querySelector('.support-hot-grid');
+
+  function projects() {
+    if (typeof knowledgeBaseConfigs === 'undefined' || !knowledgeBaseConfigs.project) return [];
+    return knowledgeBaseConfigs.project.rows.filter(function (row) {
+      // Existing project records may predate review metadata; honor explicit restrictions.
+      return row.title && row.participates !== false &&
+        !/^(pending|rejected|draft)$/i.test(row.reviewStatus || '') &&
+        !/待审核|待发布|草稿|驳回|下架|停用/.test(row.status || '');
+    });
+  }
+
+  function syncSelection() {
+    grid.querySelectorAll('.support-hot-card').forEach(function (button) {
+      var selected = composer.value.trim() === button.dataset.policyTitle;
+      button.setAttribute('aria-pressed', String(selected));
+      button.querySelector('.support-hot-action').textContent = selected ? '已选择 ✓' : '选择政策 →';
+    });
+  }
+
+  function selectProject(row) {
+    if (projects().indexOf(row) < 0) { render(); return; }
+    // Reset attachment/full-text mode through the existing composer controls.
+    var removeFile = document.querySelector('#supportComposerFileV45 button');
+    if (removeFile) removeFile.click();
+    var projectMode = document.getElementById('supportProjectModeBtn');
+    if (projectMode) projectMode.click();
+    var fullText = document.getElementById('supportPolicyFullText');
+    if (fullText) { fullText.value = ''; fullText.dispatchEvent(new Event('input', { bubbles: true })); }
+    composer.closest('.support-composer-field-v45').classList.remove('has-selected-projects-v81');
+    var hint = document.querySelector('.support-composer-hint-v45 span');
+    if (hint) hint.textContent = '支持政策项目联想 · 政策全文智能解析';
+    composer.value = row.title;
+    input.value = row.title;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    composer.dispatchEvent(new Event('input', { bubbles: true }));
+    ['supportProjectSuggestions', 'supportComposerSuggestionsV45'].forEach(function (id) {
+      var suggestions = document.getElementById(id);
+      if (suggestions) suggestions.classList.remove('open');
+    });
+    input.setAttribute('aria-expanded', 'false');
+    syncSelection();
+    composer.focus({ preventScroll: true });
+  }
+
+  function render() {
+    grid.replaceChildren();
+    var rows = projects();
+    rows.forEach(function (row) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'support-hot-card';
+      button.dataset.policyTitle = row.title;
+      button.setAttribute('aria-label', '选择政策：' + row.title);
+      button.innerHTML = '<span class="support-hot-icon" aria-hidden="true"><svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 24H5V3h17v11M9 8h9M9 12h5M9 17h3"/><circle cx="20" cy="20" r="4"/><path d="m23 23 3 3"/></svg></span><span class="support-hot-copy"><strong class="support-hot-title"></strong><span class="support-hot-meta"></span><span class="support-hot-amount"></span></span><span class="support-hot-action" aria-hidden="true"></span>';
+      button.querySelector('.support-hot-title').textContent = row.title;
+      button.querySelector('.support-hot-meta').textContent = [row.category, row.region || row.level].filter(Boolean).join(' · ');
+      button.querySelector('.support-hot-amount').textContent = row.amount || '支持金额以政策说明为准';
+      button.addEventListener('click', function () { selectProject(row); });
+      grid.appendChild(button);
+    });
+    if (!rows.length) {
+      var empty = document.createElement('div');
+      empty.className = 'support-hot-empty';
+      empty.textContent = '暂无可推荐的政策项目，可在上方输入政策名称或政策全文。';
+      grid.appendChild(empty);
+    }
+    syncSelection();
+  }
+  composer.addEventListener('input', syncSelection);
+  // Keep recommendations in sync after library edits and returning to this page.
+  var previousRender = window.renderKnowledgeList;
+  if (typeof previousRender === 'function') window.renderKnowledgeList = function () {
+    var result = previousRender.apply(this, arguments);
+    render();
+    return result;
+  };
+  new MutationObserver(render).observe(support, { attributes: true, attributeFilter: ['class'] });
+  function openSupportFromHash() {
+    if (location.hash !== '#support') return;
+    var navigation = document.querySelector('.nav[data-view="support"]');
+    if (navigation) navigation.click();
+  }
+  window.addEventListener('hashchange', openSupportFromHash);
+  render();
+  openSupportFromHash();
+})();
+</script>
