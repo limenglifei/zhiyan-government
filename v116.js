@@ -2,7 +2,7 @@
   'use strict';
 
   var NODE_TYPES_V116 = ['核心节点', '一般节点', '配套服务'];
-  var NODE_STRENGTHS_V116 = ['优势节点', '弱势节点'];
+  var NODE_STRENGTHS_V116 = ['强', '弱', '普通'];
   var activeNodeEditIndexV116 = null;
   var activeChainIndexV116 = null;
   var pendingStrengthByNameV116 = null;
@@ -27,15 +27,23 @@
   }
 
   function inferStrengthV116(node, legacyType) {
-    if (NODE_STRENGTHS_V116.indexOf(node && node.strength) > -1) return node.strength;
-    if (node && (node.weak === true || node.isWeak === true)) return '弱势节点';
-    return /薄弱|弱势/.test(legacyType) ? '弱势节点' : '优势节点';
+    var strength = String(node && node.strength || '').trim();
+    if (NODE_STRENGTHS_V116.indexOf(strength) > -1) return strength;
+    if (/^(优势节点|优势|强势节点|强势|strong|advantage)$/i.test(strength)) return '强';
+    if (/^(弱势节点|弱势|薄弱节点|薄弱|weak)$/i.test(strength)) return '弱';
+    if (/^(普通节点|一般节点|normal|ordinary|neutral)$/i.test(strength)) return '普通';
+    if (node && (node.weak === true || node.isWeak === true)) return '弱';
+    if (/薄弱|弱势|^弱$/.test(legacyType)) return '弱';
+    if (/优势|强势|^强$/.test(legacyType)) return '强';
+    return '普通';
   }
 
   function normalizeNodeV116(node) {
     if (!node) return node;
     var legacyType = String(node.nodeType || node.type || '一般节点');
     node.strength = inferStrengthV116(node, legacyType);
+    node.weak = node.strength === '弱';
+    if (Object.prototype.hasOwnProperty.call(node, 'isWeak')) node.isWeak = node.weak;
     if (NODE_TYPES_V116.indexOf(legacyType) > -1) node.nodeType = legacyType;
     else if (/核心|关键/.test(legacyType)) node.nodeType = '核心节点';
     else if (/配套|服务/.test(legacyType)) node.nodeType = '配套服务';
@@ -58,12 +66,13 @@
     if (!document.getElementById('graphNodeStrengthV116')) {
       var label = document.createElement('label');
       label.className = 'graph-node-strength-field-v116';
-      label.innerHTML = '<span>节点强弱 *</span><select id="graphNodeStrengthV116"><option value="优势节点">优势节点</option><option value="弱势节点">弱势节点</option></select>';
+      label.innerHTML = '<span>节点强弱 *</span><select id="graphNodeStrengthV116"><option value="强">强</option><option value="弱">弱</option><option value="普通" selected>普通</option></select>';
       var type = document.getElementById('graphNodeTypeV47');
       var typeLabel = type && type.closest('label');
       if (typeLabel && typeLabel.nextSibling) form.insertBefore(label, typeLabel.nextSibling);
       else form.appendChild(label);
     }
+    setOptionsV116(document.getElementById('graphNodeStrengthV116'), NODE_STRENGTHS_V116);
     var subtitle = document.querySelector('#graphNodeEditModalV47 .collection-modal header p');
     if (subtitle) subtitle.textContent = '调整节点名称、所属环节、节点类型与节点强弱';
   }
@@ -75,16 +84,32 @@
       var node = graphBuilderNodes[index];
       if (!node) return;
       normalizeNodeV116(node);
-      card.classList.toggle('node-advantage-v116', node.strength === '优势节点');
-      card.classList.toggle('node-weak-v116', node.strength === '弱势节点');
+      card.classList.toggle('node-advantage-v116', node.strength === '强');
+      card.classList.toggle('node-weak-v116', node.strength === '弱');
+      card.classList.toggle('node-normal-v116', node.strength === '普通');
       card.dataset.nodeTypeV116 = node.nodeType;
       card.dataset.nodeStrengthV116 = node.strength;
       var meta = card.querySelector(':scope > span');
       if (meta) {
         meta.className = 'graph-node-meta-v116';
-        meta.innerHTML = '<em class="' + (node.strength === '弱势节点' ? 'weak' : 'advantage') + '">' +
+        var badgeClass = node.strength === '强' ? 'advantage' : (node.strength === '弱' ? 'weak' : 'normal');
+        meta.innerHTML = '<em class="' + badgeClass + '">' +
           escV116(node.strength) + '</em><span>' + escV116(node.nodeType) + ' · ' + escV116(node.source || '业务维护') + '</span>';
       }
+    });
+  }
+
+  function decorateIndustryNodesV116() {
+    document.querySelectorAll('.chain-node').forEach(function (card) {
+      var strength = card.classList.contains('weak') ? '弱' : (card.classList.contains('advantage') ? '强' : '普通');
+      var badge = card.querySelector(':scope > em');
+      if (!badge) {
+        badge = document.createElement('em');
+        card.appendChild(badge);
+      }
+      badge.className = strength === '强' ? 'normal node-strength-strong' : (strength === '弱' ? 'node-strength-weak' : 'node-strength-ordinary');
+      badge.textContent = strength;
+      card.dataset.nodeStrength = strength;
     });
   }
 
@@ -93,19 +118,18 @@
   }
 
   function strengthNamesV116(row, strength) {
-    var preset = strength === '优势节点'
+    var empty = strength === '强' ? '暂无优势环节' : '暂无薄弱环节';
+    if (Array.isArray(row.graphNodes)) {
+      var names = row.graphNodes.map(normalizeNodeV116).filter(function (node) {
+        return node.strength === strength;
+      }).map(function (node) { return node.name; });
+      return names.join('、') || empty;
+    }
+    var preset = strength === '强'
       ? (row.advantageSegments || row.advantageLinks || row.advantage)
       : row.weak;
-    if (preset && !/^\d+\s*个$/.test(String(preset))) return splitNamesV116(preset).join('、');
-    var nodes = Array.isArray(row.graphNodes) ? row.graphNodes.map(normalizeNodeV116) : [];
-    var names = nodes.filter(function (node) { return node.strength === strength; }).map(function (node) { return node.name; });
-    if (names.length) return names.join('、');
-    if (strength === '优势节点') {
-      var weak = splitNamesV116(row.weak);
-      var skeleton = splitNamesV116(row.structure || row.sub).filter(function (name) { return weak.indexOf(name) < 0; });
-      return skeleton.slice(0, 3).join('、') || '暂无数据，待业务补充';
-    }
-    return preset || '暂无薄弱环节';
+    if (strength === '弱' && /^\d+\s*个$/.test(String(preset))) return String(preset).trim();
+    return preset && !/^\d+\s*个$/.test(String(preset)) ? splitNamesV116(preset).join('、') : empty;
   }
 
   function chainDescriptionV116(row) {
@@ -132,7 +156,7 @@
     });
     if (!weak) return;
     weak.classList.add('wide', 'chain-weak-field-v116');
-    weak.querySelector('dd').textContent = strengthNamesV116(row, '弱势节点');
+    weak.querySelector('dd').textContent = strengthNamesV116(row, '弱');
     var advantage = Array.from(body.querySelectorAll('.kb-field')).find(function (field) {
       return normalizeTextV116(field.querySelector('dt') && field.querySelector('dt').textContent) === '优势环节';
     });
@@ -142,7 +166,7 @@
       advantage.innerHTML = '<dt>优势环节</dt><dd></dd>';
       weak.parentNode.insertBefore(advantage, weak);
     }
-    advantage.querySelector('dd').textContent = strengthNamesV116(row, '优势节点');
+    advantage.querySelector('dd').textContent = strengthNamesV116(row, '强');
   }
 
   function installV116() {
@@ -150,6 +174,16 @@
     window.__chainNodeModelV116Installed = true;
     ensureNodeFieldsV116();
     normalizeAllNodesV116();
+    decorateIndustryNodesV116();
+
+    var previousIndustryRender = window.renderIndustryGraph;
+    if (typeof previousIndustryRender === 'function') {
+      window.renderIndustryGraph = function () {
+        var result = previousIndustryRender.apply(this, arguments);
+        decorateIndustryNodesV116();
+        return result;
+      };
+    }
 
     var previousRender = window.renderGraphNodes;
     if (typeof previousRender === 'function') {
@@ -169,7 +203,7 @@
         ensureNodeFieldsV116();
         var result = previousOpenNew.apply(this, arguments);
         document.getElementById('graphNodeTypeV47').value = '核心节点';
-        document.getElementById('graphNodeStrengthV116').value = '优势节点';
+        document.getElementById('graphNodeStrengthV116').value = '普通';
         return result;
       };
     }
@@ -194,6 +228,7 @@
     if (typeof previousSaveNode === 'function') {
       window.saveGraphNodeEditorV47 = function () {
         ensureNodeFieldsV116();
+        if (!document.getElementById('graphNodeNameV47').value.trim()) return previousSaveNode.apply(this, arguments);
         var strength = document.getElementById('graphNodeStrengthV116').value;
         var type = document.getElementById('graphNodeTypeV47').value;
         var before = typeof graphBuilderNodes !== 'undefined' ? graphBuilderNodes.length : 0;
@@ -206,7 +241,7 @@
             node.nodeType = type;
             node.type = type;
             node.strength = strength;
-            node.weak = strength === '弱势节点';
+            normalizeNodeV116(node);
           }
           if (typeof window.renderGraphNodes === 'function') window.renderGraphNodes();
         }
@@ -226,22 +261,49 @@
       };
     }
 
+    var previousSaveSkeleton = window.saveChainSkeletonV61;
+    if (typeof previousSaveSkeleton === 'function') {
+      window.saveChainSkeletonV61 = function () {
+        var row = activeChainIndexV116 !== null && knowledgeBaseConfigs && knowledgeBaseConfigs.chain
+          ? knowledgeBaseConfigs.chain.rows[activeChainIndexV116] : null;
+        var existing = row && Array.isArray(row.graphNodes) ? row.graphNodes.map(function (node) {
+          return normalizeNodeV116(Object.assign({}, node));
+        }) : [];
+        var result = previousSaveSkeleton.apply(this, arguments);
+        if (row && Array.isArray(row.graphNodes)) {
+          row.graphNodes.forEach(function (node) {
+            var previousIndex = existing.findIndex(function (item) { return item.name === node.name && item.stage === node.stage; });
+            if (previousIndex < 0) previousIndex = existing.findIndex(function (item) { return item.name === node.name; });
+            if (previousIndex > -1) {
+              var previous = existing.splice(previousIndex, 1)[0];
+              node.nodeType = previous.nodeType;
+              node.strength = previous.strength;
+            }
+            normalizeNodeV116(node);
+          });
+        }
+        return result;
+      };
+    }
+
     var previousOpenBasic = window.openChainBasicV61;
     if (typeof previousOpenBasic === 'function') {
       window.openChainBasicV61 = function (index) {
         activeChainIndexV116 = Number(index);
-        pendingStrengthByNameV116 = {};
+        pendingStrengthByNameV116 = Object.create(null);
         var row = knowledgeBaseConfigs && knowledgeBaseConfigs.chain && knowledgeBaseConfigs.chain.rows[activeChainIndexV116];
         if (row) {
           (row.graphNodes || []).forEach(function (node) {
             normalizeNodeV116(node);
             pendingStrengthByNameV116[node.name] = node.strength;
           });
-          if (row.weak && !/^\d+\s*个$/.test(String(row.weak))) {
-            splitNamesV116(row.weak).forEach(function (name) { pendingStrengthByNameV116[name] = '弱势节点'; });
-          }
-          if (row.advantage) {
-            splitNamesV116(row.advantage).forEach(function (name) { pendingStrengthByNameV116[name] = '优势节点'; });
+          if (!Array.isArray(row.graphNodes)) {
+            if (row.weak && !/^\d+\s*个$/.test(String(row.weak))) {
+              splitNamesV116(row.weak).forEach(function (name) { pendingStrengthByNameV116[name] = '弱'; });
+            }
+            splitNamesV116(row.advantageSegments || row.advantageLinks || row.advantage).forEach(function (name) {
+              if (!pendingStrengthByNameV116[name]) pendingStrengthByNameV116[name] = '强';
+            });
           }
         }
         return previousOpenBasic.apply(this, arguments);
@@ -257,7 +319,7 @@
             normalizeNodeV116(node);
             if (pendingStrengthByNameV116[node.name]) {
               node.strength = pendingStrengthByNameV116[node.name];
-              node.weak = node.strength === '弱势节点';
+              normalizeNodeV116(node);
             }
           });
           pendingStrengthByNameV116 = null;
@@ -292,8 +354,8 @@
           if (row && snapshot.length) {
             row.graphNodes = snapshot;
             row.nodes = String(snapshot.length);
-            row.advantage = snapshot.filter(function (node) { return node.strength === '优势节点'; }).map(function (node) { return node.name; }).join('、') || '暂无数据，待业务补充';
-            row.weak = snapshot.filter(function (node) { return node.strength === '弱势节点'; }).map(function (node) { return node.name; }).join('、') || '暂无薄弱环节';
+            row.advantage = snapshot.filter(function (node) { return node.strength === '强'; }).map(function (node) { return node.name; }).join('、') || '暂无优势环节';
+            row.weak = snapshot.filter(function (node) { return node.strength === '弱'; }).map(function (node) { return node.name; }).join('、') || '暂无薄弱环节';
           }
         }
         return result;
@@ -311,7 +373,7 @@
 
     if (window.prototypeLogicAnnotations && window.prototypeLogicAnnotations.knowledgeList) {
       window.prototypeLogicAnnotations.knowledgeList.fields = window.prototypeLogicAnnotations.knowledgeList.fields || [];
-      window.prototypeLogicAnnotations.knowledgeList.fields.push(['产业链节点强弱', '节点类型与节点强弱独立维护。', '节点类型仅支持核心节点、一般节点、配套服务；节点强弱仅支持优势节点、弱势节点，并用于汇总优势环节和关键薄弱环节。']);
+      window.prototypeLogicAnnotations.knowledgeList.fields.push(['产业链节点强弱', '节点类型与节点强弱独立维护。', '节点类型仅支持核心节点、一般节点、配套服务；节点强弱支持强、弱、普通三分类，新节点默认为普通；仅强节点汇总为优势环节，仅弱节点汇总为关键薄弱环节，普通节点不计入这两类。']);
     }
   }
 

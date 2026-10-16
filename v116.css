@@ -1,4 +1,4 @@
-/* v116: industry-chain summary, advantage links and separated node strength */
+/* v116: industry-chain summary and independent strong / weak / ordinary node strength */
 #kbDetailBody .chain-summary-field-v116 dd,
 #kbDetailBody .chain-advantage-field-v116 dd,
 #kbDetailBody .chain-weak-field-v116 dd {
@@ -50,6 +50,13 @@
   background: #fff0eb;
   border: 1px solid #f4b8a7;
 }
+#graphBuilderModal .graph-node-meta-v116 em.normal {
+  color: #526174;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+}
+.chain-node em.node-strength-ordinary { color: #7d899c; }
+#graphBuilderModal .graph-preview-node.node-normal-v116 { border-color: #cbd5e1; }
 #graphBuilderModal .graph-preview-node.node-advantage-v116 { border-color: #9edcc9; }
 #graphBuilderModal .graph-preview-node.node-weak-v116 { border-color: #f0ac99; }
 
