@@ -1,0 +1,16 @@
+#dashboardHeadlines { overflow: hidden; }
+#dashboardHeadlines .card-title { margin-bottom: 8px; }
+#dashboardHeadlines .headline-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+#dashboardHeadlines .headline-table th,
+#dashboardHeadlines .headline-table td { padding: 11px 8px; text-align: left; vertical-align: top; border-bottom: 1px solid #edf1f6; overflow-wrap: anywhere; }
+#dashboardHeadlines .headline-table th { background: #f7f9fc; color: #7b899b; font-size: 11px; font-weight: 500; }
+#dashboardHeadlines .headline-table th:first-child { width: 64%; }
+#dashboardHeadlines .headline-table th:nth-child(2) { width: 22%; }
+#dashboardHeadlines .headline-table th:last-child { width: 14%; }
+#dashboardHeadlines .headline-table tr:last-child td { border-bottom: 0; }
+#dashboardHeadlines .headline-title { display: block; color: #263b55; font-size: 12px; line-height: 1.6; font-weight: 600; }
+#dashboardHeadlines .headline-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; color: #8390a3; font-size: 11px; line-height: 1.65; margin-top: 4px; }
+#dashboardHeadlines .headline-org { color: #6f7e92; font-size: 11px; line-height: 1.7; }
+#dashboardHeadlines .headline-view { display: inline-block; border: 0; padding: 3px 0; text-decoration: none; background: transparent; color: #2673df; font-size: 12px; white-space: nowrap; cursor: pointer; }
+#dashboardHeadlines .headline-view:hover { text-decoration: underline; }
+#dashboardHeadlines .headline-view:focus-visible { outline: 2px solid #2673df; outline-offset: 3px; border-radius: 2px; }
