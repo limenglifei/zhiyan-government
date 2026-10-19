@@ -12,6 +12,15 @@
     {id:'logistics',topic:'物流中断',level:3,title:'承运枢纽中断情景，关键材料运输路线需改配',region:'华东',time:'10-18 10:20',entities:['海州国际物流（示例）'],role:'物流伙伴',move:'物流与停产',material:'电芯及关键原料',fact:'演示情景：主要中转枢纽暂时停止作业，原运输方案无法覆盖部分交货窗口。',path:['枢纽中断','在途批次滞留','生产补料延迟'],impact:'需结合运单和生产排期核验实际影响，尚未测算损失金额。',actions:['确认受影响运单、预计恢复时间及责任方。','调配替代承运商、铁路或其他枢纽。','与生产部门校准物料齐套计划。'],source:'模拟承运商通知 / 运单台账',status:'待核验',confidence:'运输关系匹配，延误时长待确认'},
     {id:'policy',topic:'宏观政策',level:2,title:'行业监管要求调整情景，关注合规投入与订单兑现',region:'中国',time:'10-17 17:00',entities:['海州新能源科技（示例）','海州整车制造（示例）'],role:'核心企业 / 头部客户',move:'重大政策',material:'电池合规与回收',fact:'演示情景：电池行业监管要求调整，可能涉及产品合规、回收管理和验收材料。',path:['监管要求变化','合规与认证成本变化','交付验收及回款影响'],impact:'政策适用对象、生效时间与存量订单过渡安排均需逐项核验。',actions:['核对政策原文与适用主体。','盘点认证、回收与追溯材料缺口。','与客户确认验收及付款安排。'],source:'模拟政策资料 / 企业合规台账',status:'待核验',confidence:'行业适用性待确认'}
   ];
+  var references = {
+    trade: {org:'美国商务部 BIS',date:'2023-10-17',title:'Commerce Strengthens Restrictions on Advanced Computing Semiconductors, Semiconductor Manufacturing Equipment, and Supercomputing Items to Countries of Concern',url:'https://www.bis.gov/press-release/commerce-strengthens-restrictions-advanced-computing-semiconductors-semiconductor-manufacturing-equipment'},
+    weather: {org:'交通运输部',date:'2025-12-31',title:'交通运输部强化低温雨雪冰冻等灾害天气主动防御',url:'https://www.mot.gov.cn/xinwen/jiaotongyaowen/202601/t20260113_4197213.html'},
+    geo: {org:'马士基',date:'2025-01-24',title:'Red Sea / Gulf of Aden Update',url:'https://www.maersk.com/news/articles/2025/01/24/red-sea-gulf-of-aden-update'},
+    tech: {org:'宁德时代',date:'2025-04-21',title:'钠新电池+双核架构！宁德时代开启多核时代',url:'https://www.catl.com/news/8400.html'},
+    health: {org:'生态环境部（国务院文件转载）',date:'2020-02-22 · 历史主题参考',title:'国务院联防联控机制关于印发企事业单位复工复产疫情防控措施指南的通知（历史参考）',url:'https://www.mee.gov.cn/zcwj/gwywj/202002/t20200227_766377.shtml'},
+    logistics: {org:'国际货币基金组织 IMF',date:'2024-03-07',title:'Red Sea Attacks Disrupt Global Trade',url:'https://www.imf.org/en/Blogs/Articles/2024/03/07/Red-Sea-Attacks-Disrupt-Global-Trade'},
+    policy: {org:'工业和信息化部',date:'2026-01-16',title:'新能源汽车废旧动力电池回收和综合利用管理暂行办法',url:'https://www.miit.gov.cn/gyhxxhb/jgsj/cyzcyfgs/bmgz/jdcjxl/art/2026/art_392462fdc40c415ea4a4129cac3028c2.html'}
+  };
   var initial = [
     {id:'s-trade',name:'关键材料与跨境风险',type:'topic',topics:['贸易冲突','地缘政治','宏观政策'],target:'',role:'',moves:[],region:'全球',keyword:'',level:2,enabled:true},
     {id:'s-weather',name:'华东生产与运输连续性',type:'topic',topics:['极端天气','疫情','物流中断'],target:'',role:'',moves:[],region:'华东',keyword:'',level:2,enabled:true},
@@ -43,7 +52,7 @@
   } catch (error) {}
   var view = 'events', selected = null, filterTopic = '', filterLevel = '', query = '', onlyMine = false, editing = null, modalFocus = null;
   var analysis = {id:null, status:'idle', texts:[], index:0, offset:0, timer:null, token:0};
-  var stageNames = ['开场白','深度推理分析','操作建议','来源依据'];
+  var stageNames = ['深度推理分析','操作建议'];
   var root = document.createElement('section');
   root.className = 'content view'; root.id = 'supplyRisk';
   document.querySelector('.main').appendChild(root);
@@ -76,7 +85,7 @@
     var active = state.subscriptions.filter(function(s){return s.enabled}).length;
     var high = events.filter(function(event){return event.level === 3 && matched(event).length && !state.handled.includes(event.id)}).length;
     return '<div class="sr-head"><div><label class="sr-eyebrow">SUPPLY CHAIN RISK INTELLIGENCE</label><h1>供应链风控</h1><p>聚焦外部事件与企业重大动作，动态研判供应链影响。</p></div><button class="sr-btn sr-primary" data-action="new">＋ 新建订阅</button></div>' +
-      '<div class="sr-notice"><b>交互演示 · 示例数据</b>以下事件与 AI 输出均为模拟演示。订阅规则保存在当前浏览器；真实事件采集与在线 AI 分析待接入。</div>' +
+      '<div class="sr-notice"><b>交互演示 · 示例数据</b>以下事件与企业关系为模拟情景，“查看原文”指向主题参考资料。订阅规则保存在当前浏览器；真实事件采集与在线 AI 分析待接入。</div>' +
       '<div class="sr-metrics">' + [[active,'生效订阅','主题领域与重点企业','◎'],[high,'待关注高风险','命中订阅的模拟事件','!'],[events.length,'风险情景','覆盖七类外部冲击','⌁']].map(function(m){return '<div class="sr-metric"><div><label>'+m[1]+'</label><strong>'+m[0]+'</strong><small>'+m[2]+'</small></div><i>'+m[3]+'</i></div>'}).join('') + '</div>' +
       '<div class="sr-tabs" role="tablist" aria-label="风控工作台">' + [['events','风险情报'],['subscriptions','我的订阅']].map(function(t){return '<button role="tab" aria-selected="'+(view===t[0])+'" class="'+(view===t[0]?'active':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('') + '</div>';
   }
@@ -92,10 +101,11 @@
     return '<div class="sr-toolbar"><input id="srSearch" aria-label="搜索事件、企业或物料" placeholder="搜索事件、企业或关键物料" value="'+esc(query)+'"><select id="srTopic" aria-label="主题领域"><option value="">全部主题领域</option>'+topics.map(function(topic){return '<option'+(filterTopic===topic?' selected':'')+'>'+topic+'</option>'}).join('')+'</select><select id="srLevel" aria-label="风险等级"><option value="">全部风险等级</option>'+[3,2,1].map(function(n){return '<option value="'+n+'"'+(filterLevel===String(n)?' selected':'')+'>'+levelText(n)+'</option>'}).join('')+'</select><label class="sr-muted"><input id="srOnlyMine" type="checkbox"'+(onlyMine?' checked':'')+'> 只看命中订阅</label></div>' +
       '<div class="sr-body"><div class="sr-card sr-feed"><div class="sr-list-head"><h2>风险情报流</h2><span>'+list.length+' 条模拟事件</span></div>' +
       (list.length ? list.map(function(item){return '<button class="sr-event '+(item.id===selected?'active':'')+'" data-event="'+item.id+'" aria-pressed="'+(item.id===selected)+'"><div class="sr-event-top"><span>'+badge(item)+' <span class="sr-badge">'+item.topic+'</span></span><small>场景 '+item.time+'</small></div><b>'+item.title+'</b><p>'+item.material+' · '+item.entities.join('、')+'</p><footer><span>'+item.region+' · '+item.source.split(' / ')[0]+'</span><span>'+(state.handled.includes(item.id)?'已确认关注':matched(item).length+' 项订阅命中')+' →</span></footer></button>'}).join('') : '<div class="sr-empty">暂无符合条件的情景<br>请调整主题、等级或搜索条件。</div>') + '</div>' +
-      (event ? detail(event) : '<article class="sr-card sr-analysis-empty"><i>✦</i><h2>选择一个事件，开始 AI 动态分析</h2><p>从左侧情报流选择风险事件，分析助手将依次输出：</p><div>开场白　→　深度推理分析　→　操作建议　→　来源依据</div><p class="sr-muted">结合供应链关系识别潜在影响，区分事件事实、研判与待核验项。</p></article>') + '</div>';
+      (event ? detail(event) : '<article class="sr-card sr-analysis-empty"><i>✦</i><h2>选择一个事件，开始 AI 动态分析</h2><p>从左侧情报流选择风险事件，分析助手将依次输出：</p><div>深度推理分析　→　操作建议</div><p class="sr-muted">点击事件标题下的“查看原文”，新开标签页阅读主题参考资料。</p></article>') + '</div>';
   }
   function detail(event) {
-    return '<article class="sr-card sr-analysis-card" data-analysis-event="'+event.id+'"><div class="sr-detail-head">'+badge(event)+' <span class="sr-badge">'+event.topic+'</span><h2>'+event.title+'</h2><p>'+event.region+' · 场景时间 '+event.time+' · '+event.source.split(' / ')[0]+'</p><p class="sr-event-summary">'+event.fact+'</p><div>'+event.entities.map(function(name){return '<span class="sr-chip">'+name+'</span>'}).join('')+'</div></div>' +
+    var reference = references[event.id];
+    return '<article class="sr-card sr-analysis-card" data-analysis-event="'+event.id+'"><div class="sr-detail-head">'+badge(event)+' <span class="sr-badge">'+event.topic+'</span><h2>'+event.title+'</h2><p>'+event.region+' · 场景时间 '+event.time+'</p><div class="sr-source-meta"><span>参考来源：'+esc(reference.org)+'</span><span>'+esc(reference.date)+'</span><a class="sr-original" href="'+esc(reference.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(reference.title)+'" aria-label="查看主题参考原文：'+esc(reference.title)+'">↗ 查看原文</a></div><p class="sr-event-summary">'+event.fact+'</p><div>'+event.entities.map(function(name){return '<span class="sr-chip">'+name+'</span>'}).join('')+'</div></div>' +
       '<div class="sr-agent"><header class="sr-agent-head"><div class="sr-agent-identity"><i>✦</i><div><b>智研供应链分析助手</b><small>围绕企业暴露、业务传导与应对动作进行研判 · 演示</small></div></div><div class="sr-agent-tools"><span id="srAnalysisStatus" role="status" aria-live="polite"></span><button class="sr-link" data-action="pause" id="srPause">暂停输出</button><button class="sr-link" data-action="resume" id="srResume" hidden>继续输出</button><button class="sr-link" data-action="restart">重新分析</button></div></header><div id="srAnalysisBody" aria-busy="true">' +
       stageNames.map(function(name,index){return '<section class="sr-answer-section waiting" data-stage="'+index+'"><h3><i>0'+(index+1)+'</i>'+name+'</h3><div class="sr-answer-content"></div></section>'}).join('') + '</div></div>' +
       '<footer class="sr-analysis-footer"><span class="sr-muted">适用链条：'+chain+'<br>命中订阅：'+(matched(event).map(function(s){return esc(s.name)}).join('、')||'暂无匹配订阅')+'</span><div class="sr-actions"><button class="sr-btn" data-action="handle" data-id="'+event.id+'">'+(state.handled.includes(event.id)?'取消关注确认':'确认关注')+'</button><button class="sr-btn sr-primary" data-action="evaluate">评估这条供应链 ↗</button></div></footer></article>';
@@ -103,15 +113,9 @@
   function textsFor(event) {
     var detailContext = context[event.id];
     return [
-      '你好，我是智研供应链分析助手。我将围绕「'+event.title+'」，分析其对'+chain+'的潜在影响，并给出下一步核验与应对建议。本次为模拟情景分析，不代表事件已发生或相关企业已受损。',
       '事件判断：'+event.fact.replace(/^演示情景：/,'')+'\n\n业务传导：'+event.path.join(' → ')+'。'+detailContext.reason+'\n\n企业暴露：'+event.entities.join('、')+'作为'+event.role+'，关联'+event.material+'。'+event.impact+'\n\n结论边界：当前为'+levelText(event.level)+'情景。'+event.confidence+'；在取得真实公告及企业经营证据前，不计算损失金额、停产天数或信用结论。',
-      event.actions.map(function(action,index){return (index+1)+'．'+['优先核验','准备备选','协同闭环'][index]+'｜'+detailContext.owners[index]+'\n'+action}).join('\n\n')+'\n\n跟踪要求：为上述行动明确责任人、核验材料与复核时间，根据新证据更新风险判断。',
-      '本次分析使用预置模拟事件及虚构供应链关系，尚未连接外部信源。事件材料用于说明风险信号，关系材料用于说明企业暴露，分析结论属于待核验研判。\n\n实际业务需补充：'+detailContext.verify+'。来源材料齐备后，应核对原文、统计期间及与本企业的适用关系。'
+      event.actions.map(function(action,index){return (index+1)+'．'+['优先核验','准备备选','协同闭环'][index]+'｜'+detailContext.owners[index]+'\n'+action}).join('\n\n')+'\n\n跟踪要求：为上述行动明确责任人、核验材料与复核时间，根据新证据更新风险判断。'
     ];
-  }
-  function sourceCards(event) {
-    var parts = event.source.split(' / ');
-    return '<div class="sr-source-list"><div class="sr-source-item"><header><b>[S1] '+esc(parts[0])+'</b><span>模拟材料</span></header><p>对应事件信号：'+esc(event.fact)+'当前无真实公告原文，不能作为事件已发生的证明。</p><small>类型：外部事件素材 · 场景时间 '+event.time+'（非采集时间）</small></div><div class="sr-source-item"><header><b>[S2] '+esc(parts[1]||'供应链关系台账')+'</b><span>虚构关系</span></header><p>'+esc(event.entities.join('、'))+' → '+esc(event.material)+' → '+chain+'。仅用于说明影响路径，尚需核验真实供需关系。</p><small>类型：内部关系素材 · 数据日期 2026-10-19（演示）</small></div><div class="sr-source-item"><header><b>[S3] 业务核验清单</b><span>待补充</span></header><p>'+esc(context[event.id].verify)+'。</p><small>状态：未获取 / 未核验 · 用途：复核实际影响</small></div></div><button class="sr-link" data-action="evidence" data-id="'+event.id+'">查看来源与核验说明 ↗</button>';
   }
   function startAnalysis(event) {
     cancelAnalysis(); selected = event.id;
@@ -122,14 +126,14 @@
     var token = analysis.token;
     analysis.timer = setTimeout(function(){
       if (token !== analysis.token || analysis.status !== 'running' || selected !== analysis.id || view !== 'events') return;
-      analysis.offset = Math.min(analysis.offset + 10, analysis.texts[analysis.index].length);
+      analysis.offset = Math.min(analysis.offset + 8, analysis.texts[analysis.index].length);
       if (analysis.offset >= analysis.texts[analysis.index].length) {
         if (analysis.index === stageNames.length - 1) analysis.status = 'complete';
         else { analysis.index++; analysis.offset = 0; }
       }
       paintAnalysis();
       if (analysis.status === 'running') scheduleStep(); else analysis.timer = null;
-    },35);
+    },45);
   }
   function paintAnalysis() {
     var body = root.querySelector('#srAnalysisBody'); if (!body || !analysis.texts.length || selected !== analysis.id) return;
@@ -138,7 +142,6 @@
     body.dataset.analysisState = analysis.status;
     root.querySelector('#srAnalysisStatus').textContent = complete ? '分析完成' : analysis.status === 'paused' ? '已暂停' : '动态分析中…';
     root.querySelector('#srPause').hidden = analysis.status !== 'running'; root.querySelector('#srResume').hidden = analysis.status !== 'paused';
-    var event = events.find(function(item){return item.id === analysis.id});
     body.querySelectorAll('[data-stage]').forEach(function(section,index){
       var done = complete || index < analysis.index;
       var active = !complete && index === analysis.index;
@@ -146,7 +149,7 @@
       var content = section.querySelector('.sr-answer-content');
       if (index > analysis.index) { content.textContent = '等待输出'; return; }
       var text = done ? analysis.texts[index] : analysis.texts[index].slice(0,analysis.offset);
-      content.innerHTML = '<p>'+esc(text)+(active && analysis.status === 'running' ? '<span class="sr-cursor" aria-hidden="true"></span>' : '')+'</p>' + (index === 3 && complete ? sourceCards(event) : '');
+      content.innerHTML = '<p>'+esc(text)+(active && analysis.status === 'running' ? '<span class="sr-cursor" aria-hidden="true"></span>' : '')+'</p>';
     });
   }
   function pauseAnalysis() { if (analysis.status === 'running') { cancelAnalysis(); analysis.status = 'paused'; paintAnalysis(); } }
@@ -184,9 +187,6 @@
     if (index < 0) state.subscriptions.push(data); else { data.enabled = state.subscriptions[index].enabled; state.subscriptions[index] = Object.assign({},state.subscriptions[index],data); }
     save(); closeModal(); pauseAnalysis(); view = 'subscriptions'; render(); notify('订阅规则已保存至当前浏览器。');
   }
-  function evidence(event) {
-    openModal('<header><div><h2 id="srModalTitle">来源依据与核验说明</h2><p>'+esc(event.title)+'</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-evidence-body"><p class="sr-confirm-note">此条为模拟事件，未连接真实信源，不是已发生的新闻或企业风险事实。</p><h3>事件材料</h3><p>'+esc(event.fact)+'<br>素材类型：'+esc(event.source)+'<br>场景时间：'+event.time+'（非真实采集时间）<br>状态：未联网取证 / 待人工核验</p><h3>企业暴露与判断边界</h3><p>'+esc(event.impact)+'<br>当前关系与业务影响均待真实材料复核，不直接认定违约、停产、损失或信用风险。</p><h3>下一步需补充</h3><p>'+esc(context[event.id].verify)+'。核对原文、发布机构、时间、适用范围及其与本企业的关联。</p></div>');
-  }
   root.addEventListener('click',function(event){
     var button = event.target.closest('button'); if (!button) return;
     if (button.dataset.tab) { if (button.dataset.tab !== 'events') pauseAnalysis(); view = button.dataset.tab; render(); return; }
@@ -201,7 +201,6 @@
       case 'pause': pauseAnalysis(); break;
       case 'resume': resumeAnalysis(); break;
       case 'restart': if (selected) startAnalysis(events.find(function(item){return item.id === selected})); break;
-      case 'evidence': evidence(events.find(function(item){return item.id === id})); break;
       case 'handle': if (state.handled.includes(id)) state.handled = state.handled.filter(function(value){return value !== id}); else state.handled.push(id); save(); render(); break;
       case 'evaluate': pauseAnalysis(); if (window.supplyEvaluationLoad) window.supplyEvaluationLoad({chain:chain,enterprise:core,region:'华东'}); else notify('评价模块加载中，请稍后重试。'); break;
     }
