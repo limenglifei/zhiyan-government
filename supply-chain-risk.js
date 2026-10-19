@@ -13,43 +13,224 @@
     {id:'policy',topic:'宏观政策',level:2,title:'行业监管要求调整情景，关注合规投入与订单兑现',region:'中国',time:'10-17 17:00',entities:['海州新能源科技（示例）','海州整车制造（示例）'],role:'核心企业 / 头部客户',move:'重大政策',material:'电池合规与回收',fact:'演示情景：电池行业监管要求调整，可能涉及产品合规、回收管理和验收材料。',path:['监管要求变化','合规与认证成本变化','交付验收及回款影响'],impact:'政策适用对象、生效时间与存量订单过渡安排均需逐项核验。',actions:['核对政策原文与适用主体。','盘点认证、回收与追溯材料缺口。','与客户确认验收及付款安排。'],source:'模拟政策资料 / 企业合规台账',status:'待核验',confidence:'行业适用性待确认'}
   ];
   var initial = [
-    {id:'s-trade',name:'关键材料与跨境风险',type:'topic',topics:['贸易冲突','地缘政治','宏观政策'],target:'',role:'',moves:[],region:'全球',keyword:'',level:2,frequency:'即时预警',enabled:true},
-    {id:'s-weather',name:'华东生产与运输连续性',type:'topic',topics:['极端天气','疫情','物流中断'],target:'',role:'',moves:[],region:'华东',keyword:'',level:2,frequency:'每日摘要',enabled:true},
-    {id:'s-supplier',name:'核心供应商重大动作',type:'company',topics:[],target:'海州芯源电子（示例）',role:'核心供应商',moves:['出口限制','生产运营','融资并购','司法与信用'],region:'全球',keyword:'',level:2,frequency:'即时预警',enabled:true},
-    {id:'s-customer',name:'头部客户技术与订单',type:'company',topics:[],target:'海州整车制造（示例）',role:'头部客户',moves:['技术与订单','重大政策','融资并购'],region:'中国',keyword:'',level:1,frequency:'每周汇总',enabled:true}
+    {id:'s-trade',name:'关键材料与跨境风险',type:'topic',topics:['贸易冲突','地缘政治','宏观政策'],target:'',role:'',moves:[],region:'全球',keyword:'',level:2,enabled:true},
+    {id:'s-weather',name:'华东生产与运输连续性',type:'topic',topics:['极端天气','疫情','物流中断'],target:'',role:'',moves:[],region:'华东',keyword:'',level:2,enabled:true},
+    {id:'s-supplier',name:'核心供应商重大动作',type:'company',topics:[],target:'海州芯源电子（示例）',role:'核心供应商',moves:['出口限制','生产运营','融资并购','司法与信用'],region:'全球',keyword:'',level:2,enabled:true},
+    {id:'s-customer',name:'头部客户技术与订单',type:'company',topics:[],target:'海州整车制造（示例）',role:'头部客户',moves:['技术与订单','重大政策','融资并购'],region:'中国',keyword:'',level:1,enabled:true}
   ];
-  var storeKey='zhiyan-supply-risk-v1';
-  var state={subscriptions:initial,deliveries:[],handled:[]};
-  try { var saved=JSON.parse(localStorage.getItem(storeKey)); if(saved&&Array.isArray(saved.subscriptions)&&Array.isArray(saved.deliveries)&&Array.isArray(saved.handled)){state.subscriptions=saved.subscriptions.filter(function(s){return s&&typeof s.id==='string'&&typeof s.name==='string'&&['topic','company'].includes(s.type)&&Array.isArray(s.topics)&&Array.isArray(s.moves)&&typeof s.target==='string'&&[1,2,3].includes(s.level)});state.deliveries=saved.deliveries.filter(function(d){return d&&typeof d.id==='string'&&typeof d.title==='string'&&typeof d.time==='string'});state.handled=saved.handled.filter(function(id){return typeof id==='string'});} }catch(e){}
-  var view='events',selected='trade',filterTopic='',filterLevel='',query='',onlyMine=false,editing=null,modalFocus=null;
-  var root=document.createElement('section');root.className='content view';root.id='supplyRisk';document.querySelector('.main').appendChild(root);
-  var modal=document.createElement('div');modal.className='sr-modal';modal.hidden=true;document.body.appendChild(modal);
-  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
-  function save(){try{localStorage.setItem(storeKey,JSON.stringify(state));return true}catch(e){notify('浏览器存储不可用，本次操作仅在当前页面保留。');return false}}
-  function notify(t){var old=root.querySelector('.sr-feedback');if(old)old.remove();var x=document.createElement('div');x.className='sr-feedback';x.setAttribute('role','status');x.textContent=t;root.appendChild(x);setTimeout(function(){x.remove()},4000)}
-  function levelText(n){return ['','低','中','高'][n]+'风险'}
-  function badge(e){return '<span class="sr-badge sr-'+['','low','medium','high'][e.level]+'">'+levelText(e.level)+'</span>'}
-  function matches(e,s){return s.enabled&&e.level>=s.level&&(s.region==='全球'||e.region===s.region||s.region==='中国'&&e.region==='华东')&&(!s.keyword||[chain,e.title,e.material].join(' ').toLowerCase().includes(s.keyword.toLowerCase()))&&(s.type==='topic'?s.topics.includes(e.topic):e.entities.includes(s.target)&&s.moves.includes(e.move))}
-  function matched(e){return state.subscriptions.filter(function(s){return matches(e,s)})}
-  function visibleEvents(){return events.filter(function(e){return (!filterTopic||e.topic===filterTopic)&&(!filterLevel||e.level===Number(filterLevel))&&(!onlyMine||matched(e).length)&&(!query||[e.title,e.topic,e.material,e.entities.join(' ')].join(' ').toLowerCase().includes(query.toLowerCase()))})}
-  function header(){var active=state.subscriptions.filter(function(s){return s.enabled}).length;var high=events.filter(function(e){return e.level===3&&matched(e).length&&!state.handled.includes(e.id)}).length;return '<div class="sr-head"><div><label class="sr-eyebrow">SUPPLY CHAIN RISK INTELLIGENCE</label><h1>供应链风控</h1><p>从外部事件到企业影响，让每一次风险识别都有依据、有行动。</p></div><div class="sr-actions"><button class="sr-btn" data-action="push">模拟预警推送</button><button class="sr-btn sr-primary" data-action="new">＋ 新建订阅</button></div></div><div class="sr-notice"><b>交互演示 · 示例数据</b>以下事件均为模拟情景。订阅配置与站内推送演示保存在当前浏览器；实时采集、后台监测、邮件和企业微信推送待接入。</div><div class="sr-metrics">'+[[active,'生效订阅','主题领域与重点企业','◎'],[high,'待关注高风险','命中订阅的模拟事件','!'],[events.length,'风险情景','覆盖七类外部冲击','⌁'],[state.deliveries.filter(function(d){return !d.read}).length,'未读站内预警','模拟投递与已读追踪','↗']].map(function(m){return '<div class="sr-metric"><div><label>'+m[1]+'</label><strong>'+m[0]+'</strong><small>'+m[2]+'</small></div><i>'+m[3]+'</i></div>'}).join('')+'</div><div class="sr-tabs" role="tablist" aria-label="风控工作台">'+[['events','风险情报'],['subscriptions','我的订阅'],['deliveries','预警推送记录']].map(function(t){return '<button role="tab" aria-selected="'+(view===t[0])+'" class="'+(view===t[0]?'active':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('')+'</div>'}
-  function render(){root.innerHTML=header()+(view==='events'?eventPage():view==='subscriptions'?subscriptionPage():deliveryPage())}
-  function eventPage(){var list=visibleEvents();if(!list.some(function(e){return e.id===selected}))selected=list.length?list[0].id:null;var e=events.find(function(x){return x.id===selected});return '<div class="sr-toolbar"><input id="srSearch" aria-label="搜索事件、企业或物料" placeholder="搜索事件、企业或关键物料" value="'+esc(query)+'"><select id="srTopic" aria-label="主题领域"><option value="">全部主题领域</option>'+topics.map(function(t){return '<option'+(filterTopic===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select><select id="srLevel" aria-label="风险等级"><option value="">全部风险等级</option>'+[3,2,1].map(function(n){return '<option value="'+n+'"'+(filterLevel===String(n)?' selected':'')+'>'+levelText(n)+'</option>'}).join('')+'</select><label class="sr-muted"><input id="srOnlyMine" type="checkbox"'+(onlyMine?' checked':'')+'> 只看命中订阅</label></div><div class="sr-body"><div class="sr-card"><div class="sr-list-head"><h2>风险情报流</h2><span>'+list.length+' 条模拟事件</span></div>'+(list.length?list.map(function(x){return '<button class="sr-event '+(x.id===selected?'active':'')+'" data-event="'+x.id+'"><div class="sr-event-top"><span>'+badge(x)+' <span class="sr-badge">'+x.topic+'</span></span><small>场景 '+x.time+'</small></div><b>'+x.title+'</b><p>'+x.material+' · '+x.entities.join('、')+'</p><footer><span>'+x.region+' · '+matched(x).length+' 项订阅命中</span><span>'+(state.handled.includes(x.id)?'已确认关注':'待关注')+' →</span></footer></button>'}).join(''):'<div class="sr-empty">暂无符合条件的情景<br>请调整主题、等级或搜索条件。</div>')+'</div>'+(e?detail(e):'<div class="sr-empty">选择风险事件，查看证据与影响路径。</div>')+'</div>'}
-  function detail(e){return '<article class="sr-card"><div class="sr-detail-head">'+badge(e)+' <span class="sr-badge">AI 影响分析 · 演示</span><h2>'+e.title+'</h2><p>适用链条：'+chain+'<br>证据状态：'+e.status+' · 场景时间 '+e.time+'</p></div><div class="sr-detail-section"><h3>01　事件与证据</h3><p>'+e.fact+'</p><p class="sr-muted">信源：'+e.source+' · '+e.confidence+'</p><button class="sr-link" data-action="evidence" data-id="'+e.id+'">查看证据与识别口径 ↗</button></div><div class="sr-detail-section"><h3>02　风险传导与企业暴露</h3><div class="sr-flow">'+e.path.map(function(p,i){return (i?'<i>→</i>':'')+'<span>'+p+'</span>'}).join('')+'</div><p>'+e.impact+'</p>'+e.entities.map(function(n){return '<span class="sr-chip">'+n+'</span>'}).join('')+'<p class="sr-muted">'+e.role+' · 重大动作：'+e.move+'<br>风险等级为情景演示分级，综合事件严重程度、区域/物料关联及紧迫性；不构成实际损失或信用判断。</p></div><div class="sr-detail-section"><h3>03　建议行动</h3><ol>'+e.actions.map(function(a){return '<li>'+a+'</li>'}).join('')+'</ol><div class="sr-actions"><button class="sr-btn" data-action="handle" data-id="'+e.id+'">'+(state.handled.includes(e.id)?'取消关注确认':'确认关注')+'</button><button class="sr-btn sr-primary" data-action="evaluate">评估这条供应链 ↗</button></div><p class="sr-muted">命中订阅：'+(matched(e).map(function(s){return esc(s.name)}).join('、')||'暂无，可新建主题或企业订阅')+'</p></div></article>'}
-  function subscriptionPage(){return '<div class="sr-toolbar"><h2>按主题或企业持续关注</h2><span class="sr-muted">企业名称精确匹配；自定义企业暂无示例事件时不生成预警。</span></div>'+(state.subscriptions.length?'<div class="sr-sub-grid">'+state.subscriptions.map(function(s){return '<article class="sr-card sr-sub"><header><div><span class="sr-badge">'+(s.type==='topic'?'主题领域订阅':'企业维度订阅')+'</span><h3>'+esc(s.name)+'</h3></div><span class="sr-badge '+(s.enabled?'sr-low':'')+'">'+(s.enabled?'生效中':'已暂停')+'</span></header><p>'+(s.type==='topic'?s.topics.map(esc).join(' / '):esc(s.role)+'：'+esc(s.target))+'</p>'+(s.type==='company'?'<p>重大动作：'+s.moves.map(esc).join('、')+'</p>':'')+'<p>'+esc(s.region)+' · '+levelText(s.level)+'及以上 · '+esc(s.frequency)+' · 站内消息</p>'+(s.keyword?'<p>链条 / 物料关键词：'+esc(s.keyword)+'</p>':'')+'<footer><button class="sr-link" data-action="edit" data-id="'+esc(s.id)+'">编辑规则</button><button class="sr-link" data-action="toggle" data-id="'+esc(s.id)+'">'+(s.enabled?'暂停':'恢复')+'</button><button class="sr-link danger" data-action="delete" data-id="'+esc(s.id)+'">删除订阅</button></footer></article>'}).join('')+'</div>':'<div class="sr-empty">暂无订阅，点击“新建订阅”开始关注。</div>')}
-  function deliveryPage(){return '<div class="sr-toolbar"><h2>站内预警投递演示</h2><button class="sr-btn" data-action="readall">全部标记已读</button><span class="sr-muted">按照频率分别模拟即时、日摘要、周汇总；相同事件与订阅不会重复投递。</span></div><div class="sr-card">'+(state.deliveries.length?state.deliveries.slice().reverse().map(function(d){return '<div class="sr-delivery"><div><span class="sr-badge '+(d.read?'':'sr-high')+'">'+(d.read?'已读':'未读')+'</span><h3>'+esc(d.title)+'</h3><p>'+esc(d.subscription)+' · '+esc(d.frequency)+' · 站内模拟投递<br>'+esc(d.time)+'</p></div><button class="sr-btn" data-delivery="'+esc(d.id)+'">查看预警</button></div>'}).join(''):'<div class="sr-empty">暂无推送记录<br>配置订阅后点击“模拟预警推送”，查看命中规则与投递结果。</div>')+'</div>'}
-  function openModal(html){modalFocus=document.activeElement;modal.innerHTML='<div class="sr-dialog" role="dialog" aria-modal="true" aria-labelledby="srModalTitle">'+html+'</div>';modal.hidden=false;modal.querySelector('input,select,button').focus()}
-  function closeModal(){modal.hidden=true;modal.innerHTML='';if(modalFocus&&modalFocus.isConnected)modalFocus.focus()}
-  function form(s){editing=s?s.id:null;var d=s||{name:'',type:'topic',topics:[],target:'',role:'核心供应商',moves:[],region:'全球',keyword:'',level:2,frequency:'即时预警'};openModal('<header><div><h2 id="srModalTitle">'+(s?'编辑订阅':'新建订阅')+'</h2><p>选择风险主题，或关注核心供应商、头部客户的重大动作。</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><form class="sr-form" id="srForm"><div class="sr-fields"><label class="sr-wide"><span>订阅名称 *</span><input id="srName" maxlength="60" required value="'+esc(d.name)+'" placeholder="例如：关键供应商经营与交付风险"></label><label><span>订阅维度</span><select id="srType"><option value="topic"'+(d.type==='topic'?' selected':'')+'>主题领域</option><option value="company"'+(d.type==='company'?' selected':'')+'>企业维度</option></select></label><label><span>关注区域</span><select id="srRegion">'+['全球','中国','华东'].map(function(r){return '<option'+(d.region===r?' selected':'')+'>'+r+'</option>'}).join('')+'</select></label><div class="sr-wide" id="srTopicFields"><p>主题领域 *（可多选）</p><div class="sr-checks">'+topics.map(function(t){return '<label><input type="checkbox" name="srTopics" value="'+t+'"'+(d.topics.includes(t)?' checked':'')+'>'+t+'</label>'}).join('')+'</div></div><label class="sr-wide" id="srTargetFields"><span>企业全称 *（精确匹配）</span><input id="srTarget" maxlength="100" list="srCompanies" value="'+esc(d.target)+'" placeholder="输入核心供应商或头部客户全称"><datalist id="srCompanies">'+['海州芯源电子（示例）','海州材料制造（示例）','海州整车制造（示例）','海州国际物流（示例）'].map(function(n){return '<option value="'+n+'">'}).join('')+'</datalist></label><label id="srRoleFields"><span>企业角色</span><select id="srRole">'+['核心供应商','头部客户','物流伙伴','其他关键伙伴'].map(function(r){return '<option'+(d.role===r?' selected':'')+'>'+r+'</option>'}).join('')+'</select></label><div class="sr-wide" id="srMoveFields"><p>重大动作 *（可多选）</p><div class="sr-checks">'+['生产运营','融资并购','司法与信用','技术与订单','物流与停产','出口限制','重大政策','航线调整'].map(function(t){return '<label><input type="checkbox" name="srMoves" value="'+t+'"'+(d.moves.includes(t)?' checked':'')+'>'+t+'</label>'}).join('')+'</div></div><label class="sr-wide"><span>链条 / 关键物料关键词（可选）</span><input id="srKeyword" maxlength="60" value="'+esc(d.keyword)+'" placeholder="例如：芯片；留空关注该范围全部事件"></label><label><span>预警门槛</span><select id="srThreshold">'+[3,2,1].map(function(n){return '<option value="'+n+'"'+(d.level===n?' selected':'')+'>'+levelText(n)+'及以上</option>'}).join('')+'</select></label><label><span>推送频率</span><select id="srFrequency">'+['即时预警','每日摘要','每周汇总'].map(function(f){return '<option'+(d.frequency===f?' selected':'')+'>'+f+'</option>'}).join('')+'</select></label><div class="sr-wide"><p>推送渠道：站内消息（可演示） · 邮件 / 企业微信（待接入）</p><p>此原型不在页面关闭后运行监测，也不向外部收件人发送消息。</p></div></div><div id="srFormError" class="sr-error" role="alert"></div><div class="sr-form-footer"><button class="sr-btn" type="button" data-close>取消</button><button class="sr-btn sr-primary" type="submit">保存订阅</button></div></form>');updateFormType();modal.querySelector('#srType').onchange=updateFormType;modal.querySelector('#srForm').onsubmit=saveForm}
-  function updateFormType(){var company=modal.querySelector('#srType').value==='company';['srTargetFields','srRoleFields','srMoveFields'].forEach(function(id){modal.querySelector('#'+id).hidden=!company});modal.querySelector('#srTopicFields').hidden=company;modal.querySelector('#srTarget').required=company}
-  function saveForm(ev){ev.preventDefault();var get=function(id){return modal.querySelector('#'+id).value.trim()};var type=get('srType');var selectedChecks=function(name){return Array.from(modal.querySelectorAll('input[name="'+name+'"]:checked')).map(function(x){return x.value})};var d={id:editing||'s-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),name:get('srName'),type:type,topics:selectedChecks('srTopics'),target:get('srTarget'),role:get('srRole'),moves:selectedChecks('srMoves'),region:get('srRegion'),keyword:get('srKeyword'),level:Number(get('srThreshold')),frequency:get('srFrequency'),enabled:true};if(!d.name||type==='topic'&&!d.topics.length||type==='company'&&(!d.target||!d.moves.length)){modal.querySelector('#srFormError').textContent='请填写订阅名称，并选择至少一个主题；企业订阅需填写企业全称并选择重大动作。';return}var index=state.subscriptions.findIndex(function(s){return s.id===editing});if(index<0)state.subscriptions.push(d);else {d.enabled=state.subscriptions[index].enabled;state.subscriptions[index]=d}save();closeModal();view='subscriptions';render();notify('订阅规则已保存至当前浏览器。')}
-  function evidence(e){openModal('<header><div><h2 id="srModalTitle">事件证据与识别口径</h2><p>'+esc(e.title)+'</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-evidence-body"><p class="sr-confirm-note">此条为模拟事件，未连接真实信源，不是已发生的新闻或企业风险事实。</p><h3>事件素材</h3><p>'+esc(e.fact)+'<br>拟接入信源类型：'+esc(e.source)+'<br>场景时间：'+e.time+'（非真实采集时间）<br>状态：未联网取证 / 待人工核验</p><h3>关系与暴露</h3><p>通过事件地区、主题、企业实体、物料与供应链节点进行关联。示例关系：'+esc(e.entities.join('、'))+' → '+esc(e.material)+' → '+chain+'。</p><h3>推断与待补材料</h3><p>'+esc(e.impact)+'<br>需补充公告原文、订单/运单、库存、供应商回访与企业授权资料。未核验材料不直接视为违约、停产或信用风险。</p><h3>分级与推送</h3><p>本情景为'+levelText(e.level)+'。主题订阅按主题、区域、关键词与门槛匹配；企业订阅另按企业全称及动作类型匹配。相同事件与相同订阅去重，频率按所选批次模拟。</p></div>')}
-  function pushForm(){openModal('<header><div><h2 id="srModalTitle">模拟预警推送</h2><p>按订阅规则计算命中事件，仅创建站内演示消息。</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-form"><label>模拟执行批次 <select id="srPushBatch"><option>即时预警</option><option>每日摘要</option><option>每周汇总</option></select></label><p style="margin-top:16px">日摘要与周汇总会将同一订阅的命中事件合并为一条消息；重复执行不重复投递。</p><div class="sr-form-footer"><button class="sr-btn" data-close>取消</button><button class="sr-btn sr-primary" data-action="runpush">生成站内演示消息</button></div></div>')}
-  function runPush(){var frequency=modal.querySelector('#srPushBatch').value;var count=0;state.subscriptions.filter(function(s){return s.enabled&&s.frequency===frequency}).forEach(function(s){var pending=events.filter(function(e){return matches(e,s)&&!state.deliveries.some(function(d){return d.subscriptionId===s.id&&(d.eventIds||[]).includes(e.id)})});if(frequency==='即时预警'){pending.forEach(function(e){add(s,[e],e.title)})}else if(pending.length){add(s,pending,s.name+' · '+(frequency==='每日摘要'?'日摘要':'周汇总')+'（'+pending.length+' 条）')}});function add(s,list,title){state.deliveries.push({id:'d-'+Date.now()+'-'+count,eventIds:list.map(function(e){return e.id}),subscriptionId:s.id,subscription:s.name,frequency:frequency,title:title,time:new Date().toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',hour12:false}),read:false});count++}save();closeModal();view='deliveries';render();notify(count?'已生成 '+count+' 条站内演示消息。':'本批次暂无新的命中事件；请检查频率、门槛或去重记录。')}
-  root.addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;if(b.dataset.tab){view=b.dataset.tab;render();return}if(b.dataset.event){selected=b.dataset.event;render();return}if(b.dataset.delivery){var d=state.deliveries.find(function(x){return x.id===b.dataset.delivery});d.read=true;save();view='events';filterTopic='';filterLevel='';query='';onlyMine=false;selected=(d.eventIds||[])[0]||events[0].id;render();if(d.eventIds&&d.eventIds.length>1)notify('本摘要含 '+d.eventIds.length+' 条事件，当前展示首条，可在情报流继续查看。');return}var id=b.dataset.id,s=state.subscriptions.find(function(x){return x.id===id});switch(b.dataset.action){case'new':form();break;case'edit':form(s);break;case'toggle':s.enabled=!s.enabled;save();render();break;case'delete':openModal('<header><div><h2 id="srModalTitle">删除订阅</h2><p>'+esc(s.name)+'</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-form"><p>删除后停止该规则的预警演示，历史推送记录仍可查看。</p><div class="sr-form-footer"><button class="sr-btn" data-close>取消</button><button class="sr-btn sr-primary" data-action="confirmdelete" data-id="'+esc(id)+'">删除这条订阅</button></div></div>');break;case'evidence':evidence(events.find(function(x){return x.id===id}));break;case'handle':if(state.handled.includes(id))state.handled=state.handled.filter(function(x){return x!==id});else state.handled.push(id);save();render();break;case'evaluate':if(window.supplyEvaluationLoad)window.supplyEvaluationLoad({chain:chain,enterprise:core,region:'华东'});else notify('评价模块加载中，请稍后重试。');break;case'push':pushForm();break;case'readall':state.deliveries.forEach(function(d){d.read=true});save();render();notify('站内预警已全部标记为已读。');break}});
-  root.addEventListener('change',function(ev){switch(ev.target.id){case'srTopic':filterTopic=ev.target.value;render();break;case'srLevel':filterLevel=ev.target.value;render();break;case'srOnlyMine':onlyMine=ev.target.checked;render();break}});
-  root.addEventListener('input',function(ev){if(ev.target.id==='srSearch'){query=ev.target.value;var pos=ev.target.selectionStart;render();var input=root.querySelector('#srSearch');input.focus();input.setSelectionRange(pos,pos)}});
-  modal.addEventListener('click',function(ev){if(ev.target===modal||ev.target.closest('[data-close]'))closeModal();var b=ev.target.closest('[data-action]');if(!b)return;if(b.dataset.action==='runpush')runPush();if(b.dataset.action==='confirmdelete'){state.subscriptions=state.subscriptions.filter(function(s){return s.id!==b.dataset.id});save();closeModal();render();notify('订阅已删除。')}});
-  document.addEventListener('keydown',function(ev){if(modal.hidden)return;if(ev.key==='Escape')closeModal();if(ev.key==='Tab'){var nodes=Array.from(modal.querySelectorAll('button,input,select,textarea,a[href]')).filter(function(n){return !n.disabled&&n.getClientRects().length});var first=nodes[0],last=nodes[nodes.length-1];if(ev.shiftKey&&document.activeElement===first){ev.preventDefault();last.focus()}else if(!ev.shiftKey&&document.activeElement===last){ev.preventDefault();first.focus()}}});
+  var context = {
+    trade: {reason:'许可调整首先影响特定料号及原产地，而非所有芯片。若该料号不可替换，且现有库存不足以覆盖许可办理和验证周期，采购延迟才可能传导至电池管理系统排产与客户交期。',verify:'受控清单及生效时间、料号与原产地、供应商交期确认、订单和库存覆盖天数',owners:['采购与贸易合规','采购与研发','销售、法务及供应链负责人']},
+    weather: {reason:'天气预警属于区域信号。只有工厂、仓库或在途路线与受影响区域重叠时，才形成直接暴露；实际交付影响还取决于道路可用性、备选运力与安全库存。应先核验运营状态，再判断是否需要调整排产。',verify:'气象和道路原文、供应商运营确认、在途运单、库存与备选线路',owners:['物流与采购','物流与生产计划','供应链负责人']},
+    geo: {reason:'冲突可能通过航线绕行、保险和能源费用传导，但业务影响取决于企业实际使用的航道、承运商与合同责任。对于无相关路线暴露的订单，不应直接套用同等风险判断；应优先识别紧急物料及交期敏感订单。',verify:'区域通告、航线公告、相关运单与交货条款、承运商报价',owners:['国际业务与物流','物流与采购','生产计划与客户负责人']},
+    tech: {reason:'技术验证与规模量产存在阶段差异。新工艺可能改变性能、认证与采购结构，也可能形成联合研发机会。应将技术成熟度、客户切换计划与现有订单约定分开核验，避免把技术发布直接等同于订单流失。',verify:'技术资料及验证结果、客户规格、量产时间表、现有订单与认证计划',owners:['研发与产品','研发与客户经理','技术与业务负责人']},
+    health: {reason:'区域应急响应可能影响人员出勤、跨区运输和产能利用，但不能仅凭区域信号判断企业停产。应结合工厂实际运营、替班安排、替代产地与库存缓冲，识别可能无法兑现的交付窗口。',verify:'应急通告、工厂回访记录、产能与排班、交付承诺和库存台账',owners:['采购与供应商管理','生产与人力资源','销售与供应链负责人']},
+    logistics: {reason:'枢纽停运首先作用于经过该节点的运单。只有滞留时长超过物料缓冲或交付窗口时，才会进一步影响生产与履约。需同时比较改配线路、替代运输方式和客户交付优先级，不能只按事件等级推算损失。',verify:'承运商通知、受影响运单、预计恢复时间、替代线路与齐套计划',owners:['物流与承运商','物流与采购','生产计划与客户负责人']},
+    policy: {reason:'监管要求变化可能作用于认证、追溯、验收与回款，具体影响取决于适用主体、生效时间和存量订单过渡安排。应先形成适用性清单，再核对材料缺口与合同义务；政策发布不直接等于企业不合规。',verify:'政策原文及配套细则、主体与产品清单、认证材料、验收与付款条款',owners:['合规与法务','质量与业务部门','客户与财务负责人']}
+  };
+  var storeKey = 'zhiyan-supply-risk-v1';
+  var retained = Object.create(null);
+  var state = {subscriptions:initial, handled:[]};
+  function validSubscription(s) {
+    return s && typeof s.id === 'string' && typeof s.name === 'string' && ['topic','company'].includes(s.type) && Array.isArray(s.topics) && s.topics.every(function(t){return typeof t === 'string'}) && Array.isArray(s.moves) && s.moves.every(function(t){return typeof t === 'string'}) && typeof s.target === 'string' && typeof s.region === 'string' && (!s.keyword || typeof s.keyword === 'string') && [1,2,3].includes(s.level);
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(storeKey));
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+      retained = saved;
+      if (Array.isArray(saved.subscriptions)) state.subscriptions = saved.subscriptions.filter(validSubscription);
+      if (Array.isArray(saved.handled)) state.handled = saved.handled.filter(function(id){return typeof id === 'string'});
+    }
+  } catch (error) {}
+  var view = 'events', selected = null, filterTopic = '', filterLevel = '', query = '', onlyMine = false, editing = null, modalFocus = null;
+  var analysis = {id:null, status:'idle', texts:[], index:0, offset:0, timer:null, token:0};
+  var stageNames = ['开场白','深度推理分析','操作建议','来源依据'];
+  var root = document.createElement('section');
+  root.className = 'content view'; root.id = 'supplyRisk';
+  document.querySelector('.main').appendChild(root);
+  var modal = document.createElement('div'); modal.className = 'sr-modal'; modal.hidden = true; document.body.appendChild(modal);
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});
+  }
+  function save() {
+    try {
+      var payload = Object.assign(Object.create(null), retained, {subscriptions:state.subscriptions, handled:state.handled});
+      localStorage.setItem(storeKey,JSON.stringify(payload)); return true;
+    } catch (error) { notify('浏览器存储不可用，本次操作仅在当前页面保留。'); return false; }
+  }
+  function notify(text) {
+    var old = root.querySelector('.sr-feedback'); if (old) old.remove();
+    var element = document.createElement('div'); element.className = 'sr-feedback'; element.setAttribute('role','status'); element.textContent = text; root.appendChild(element);
+    setTimeout(function(){element.remove()},3600);
+  }
+  function levelText(n) { return ['','低','中','高'][n] + '风险'; }
+  function badge(event) { return '<span class="sr-badge sr-' + ['','low','medium','high'][event.level] + '">' + levelText(event.level) + '</span>'; }
+  function matches(event,subscription) {
+    return subscription.enabled && event.level >= subscription.level && (subscription.region === '全球' || event.region === subscription.region || subscription.region === '中国' && event.region === '华东') && (!subscription.keyword || [chain,event.title,event.material].join(' ').toLowerCase().includes(subscription.keyword.toLowerCase())) && (subscription.type === 'topic' ? subscription.topics.includes(event.topic) : event.entities.includes(subscription.target) && subscription.moves.includes(event.move));
+  }
+  function matched(event) { return state.subscriptions.filter(function(s){return matches(event,s)}); }
+  function visibleEvents() {
+    return events.filter(function(event){return (!filterTopic || event.topic === filterTopic) && (!filterLevel || event.level === Number(filterLevel)) && (!onlyMine || matched(event).length) && (!query || [event.title,event.topic,event.material,event.entities.join(' ')].join(' ').toLowerCase().includes(query.toLowerCase()))});
+  }
+  function header() {
+    var active = state.subscriptions.filter(function(s){return s.enabled}).length;
+    var high = events.filter(function(event){return event.level === 3 && matched(event).length && !state.handled.includes(event.id)}).length;
+    return '<div class="sr-head"><div><label class="sr-eyebrow">SUPPLY CHAIN RISK INTELLIGENCE</label><h1>供应链风控</h1><p>聚焦外部事件与企业重大动作，动态研判供应链影响。</p></div><button class="sr-btn sr-primary" data-action="new">＋ 新建订阅</button></div>' +
+      '<div class="sr-notice"><b>交互演示 · 示例数据</b>以下事件与 AI 输出均为模拟演示。订阅规则保存在当前浏览器；真实事件采集与在线 AI 分析待接入。</div>' +
+      '<div class="sr-metrics">' + [[active,'生效订阅','主题领域与重点企业','◎'],[high,'待关注高风险','命中订阅的模拟事件','!'],[events.length,'风险情景','覆盖七类外部冲击','⌁']].map(function(m){return '<div class="sr-metric"><div><label>'+m[1]+'</label><strong>'+m[0]+'</strong><small>'+m[2]+'</small></div><i>'+m[3]+'</i></div>'}).join('') + '</div>' +
+      '<div class="sr-tabs" role="tablist" aria-label="风控工作台">' + [['events','风险情报'],['subscriptions','我的订阅']].map(function(t){return '<button role="tab" aria-selected="'+(view===t[0])+'" class="'+(view===t[0]?'active':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('') + '</div>';
+  }
+  function cancelAnalysis() { clearTimeout(analysis.timer); analysis.timer = null; analysis.token++; }
+  function render() {
+    root.innerHTML = header() + (view === 'events' ? eventPage() : subscriptionPage());
+    if (view === 'events' && selected === analysis.id) paintAnalysis();
+  }
+  function eventPage() {
+    var list = visibleEvents();
+    if (selected && !list.some(function(event){return event.id === selected})) { cancelAnalysis(); selected = null; analysis.status = 'idle'; }
+    var event = events.find(function(item){return item.id === selected});
+    return '<div class="sr-toolbar"><input id="srSearch" aria-label="搜索事件、企业或物料" placeholder="搜索事件、企业或关键物料" value="'+esc(query)+'"><select id="srTopic" aria-label="主题领域"><option value="">全部主题领域</option>'+topics.map(function(topic){return '<option'+(filterTopic===topic?' selected':'')+'>'+topic+'</option>'}).join('')+'</select><select id="srLevel" aria-label="风险等级"><option value="">全部风险等级</option>'+[3,2,1].map(function(n){return '<option value="'+n+'"'+(filterLevel===String(n)?' selected':'')+'>'+levelText(n)+'</option>'}).join('')+'</select><label class="sr-muted"><input id="srOnlyMine" type="checkbox"'+(onlyMine?' checked':'')+'> 只看命中订阅</label></div>' +
+      '<div class="sr-body"><div class="sr-card sr-feed"><div class="sr-list-head"><h2>风险情报流</h2><span>'+list.length+' 条模拟事件</span></div>' +
+      (list.length ? list.map(function(item){return '<button class="sr-event '+(item.id===selected?'active':'')+'" data-event="'+item.id+'" aria-pressed="'+(item.id===selected)+'"><div class="sr-event-top"><span>'+badge(item)+' <span class="sr-badge">'+item.topic+'</span></span><small>场景 '+item.time+'</small></div><b>'+item.title+'</b><p>'+item.material+' · '+item.entities.join('、')+'</p><footer><span>'+item.region+' · '+item.source.split(' / ')[0]+'</span><span>'+(state.handled.includes(item.id)?'已确认关注':matched(item).length+' 项订阅命中')+' →</span></footer></button>'}).join('') : '<div class="sr-empty">暂无符合条件的情景<br>请调整主题、等级或搜索条件。</div>') + '</div>' +
+      (event ? detail(event) : '<article class="sr-card sr-analysis-empty"><i>✦</i><h2>选择一个事件，开始 AI 动态分析</h2><p>从左侧情报流选择风险事件，分析助手将依次输出：</p><div>开场白　→　深度推理分析　→　操作建议　→　来源依据</div><p class="sr-muted">结合供应链关系识别潜在影响，区分事件事实、研判与待核验项。</p></article>') + '</div>';
+  }
+  function detail(event) {
+    return '<article class="sr-card sr-analysis-card" data-analysis-event="'+event.id+'"><div class="sr-detail-head">'+badge(event)+' <span class="sr-badge">'+event.topic+'</span><h2>'+event.title+'</h2><p>'+event.region+' · 场景时间 '+event.time+' · '+event.source.split(' / ')[0]+'</p><p class="sr-event-summary">'+event.fact+'</p><div>'+event.entities.map(function(name){return '<span class="sr-chip">'+name+'</span>'}).join('')+'</div></div>' +
+      '<div class="sr-agent"><header class="sr-agent-head"><div class="sr-agent-identity"><i>✦</i><div><b>智研供应链分析助手</b><small>围绕企业暴露、业务传导与应对动作进行研判 · 演示</small></div></div><div class="sr-agent-tools"><span id="srAnalysisStatus" role="status" aria-live="polite"></span><button class="sr-link" data-action="pause" id="srPause">暂停输出</button><button class="sr-link" data-action="resume" id="srResume" hidden>继续输出</button><button class="sr-link" data-action="restart">重新分析</button></div></header><div id="srAnalysisBody" aria-busy="true">' +
+      stageNames.map(function(name,index){return '<section class="sr-answer-section waiting" data-stage="'+index+'"><h3><i>0'+(index+1)+'</i>'+name+'</h3><div class="sr-answer-content"></div></section>'}).join('') + '</div></div>' +
+      '<footer class="sr-analysis-footer"><span class="sr-muted">适用链条：'+chain+'<br>命中订阅：'+(matched(event).map(function(s){return esc(s.name)}).join('、')||'暂无匹配订阅')+'</span><div class="sr-actions"><button class="sr-btn" data-action="handle" data-id="'+event.id+'">'+(state.handled.includes(event.id)?'取消关注确认':'确认关注')+'</button><button class="sr-btn sr-primary" data-action="evaluate">评估这条供应链 ↗</button></div></footer></article>';
+  }
+  function textsFor(event) {
+    var detailContext = context[event.id];
+    return [
+      '你好，我是智研供应链分析助手。我将围绕「'+event.title+'」，分析其对'+chain+'的潜在影响，并给出下一步核验与应对建议。本次为模拟情景分析，不代表事件已发生或相关企业已受损。',
+      '事件判断：'+event.fact.replace(/^演示情景：/,'')+'\n\n业务传导：'+event.path.join(' → ')+'。'+detailContext.reason+'\n\n企业暴露：'+event.entities.join('、')+'作为'+event.role+'，关联'+event.material+'。'+event.impact+'\n\n结论边界：当前为'+levelText(event.level)+'情景。'+event.confidence+'；在取得真实公告及企业经营证据前，不计算损失金额、停产天数或信用结论。',
+      event.actions.map(function(action,index){return (index+1)+'．'+['优先核验','准备备选','协同闭环'][index]+'｜'+detailContext.owners[index]+'\n'+action}).join('\n\n')+'\n\n跟踪要求：为上述行动明确责任人、核验材料与复核时间，根据新证据更新风险判断。',
+      '本次分析使用预置模拟事件及虚构供应链关系，尚未连接外部信源。事件材料用于说明风险信号，关系材料用于说明企业暴露，分析结论属于待核验研判。\n\n实际业务需补充：'+detailContext.verify+'。来源材料齐备后，应核对原文、统计期间及与本企业的适用关系。'
+    ];
+  }
+  function sourceCards(event) {
+    var parts = event.source.split(' / ');
+    return '<div class="sr-source-list"><div class="sr-source-item"><header><b>[S1] '+esc(parts[0])+'</b><span>模拟材料</span></header><p>对应事件信号：'+esc(event.fact)+'当前无真实公告原文，不能作为事件已发生的证明。</p><small>类型：外部事件素材 · 场景时间 '+event.time+'（非采集时间）</small></div><div class="sr-source-item"><header><b>[S2] '+esc(parts[1]||'供应链关系台账')+'</b><span>虚构关系</span></header><p>'+esc(event.entities.join('、'))+' → '+esc(event.material)+' → '+chain+'。仅用于说明影响路径，尚需核验真实供需关系。</p><small>类型：内部关系素材 · 数据日期 2026-10-19（演示）</small></div><div class="sr-source-item"><header><b>[S3] 业务核验清单</b><span>待补充</span></header><p>'+esc(context[event.id].verify)+'。</p><small>状态：未获取 / 未核验 · 用途：复核实际影响</small></div></div><button class="sr-link" data-action="evidence" data-id="'+event.id+'">查看来源与核验说明 ↗</button>';
+  }
+  function startAnalysis(event) {
+    cancelAnalysis(); selected = event.id;
+    analysis.id = event.id; analysis.status = 'running'; analysis.texts = textsFor(event); analysis.index = 0; analysis.offset = 0;
+    render(); scheduleStep();
+  }
+  function scheduleStep() {
+    var token = analysis.token;
+    analysis.timer = setTimeout(function(){
+      if (token !== analysis.token || analysis.status !== 'running' || selected !== analysis.id || view !== 'events') return;
+      analysis.offset = Math.min(analysis.offset + 10, analysis.texts[analysis.index].length);
+      if (analysis.offset >= analysis.texts[analysis.index].length) {
+        if (analysis.index === stageNames.length - 1) analysis.status = 'complete';
+        else { analysis.index++; analysis.offset = 0; }
+      }
+      paintAnalysis();
+      if (analysis.status === 'running') scheduleStep(); else analysis.timer = null;
+    },35);
+  }
+  function paintAnalysis() {
+    var body = root.querySelector('#srAnalysisBody'); if (!body || !analysis.texts.length || selected !== analysis.id) return;
+    var complete = analysis.status === 'complete';
+    body.setAttribute('aria-busy',String(analysis.status === 'running'));
+    body.dataset.analysisState = analysis.status;
+    root.querySelector('#srAnalysisStatus').textContent = complete ? '分析完成' : analysis.status === 'paused' ? '已暂停' : '动态分析中…';
+    root.querySelector('#srPause').hidden = analysis.status !== 'running'; root.querySelector('#srResume').hidden = analysis.status !== 'paused';
+    var event = events.find(function(item){return item.id === analysis.id});
+    body.querySelectorAll('[data-stage]').forEach(function(section,index){
+      var done = complete || index < analysis.index;
+      var active = !complete && index === analysis.index;
+      section.className = 'sr-answer-section ' + (done ? 'done' : active ? 'typing' : 'waiting');
+      var content = section.querySelector('.sr-answer-content');
+      if (index > analysis.index) { content.textContent = '等待输出'; return; }
+      var text = done ? analysis.texts[index] : analysis.texts[index].slice(0,analysis.offset);
+      content.innerHTML = '<p>'+esc(text)+(active && analysis.status === 'running' ? '<span class="sr-cursor" aria-hidden="true"></span>' : '')+'</p>' + (index === 3 && complete ? sourceCards(event) : '');
+    });
+  }
+  function pauseAnalysis() { if (analysis.status === 'running') { cancelAnalysis(); analysis.status = 'paused'; paintAnalysis(); } }
+  function resumeAnalysis() { if (analysis.status === 'paused') { analysis.status = 'running'; paintAnalysis(); scheduleStep(); } }
+
+  function subscriptionPage() {
+    return '<div class="sr-toolbar"><h2>按主题或企业持续关注</h2><span class="sr-muted">企业名称精确匹配；自定义企业暂无示例事件时不生成关联情报。</span></div>' +
+      (state.subscriptions.length ? '<div class="sr-sub-grid">' + state.subscriptions.map(function(s){return '<article class="sr-card sr-sub"><header><div><span class="sr-badge">'+(s.type==='topic'?'主题领域订阅':'企业维度订阅')+'</span><h3>'+esc(s.name)+'</h3></div><span class="sr-badge '+(s.enabled?'sr-low':'')+'">'+(s.enabled?'生效中':'已暂停')+'</span></header><p>'+(s.type==='topic'?s.topics.map(esc).join(' / '):esc(s.role)+'：'+esc(s.target))+'</p>'+(s.type==='company'?'<p>重大动作：'+s.moves.map(esc).join('、')+'</p>':'')+'<p>关注区域：'+esc(s.region)+' · 风险门槛：'+levelText(s.level)+'及以上</p>'+(s.keyword?'<p>链条 / 物料关键词：'+esc(s.keyword)+'</p>':'')+'<footer><button class="sr-link" data-action="edit" data-id="'+esc(s.id)+'">编辑规则</button><button class="sr-link" data-action="toggle" data-id="'+esc(s.id)+'">'+(s.enabled?'暂停':'恢复')+'</button><button class="sr-link danger" data-action="delete" data-id="'+esc(s.id)+'">删除订阅</button></footer></article>'}).join('')+'</div>' : '<div class="sr-empty">暂无订阅，点击“新建订阅”开始关注。</div>');
+  }
+  function openModal(html) {
+    modalFocus = document.activeElement;
+    modal.innerHTML = '<div class="sr-dialog" role="dialog" aria-modal="true" aria-labelledby="srModalTitle">'+html+'</div>';
+    modal.hidden = false; modal.querySelector('input,select,button').focus();
+  }
+  function closeModal() { modal.hidden = true; modal.innerHTML = ''; if (modalFocus && modalFocus.isConnected) modalFocus.focus(); }
+  function form(subscription) {
+    pauseAnalysis();
+    editing = subscription ? subscription.id : null;
+    var data = subscription || {name:'',type:'topic',topics:[],target:'',role:'核心供应商',moves:[],region:'全球',keyword:'',level:2};
+    openModal('<header><div><h2 id="srModalTitle">'+(subscription?'编辑订阅':'新建订阅')+'</h2><p>选择风险主题，或关注核心供应商、头部客户的重大动作。</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><form class="sr-form" id="srForm"><div class="sr-fields"><label class="sr-wide"><span>订阅名称 *</span><input id="srName" maxlength="60" required value="'+esc(data.name)+'" placeholder="例如：关键供应商经营与交付风险"></label><label><span>订阅维度</span><select id="srType"><option value="topic"'+(data.type==='topic'?' selected':'')+'>主题领域</option><option value="company"'+(data.type==='company'?' selected':'')+'>企业维度</option></select></label><label><span>关注区域</span><select id="srRegion">'+['全球','中国','华东'].map(function(region){return '<option'+(data.region===region?' selected':'')+'>'+region+'</option>'}).join('')+'</select></label><div class="sr-wide" id="srTopicFields"><p>主题领域 *（可多选）</p><div class="sr-checks">'+topics.map(function(topic){return '<label><input type="checkbox" name="srTopics" value="'+topic+'"'+(data.topics.includes(topic)?' checked':'')+'>'+topic+'</label>'}).join('')+'</div></div><label class="sr-wide" id="srTargetFields"><span>企业全称 *（精确匹配）</span><input id="srTarget" maxlength="100" list="srCompanies" value="'+esc(data.target)+'" placeholder="输入核心供应商或头部客户全称"><datalist id="srCompanies">'+['海州芯源电子（示例）','海州材料制造（示例）','海州整车制造（示例）','海州国际物流（示例）'].map(function(name){return '<option value="'+name+'">'}).join('')+'</datalist></label><label id="srRoleFields"><span>企业角色</span><select id="srRole">'+['核心供应商','头部客户','物流伙伴','其他关键伙伴'].map(function(role){return '<option'+(data.role===role?' selected':'')+'>'+role+'</option>'}).join('')+'</select></label><div class="sr-wide" id="srMoveFields"><p>重大动作 *（可多选）</p><div class="sr-checks">'+['生产运营','融资并购','司法与信用','技术与订单','物流与停产','出口限制','重大政策','航线调整'].map(function(move){return '<label><input type="checkbox" name="srMoves" value="'+move+'"'+(data.moves.includes(move)?' checked':'')+'>'+move+'</label>'}).join('')+'</div></div><label class="sr-wide"><span>链条 / 关键物料关键词（可选）</span><input id="srKeyword" maxlength="60" value="'+esc(data.keyword)+'" placeholder="例如：芯片；留空关注该范围全部事件"></label><label class="sr-wide"><span>风险门槛</span><select id="srThreshold">'+[3,2,1].map(function(level){return '<option value="'+level+'"'+(data.level===level?' selected':'')+'>'+levelText(level)+'及以上</option>'}).join('')+'</select></label></div><div id="srFormError" class="sr-error" role="alert"></div><div class="sr-form-footer"><button class="sr-btn" type="button" data-close>取消</button><button class="sr-btn sr-primary" type="submit">保存订阅</button></div></form>');
+    updateFormType(); modal.querySelector('#srType').onchange = updateFormType; modal.querySelector('#srForm').onsubmit = saveForm;
+  }
+  function updateFormType() {
+    var company = modal.querySelector('#srType').value === 'company';
+    ['srTargetFields','srRoleFields','srMoveFields'].forEach(function(id){modal.querySelector('#'+id).hidden = !company});
+    modal.querySelector('#srTopicFields').hidden = company; modal.querySelector('#srTarget').required = company;
+  }
+  function saveForm(event) {
+    event.preventDefault();
+    var get = function(id){return modal.querySelector('#'+id).value.trim()};
+    var selectedChecks = function(name){return Array.from(modal.querySelectorAll('input[name="'+name+'"]:checked')).map(function(input){return input.value})};
+    var data = {id:editing||'s-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),name:get('srName'),type:get('srType'),topics:selectedChecks('srTopics'),target:get('srTarget'),role:get('srRole'),moves:selectedChecks('srMoves'),region:get('srRegion'),keyword:get('srKeyword'),level:Number(get('srThreshold')),enabled:true};
+    if (!data.name || data.type === 'topic' && !data.topics.length || data.type === 'company' && (!data.target || !data.moves.length)) { modal.querySelector('#srFormError').textContent = '请填写订阅名称，并选择至少一个主题；企业订阅需填写企业全称并选择重大动作。'; return; }
+    var index = state.subscriptions.findIndex(function(item){return item.id === editing});
+    if (index < 0) state.subscriptions.push(data); else { data.enabled = state.subscriptions[index].enabled; state.subscriptions[index] = Object.assign({},state.subscriptions[index],data); }
+    save(); closeModal(); pauseAnalysis(); view = 'subscriptions'; render(); notify('订阅规则已保存至当前浏览器。');
+  }
+  function evidence(event) {
+    openModal('<header><div><h2 id="srModalTitle">来源依据与核验说明</h2><p>'+esc(event.title)+'</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-evidence-body"><p class="sr-confirm-note">此条为模拟事件，未连接真实信源，不是已发生的新闻或企业风险事实。</p><h3>事件材料</h3><p>'+esc(event.fact)+'<br>素材类型：'+esc(event.source)+'<br>场景时间：'+event.time+'（非真实采集时间）<br>状态：未联网取证 / 待人工核验</p><h3>企业暴露与判断边界</h3><p>'+esc(event.impact)+'<br>当前关系与业务影响均待真实材料复核，不直接认定违约、停产、损失或信用风险。</p><h3>下一步需补充</h3><p>'+esc(context[event.id].verify)+'。核对原文、发布机构、时间、适用范围及其与本企业的关联。</p></div>');
+  }
+  root.addEventListener('click',function(event){
+    var button = event.target.closest('button'); if (!button) return;
+    if (button.dataset.tab) { if (button.dataset.tab !== 'events') pauseAnalysis(); view = button.dataset.tab; render(); return; }
+    if (button.dataset.event) { startAnalysis(events.find(function(item){return item.id === button.dataset.event})); return; }
+    var id = button.dataset.id;
+    var subscription = state.subscriptions.find(function(item){return item.id === id});
+    switch (button.dataset.action) {
+      case 'new': form(); break;
+      case 'edit': form(subscription); break;
+      case 'toggle': subscription.enabled = !subscription.enabled; save(); render(); break;
+      case 'delete': openModal('<header><div><h2 id="srModalTitle">删除订阅</h2><p>'+esc(subscription.name)+'</p></div><button class="sr-close" data-close aria-label="关闭">×</button></header><div class="sr-form"><p>删除后，该规则将不再用于情报筛选与关联。</p><div class="sr-form-footer"><button class="sr-btn" data-close>取消</button><button class="sr-btn sr-primary" data-action="confirmdelete" data-id="'+esc(id)+'">删除这条订阅</button></div></div>'); break;
+      case 'pause': pauseAnalysis(); break;
+      case 'resume': resumeAnalysis(); break;
+      case 'restart': if (selected) startAnalysis(events.find(function(item){return item.id === selected})); break;
+      case 'evidence': evidence(events.find(function(item){return item.id === id})); break;
+      case 'handle': if (state.handled.includes(id)) state.handled = state.handled.filter(function(value){return value !== id}); else state.handled.push(id); save(); render(); break;
+      case 'evaluate': pauseAnalysis(); if (window.supplyEvaluationLoad) window.supplyEvaluationLoad({chain:chain,enterprise:core,region:'华东'}); else notify('评价模块加载中，请稍后重试。'); break;
+    }
+  });
+  root.addEventListener('change',function(event){
+    switch (event.target.id) {
+      case 'srTopic': filterTopic = event.target.value; render(); break;
+      case 'srLevel': filterLevel = event.target.value; render(); break;
+      case 'srOnlyMine': onlyMine = event.target.checked; render(); break;
+    }
+  });
+  root.addEventListener('input',function(event){
+    if (event.target.id === 'srSearch') { query = event.target.value; var position = event.target.selectionStart; render(); var input = root.querySelector('#srSearch'); input.focus(); input.setSelectionRange(position,position); }
+  });
+  modal.addEventListener('click',function(event){
+    if (event.target === modal || event.target.closest('[data-close]')) { closeModal(); return; }
+    var button = event.target.closest('[data-action="confirmdelete"]');
+    if (button) { state.subscriptions = state.subscriptions.filter(function(item){return item.id !== button.dataset.id}); save(); closeModal(); render(); notify('订阅已删除。'); }
+  });
+  document.addEventListener('keydown',function(event){
+    if (modal.hidden) return;
+    if (event.key === 'Escape') closeModal();
+    if (event.key === 'Tab') {
+      var nodes = Array.from(modal.querySelectorAll('button,input,select,textarea,a[href]')).filter(function(node){return !node.disabled && node.getClientRects().length});
+      var first = nodes[0], last = nodes[nodes.length-1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+  new MutationObserver(function(){if (!root.classList.contains('show')) pauseAnalysis()}).observe(root,{attributes:true,attributeFilter:['class']});
   render();
 })();
