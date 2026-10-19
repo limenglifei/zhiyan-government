@@ -92,23 +92,32 @@
     var active = state.subscriptions.filter(function(s){return s.enabled}).length;
     var high = events.filter(function(event){return event.level === 3 && matched(event).length && !state.handled.includes(event.id)}).length;
     return '<div class="sr-head"><div><label class="sr-eyebrow">SUPPLY CHAIN RISK INTELLIGENCE</label><h1>供应链风控</h1><p>聚焦外部事件与企业重大动作，动态研判供应链影响。</p></div><button class="sr-btn sr-primary" data-action="new">＋ 新建订阅</button></div>' +
-      '<div class="sr-notice"><b>交互演示 · 示例数据</b>以下事件与企业关系为模拟情景，“查看原文”指向主题参考资料。订阅规则保存在当前浏览器；真实事件采集与在线 AI 分析待接入。</div>' +
       '<div class="sr-metrics">' + [[active,'生效订阅','事件维度与企业维度','◎'],[high,'待关注高风险','命中订阅的模拟事件','!'],[events.length,'风险情景','覆盖七类外部冲击','⌁']].map(function(m){return '<div class="sr-metric"><div><label>'+m[1]+'</label><strong>'+m[0]+'</strong><small>'+m[2]+'</small></div><i>'+m[3]+'</i></div>'}).join('') + '</div>' +
       '<div class="sr-tabs" role="tablist" aria-label="风控工作台">' + [['events','风险情报'],['subscriptions','我的订阅']].map(function(t){return '<button role="tab" aria-selected="'+(view===t[0])+'" class="'+(view===t[0]?'active':'')+'" data-tab="'+t[0]+'">'+t[1]+'</button>'}).join('') + '</div>';
   }
   function cancelAnalysis() { clearTimeout(analysis.timer); analysis.timer = null; analysis.token++; }
-  function showSubscriptionFeed(id) {
+  function clearAnalysisSelection() {
     cancelAnalysis(); selected = null; analysis.id = null; analysis.status = 'idle'; analysis.texts = []; analysis.index = 0; analysis.offset = 0;
+  }
+  function selectFirstEvent(force) {
+    var list = visibleEvents();
+    if (!list.length) { if (selected || analysis.status !== 'idle') clearAnalysisSelection(); return false; }
+    if (!force && list.some(function(event){return event.id === selected})) return false;
+    startAnalysis(list[0]); return true;
+  }
+  function showSubscriptionFeed(id) {
+    clearAnalysisSelection();
     filterSubscriptionId = id || null; filterTopic = ''; filterLevel = ''; query = ''; onlyMine = false; view = 'events'; render();
   }
   function render() {
     if (filterSubscriptionId && !feedSubscription()) filterSubscriptionId = null;
+    if (view === 'events' && root.classList.contains('show') && selectFirstEvent(false)) return;
     root.innerHTML = header() + (view === 'events' ? eventPage() : subscriptionPage());
     if (view === 'events' && selected === analysis.id) paintAnalysis();
   }
   function eventPage() {
     var list = visibleEvents(), subscription = feedSubscription();
-    if (selected && !list.some(function(event){return event.id === selected})) { cancelAnalysis(); selected = null; analysis.status = 'idle'; }
+    if (selected && !list.some(function(event){return event.id === selected})) clearAnalysisSelection();
     var event = events.find(function(item){return item.id === selected});
     return (subscription ? '<div class="sr-toolbar" aria-label="当前订阅信息流"><span class="sr-badge">订阅信息流</span><b>'+esc(subscription.name)+'</b><button class="sr-btn" data-action="allEvents">查看全部事件</button><span class="sr-muted">'+esc(subscriptionSummary(subscription))+'</span></div>' : '') +
       '<div class="sr-toolbar"><input id="srSearch" aria-label="搜索事件、企业或物料" placeholder="搜索事件、企业或关键物料" value="'+esc(query)+'"><select id="srTopic" aria-label="事件维度"><option value="">全部事件维度</option>'+topics.map(function(topic){return '<option'+(filterTopic===topic?' selected':'')+'>'+topic+'</option>'}).join('')+'</select><select id="srLevel" aria-label="风险等级"><option value="">全部风险等级</option>'+[3,2,1].map(function(n){return '<option value="'+n+'"'+(filterLevel===String(n)?' selected':'')+'>'+levelText(n)+'</option>'}).join('')+'</select><label class="sr-muted"><input id="srOnlyMine" type="checkbox"'+(onlyMine?' checked':'')+'> 只看命中订阅</label></div>' +
@@ -131,14 +140,17 @@
     ];
   }
   function startAnalysis(event) {
+    if (!event || !visibleEvents().some(function(item){return item.id === event.id})) return;
     cancelAnalysis(); selected = event.id;
-    analysis.id = event.id; analysis.status = 'running'; analysis.texts = textsFor(event); analysis.index = 0; analysis.offset = 0;
-    render(); scheduleStep();
+    analysis.id = event.id; analysis.status = root.classList.contains('show') && view === 'events' ? 'running' : 'paused'; analysis.texts = textsFor(event); analysis.index = 0; analysis.offset = 0;
+    render(); if (analysis.status === 'running') scheduleStep();
   }
   function scheduleStep() {
+    if (analysis.status !== 'running' || view !== 'events' || !root.classList.contains('show')) return;
+    clearTimeout(analysis.timer);
     var token = analysis.token;
     analysis.timer = setTimeout(function(){
-      if (token !== analysis.token || analysis.status !== 'running' || selected !== analysis.id || view !== 'events') return;
+      if (token !== analysis.token || analysis.status !== 'running' || selected !== analysis.id || view !== 'events' || !root.classList.contains('show')) return;
       analysis.offset = Math.min(analysis.offset + 3, analysis.texts[analysis.index].length);
       if (analysis.offset >= analysis.texts[analysis.index].length) {
         if (analysis.index === stageNames.length - 1) analysis.status = 'complete';
@@ -166,7 +178,7 @@
     });
   }
   function pauseAnalysis() { if (analysis.status === 'running') { cancelAnalysis(); analysis.status = 'paused'; paintAnalysis(); } }
-  function resumeAnalysis() { if (analysis.status === 'paused') { analysis.status = 'running'; paintAnalysis(); scheduleStep(); } }
+  function resumeAnalysis() { if (analysis.status === 'paused' && view === 'events' && root.classList.contains('show')) { analysis.status = 'running'; paintAnalysis(); scheduleStep(); } }
 
   function subscriptionPage() {
     return '<div class="sr-toolbar"><h2>按事件或企业持续关注</h2><span class="sr-muted">企业名称精确匹配；自定义企业暂无示例事件时不生成关联情报。</span></div>' +
@@ -202,7 +214,12 @@
   }
   root.addEventListener('click',function(event){
     var button = event.target.closest('button'); if (!button) return;
-    if (button.dataset.tab) { if (button.dataset.tab !== 'events') pauseAnalysis(); view = button.dataset.tab; render(); return; }
+    if (button.dataset.tab) {
+      if (button.dataset.tab !== 'events') pauseAnalysis();
+      view = button.dataset.tab;
+      if (view !== 'events' || !selectFirstEvent(true)) render();
+      return;
+    }
     if (button.dataset.event) { startAnalysis(events.find(function(item){return item.id === button.dataset.event})); return; }
     var id = button.dataset.id;
     var subscription = state.subscriptions.find(function(item){return item.id === id});
@@ -245,6 +262,9 @@
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
   });
-  new MutationObserver(function(){if (!root.classList.contains('show')) pauseAnalysis()}).observe(root,{attributes:true,attributeFilter:['class']});
+  new MutationObserver(function(){
+    if (!root.classList.contains('show')) pauseAnalysis();
+    else if (view === 'events' && !selected) selectFirstEvent(false);
+  }).observe(root,{attributes:true,attributeFilter:['class']});
   render();
 })();
