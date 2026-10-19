@@ -168,6 +168,8 @@
     <button class="nav" data-view="qa"><span>✦</span>产业智能问答</button>
     <button class="nav" data-view="investment"><span>⌖</span>招商线索雷达<em>AI</em></button>
     <button class="nav" data-view="dueDiligence"><span>尽</span>企业尽调助手</button>
+    <button class="nav" data-view="supplyRisk"><span>盾</span>供应链风控</button>
+    <button class="nav" data-view="supplyEvaluation"><span>评</span>供应链评价<em>AI</em></button>
     <button class="nav" data-view="enterprisePolicy"><span>企</span>企业政策匹配</button>
     <button class="nav" data-view="support"><span>扶</span>政策精准扶持</button>
     <button class="nav" data-view="knowledge"><span>库</span>精品知识库</button>
@@ -621,7 +623,7 @@
 </section>
 <div class="toast" id="toast"></div>
 <script>
-const names={dashboard:'产业运行总览',qa:'产业智能问答',enterprisePolicy:'企业政策匹配',support:'政策精准扶持',chain:'产业链分析',strength:'强链补链深度报告',investment:'招商线索雷达',dueDiligence:'企业尽调助手',dueReport:'招商尽调报告',knowledge:'精品知识库',knowledgeList:'精品知识库',collection:'数据采集',system:'系统管理'};
+const names={dashboard:'产业运行总览',qa:'产业智能问答',enterprisePolicy:'企业政策匹配',support:'政策精准扶持',chain:'产业链分析',strength:'强链补链深度报告',investment:'招商线索雷达',dueDiligence:'企业尽调助手',supplyRisk:'供应链风控',supplyEvaluation:'供应链评价',dueReport:'招商尽调报告',knowledge:'精品知识库',knowledgeList:'精品知识库',collection:'数据采集',system:'系统管理'};
 const editionConfig={enterprise:{label:'企业版',workspace:'海州智造科技有限公司',account:'海州智造科技有限公司',role:'企业管理员 · 企业版',avatar:'智',subtitle:'企业政策与供应链智能平台',defaultView:'qa',monitorName:'供应链风控'},government:{label:'政府版',workspace:'海州市产业园区',account:'海州市',role:'管理员 · 政府版',avatar:'海',subtitle:'产业智能决策系统',defaultView:'dashboard',monitorName:'产业情报监控'}};
 let activeEdition='government';
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('show',x.id===v));const navKey=v==='knowledgeList'?'knowledge':v;document.querySelectorAll('.nav[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===navKey));document.getElementById('crumb').textContent=names[v]||v;const assistant=document.getElementById('floatingProductAssistant'),panel=document.getElementById('productAssistantPanel'),onDashboard=v==='dashboard';if(assistant)assistant.style.display=onDashboard?'flex':'none';if(!onDashboard&&panel){panel.classList.remove('open');panel.setAttribute('aria-hidden','true');if(assistant)assistant.setAttribute('aria-expanded','false')}}
@@ -3989,5 +3991,15 @@ var dashboardHeadlineNews = [
     row.append(rank, content, link);
     list.appendChild(row);
   });
+})();
+</script>
+<link rel="stylesheet" href="supply-chain-risk.css?v=20261019">
+<link rel="stylesheet" href="supply-chain-evaluation.css?v=20261019">
+<script src="supply-chain-risk.js?v=20261019"></script>
+<script src="supply-chain-evaluation.js?v=20261019"></script>
+<script>
+(function () {
+  var moduleName = new URLSearchParams(window.location.search).get('module');
+  if (['supplyRisk', 'supplyEvaluation'].includes(moduleName)) show(moduleName);
 })();
 </script>
