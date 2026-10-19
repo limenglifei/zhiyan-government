@@ -99,8 +99,7 @@
   }
   var section = document.createElement('section');
   section.className = 'content view sc-eval'; section.id = 'supplyEvaluation';
-  section.innerHTML = '<div class="sce-head"><div><span class="sce-eyebrow">SUPPLY CHAIN RESILIENCE</span><h1>供应链评价</h1><p>从结构、运营、恢复与治理出发，形成可追溯的韧性评价与改进建议。</p></div><span class="sce-demo">交互演示 · 示例数据</span></div>' +
-    '<div class="sce-notice"><b>智能体工作台</b><span>演示“信息采集 → 指标分析 → 报告生成”流程。当前未接入实时采集或在线 AI；自定义对象生成待补充的评价底稿。</span></div>' +
+  section.innerHTML = '<div class="sce-head"><div><span class="sce-eyebrow">SUPPLY CHAIN RESILIENCE</span><h1>供应链评价</h1><p>从结构、运营、恢复与治理出发，形成可追溯的韧性评价与改进建议。</p></div></div>' +
     '<div id="sceEditor" class="sce-layout"><div><form id="sceForm" class="sce-card" novalidate><div class="sce-card-head"><div><h2>创建供应链评价</h2><p>明确评价边界，再配置内外部信息。</p></div><button type="button" class="sce-btn sce-btn-soft" id="sceLoadSample">载入示例</button></div><div class="sce-card-body"><div class="sce-form-grid">' +
     '<label>供应链名称 <i>*</i><input id="sceChain" name="chain" maxlength="80" placeholder="如：新能源汽车动力电池供应链" required></label>' +
     '<label>核心企业 <i>*</i><input id="sceEnterprise" name="enterprise" maxlength="80" placeholder="请输入核心企业名称" required></label>' +
