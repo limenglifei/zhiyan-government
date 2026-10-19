@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var topics = ['地缘政治', '贸易冲突', '极端天气', '技术突破', '疫情', '物流中断', '宏观政策'];
+  var topics = ['地缘政治', '贸易冲突', '极端天气', '技术突破', '疫情爆发', '物流中断', '宏观政策'];
   var chain = '新能源汽车动力电池供应链';
   var core = '海州新能源科技（示例）';
   var events = [
@@ -8,7 +8,7 @@
     {id:'weather',topic:'极端天气',level:3,title:'强降雨影响生产基地周边运输，关注在途物料',region:'华东',time:'10-19 08:50',entities:['海州材料制造（示例）'],role:'核心供应商',move:'物流与停产',material:'正极材料',fact:'演示情景：生产基地周边出现强降雨预警，部分道路通行能力下降。',path:['极端降雨','陆运通道受限','正极材料到货延迟'],impact:'供应节点与运输路径重合；气象预警并不等同于企业停产，需联系工厂核验。',actions:['核对在途订单与道路通行信息。','准备替代运输线路，确认安全库存。','每日更新供应商运营状态与到货承诺。'],source:'模拟气象预警 / 运输路径',status:'待核验',confidence:'区域暴露匹配，未确认停产'},
     {id:'geo',topic:'地缘政治',level:3,title:'区域冲突升级情景，跨境航线与能源成本波动',region:'全球',time:'10-18 16:40',entities:['海州国际物流（示例）'],role:'物流伙伴',move:'航线调整',material:'跨境运输',fact:'演示情景：区域冲突导致承运商重新评估航线，运费与燃油附加费可能变化。',path:['区域冲突','航线绕行与能源波动','交货成本及周期变化'],impact:'仅对经过相关航道或使用相关能源来源的订单形成暴露。',actions:['梳理相关航道订单与合同交付责任。','获取承运商替代航线方案和报价。','对紧急物料评估分批运输。'],source:'模拟航运公告 / 物流关系',status:'待核验',confidence:'区域情景，订单暴露待补充'},
     {id:'tech',topic:'技术突破',level:2,title:'新型电池工艺进入验证阶段，关注技术替代与客户切换',region:'中国',time:'10-18 14:30',entities:['海州整车制造（示例）'],role:'头部客户',move:'技术与订单',material:'动力电池技术路线',fact:'演示情景：头部客户发布新工艺验证计划，潜在改变电芯性能要求与采购组合。',path:['新工艺验证','客户采购规格变化','产线适配与需求迁移'],impact:'技术突破同时带来合作机会和替代风险；未进入量产不视为现有订单流失。',actions:['确认技术成熟度、验证周期及量产节点。','与客户评估现有产品适配方案。','制定工艺储备与联合研发计划。'],source:'模拟客户公告 / 技术资料',status:'待核验',confidence:'技术情报，商业化影响待验证'},
-    {id:'health',topic:'疫情',level:2,title:'公共卫生应急情景，关键供应节点人员与产能需复核',region:'华东',time:'10-18 11:10',entities:['海州材料制造（示例）'],role:'核心供应商',move:'生产运营',material:'正极材料',fact:'演示情景：供应节点所在区域启动公共卫生应急响应，需了解生产与运输连续性安排。',path:['公共卫生事件','人员与物流受限','产能与交付波动'],impact:'区域应急响应不能直接推断供应商停产，应核验工厂实际运营情况。',actions:['联系供应商核验人员、产能与交付情况。','检查跨区域供给与替班机制。','建立客户交付优先级。'],source:'模拟应急通报 / 供应商回访',status:'待核验',confidence:'公共情景，企业运营待确认'},
+    {id:'health',topic:'疫情爆发',level:2,title:'公共卫生应急情景，关键供应节点人员与产能需复核',region:'华东',time:'10-18 11:10',entities:['海州材料制造（示例）'],role:'核心供应商',move:'生产运营',material:'正极材料',fact:'演示情景：供应节点所在区域启动公共卫生应急响应，需了解生产与运输连续性安排。',path:['公共卫生事件','人员与物流受限','产能与交付波动'],impact:'区域应急响应不能直接推断供应商停产，应核验工厂实际运营情况。',actions:['联系供应商核验人员、产能与交付情况。','检查跨区域供给与替班机制。','建立客户交付优先级。'],source:'模拟应急通报 / 供应商回访',status:'待核验',confidence:'公共情景，企业运营待确认'},
     {id:'logistics',topic:'物流中断',level:3,title:'承运枢纽中断情景，关键材料运输路线需改配',region:'华东',time:'10-18 10:20',entities:['海州国际物流（示例）'],role:'物流伙伴',move:'物流与停产',material:'电芯及关键原料',fact:'演示情景：主要中转枢纽暂时停止作业，原运输方案无法覆盖部分交货窗口。',path:['枢纽中断','在途批次滞留','生产补料延迟'],impact:'需结合运单和生产排期核验实际影响，尚未测算损失金额。',actions:['确认受影响运单、预计恢复时间及责任方。','调配替代承运商、铁路或其他枢纽。','与生产部门校准物料齐套计划。'],source:'模拟承运商通知 / 运单台账',status:'待核验',confidence:'运输关系匹配，延误时长待确认'},
     {id:'policy',topic:'宏观政策',level:2,title:'行业监管要求调整情景，关注合规投入与订单兑现',region:'中国',time:'10-17 17:00',entities:['海州新能源科技（示例）','海州整车制造（示例）'],role:'核心企业 / 头部客户',move:'重大政策',material:'电池合规与回收',fact:'演示情景：电池行业监管要求调整，可能涉及产品合规、回收管理和验收材料。',path:['监管要求变化','合规与认证成本变化','交付验收及回款影响'],impact:'政策适用对象、生效时间与存量订单过渡安排均需逐项核验。',actions:['核对政策原文与适用主体。','盘点认证、回收与追溯材料缺口。','与客户确认验收及付款安排。'],source:'模拟政策资料 / 企业合规台账',status:'待核验',confidence:'行业适用性待确认'}
   ];
@@ -23,7 +23,7 @@
   };
   var initial = [
     {id:'s-trade',name:'关键材料与跨境风险',type:'topic',topics:['贸易冲突','地缘政治','宏观政策'],target:'',role:'',moves:[],region:'全球',keyword:'',level:2,enabled:true},
-    {id:'s-weather',name:'华东生产与运输连续性',type:'topic',topics:['极端天气','疫情','物流中断'],target:'',role:'',moves:[],region:'华东',keyword:'',level:2,enabled:true},
+    {id:'s-weather',name:'华东生产与运输连续性',type:'topic',topics:['极端天气','疫情爆发','物流中断'],target:'',role:'',moves:[],region:'华东',keyword:'',level:2,enabled:true},
     {id:'s-supplier',name:'核心供应商重大动作',type:'company',topics:[],target:'海州芯源电子（示例）',role:'核心供应商',moves:['出口限制','生产运营','融资并购','司法与信用'],region:'全球',keyword:'',level:2,enabled:true},
     {id:'s-customer',name:'头部客户技术与订单',type:'company',topics:[],target:'海州整车制造（示例）',role:'头部客户',moves:['技术与订单','重大政策','融资并购'],region:'中国',keyword:'',level:1,enabled:true}
   ];
@@ -46,7 +46,9 @@
     var saved = JSON.parse(localStorage.getItem(storeKey));
     if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
       retained = saved;
-      if (Array.isArray(saved.subscriptions)) state.subscriptions = saved.subscriptions.filter(validSubscription);
+      if (Array.isArray(saved.subscriptions)) state.subscriptions = saved.subscriptions.filter(validSubscription).map(function(subscription){
+        return Object.assign({},subscription,{topics:subscription.topics.map(function(topic){return topic === '疫情' ? '疫情爆发' : topic})});
+      });
       if (Array.isArray(saved.handled)) state.handled = saved.handled.filter(function(id){return typeof id === 'string'});
     }
   } catch (error) {}
