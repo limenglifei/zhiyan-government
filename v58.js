@@ -5,14 +5,14 @@
   function selectedChainV58(){return typeof chainIndustryData!=='undefined'&&chainIndustryData[activeChainKey]?chainIndustryData[activeChainKey]:chainIndustryData.newenergy}
   function patentRankingV58(){
     var list=document.querySelector('#dashboard .innovation-ranking'),card=list&&list.closest('.ranking-card');if(!card)return;
-    card.classList.add('innovation-ranking-v58');var title=card.querySelector('h2'),sub=card.querySelector('.card-title p');if(title)title.textContent='创新企业榜 TOP10';if(sub)sub.textContent='按专利总数降序排列 · 单位：项 · 示意数据';
+    card.classList.add('innovation-ranking-v58');
     var rows=Array.from(list.querySelectorAll('.rank-row'));
-    rows.sort(function(a,b){return Number(b.querySelector('strong').textContent)-Number(a.querySelector('strong').textContent)});
+    rows.sort(function(a,b){return Number(a.dataset.provincialRank)-Number(b.dataset.provincialRank)});
     rows.forEach(function(row,index){row.querySelector('i').textContent=index+1;row.classList.toggle('top',index<3);list.appendChild(row)});
   }
   function updateAnnotationsV58(){
     if(typeof prototypeLogicAnnotations==='undefined')return;
-    var dashboard=prototypeLogicAnnotations.dashboard&&prototypeLogicAnnotations.dashboard.fields||[],rank=dashboard.find(function(x){return /纳税/.test(x[0])});if(rank){rank[0]='纳税与创新企业榜';rank[1]='纳税榜按本年度累计实缴税额降序；创新企业榜按企业专利总数降序，统计发明、实用新型和外观设计专利，按专利申请号去重。';rank[2]='税务汇总数据、国家知识产权数据、企业统一社会信用代码';rank[3]='专利数据每日更新，榜单按月固化'}
+    var dashboard=prototypeLogicAnnotations.dashboard&&prototypeLogicAnnotations.dashboard.fields||[],rank=dashboard.find(function(x){return /纳税/.test(x[0])});if(rank){rank[0]='纳税与创新企业榜';rank[1]='纳税榜为合肥企业场景示例，金额及名次不代表真实纳税数据；创新榜为2025安徽制造业企业发明专利50强中合肥入围企业，右侧展示省榜名次。';rank[2]='合肥企业公开资料、2025安徽发明专利排行榜';rank[3]='按对应榜单年份展示，不作为实时专利数量'}
     var chain=prototypeLogicAnnotations.chain&&prototypeLogicAnnotations.chain.fields||[],rate=chain.find(function(x){return x[0]==='本地配套率'});if(rate){rate[1]='大白话理解：本地产业链一共需要多少关键原料、零部件和服务，其中有多少能由海州市本地企业提供。比如本地企业总共需要100万元的配套产品，本地供应商能提供64万元，本地配套率就是64%。';rate[2]='本地企业采购需求、供应商产品清单、供需关系和可供货能力';rate[3]='月度更新，重大项目投产或企业供需变化后重算'}
     if(prototypeLogicAnnotations.investment){prototypeLogicAnnotations.investment.interactions.push(['单节点强链补链分析','点击产业链单个节点。','直接弹出该节点推荐企业清单，每家企业可加入招商名单，不生成重型报告。'],['产业链整体分析','点击页面级强链补链分析推荐。','进入招商线索雷达二级报告页面，支持面包屑返回；推荐企业可单个或批量加入招商名单。'])}
   }

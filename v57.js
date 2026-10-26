@@ -26,8 +26,8 @@
   }
   window.runAttractionRecommend=openStandaloneReport;
   window.exportChainReportV51=openStandaloneReport;
-  var sideName=document.getElementById('sideAccountName');if(sideName)sideName.textContent='海州市';
-  if(typeof editionConfig!=='undefined'&&editionConfig.government)editionConfig.government.account='海州市';
+  var sideName=document.getElementById('sideAccountName');if(sideName)sideName.textContent='合肥市';
+  if(typeof editionConfig!=='undefined'&&editionConfig.government)editionConfig.government.account='合肥市';
   if(typeof prototypeLogicAnnotations!=='undefined'&&prototypeLogicAnnotations.investment){
     prototypeLogicAnnotations.investment.interactions.push(['生成强链补链报告','完成招商条件后点击开始推荐。','新开浏览器标签进入独立专项报告页，不在原弹窗内堆叠展示；报告保留产业链、节点、区域及资质筛选上下文。']);
   }

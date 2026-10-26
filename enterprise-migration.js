@@ -4,9 +4,9 @@
   const geography = window.ZhiyanMigrationGeography;
   if (!vitality || !geography || document.getElementById('enterpriseMigrationMap')) return;
 
-  // Illustrative enterprise movements; totals match the existing vitality cards.
-  // Haizhou is the prototype's local area, shown at an illustrative Jiangsu location.
-  const home = { name: '海州市', coordinate: [119.18, 34.60], province: 320000 };
+  // Illustrative Hefei enterprise movements; totals match the vitality cards.
+  // These fixed October 2026 scenarios do not represent verified migration records.
+  const home = { name: '合肥市', coordinate: [117.23, 31.82], province: 340000 };
   const movements = [
     { id: 'shanghai', city: '上海市', province: 310000, coordinate: [121.47, 31.23], in: 6, out: 3 },
     { id: 'suzhou', city: '苏州市', province: 320000, coordinate: [120.58, 31.30], in: 5, out: 2 },
@@ -14,7 +14,7 @@
     { id: 'hangzhou', city: '杭州市', province: 330000, coordinate: [120.16, 30.25], in: 2, out: 1 },
     { id: 'beijing', city: '北京市', province: 110000, coordinate: [116.41, 39.90], in: 2, out: 0 },
     { id: 'chengdu', city: '成都市', province: 510000, coordinate: [104.07, 30.57], in: 2, out: 0 },
-    { id: 'hefei', city: '合肥市', province: 340000, coordinate: [117.23, 31.82], in: 1, out: 1 },
+    { id: 'nanjing', city: '南京市', province: 320000, coordinate: [118.80, 32.06], in: 1, out: 1 },
     { id: 'qingdao', city: '青岛市', province: 370000, coordinate: [120.38, 36.07], in: 1, out: 0 },
     { id: 'wuhan', city: '武汉市', province: 420000, coordinate: [114.31, 30.59], in: 1, out: 0 },
     { id: 'xian', city: '西安市', province: 610000, coordinate: [108.94, 34.34], in: 1, out: 0 },
@@ -46,10 +46,8 @@
     insetPath: geometryPath(feature.geometry, insetPoint)
   }));
   const provinceName = code => features.find(feature => Number(feature.adcode) === Number(code))?.name || '其他地区';
-  const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
-  const datePart = type => dateParts.find(part => part.type === type).value;
-  const migrationMonth = datePart('year') + '-' + datePart('month');
-  const migrationDay = Number(datePart('day'));
+  const migrationMonth = '2026-10';
+  const migrationDay = 31;
   const enterpriseProfiles = [
     { industry: '新能源汽车及零部件', name: '新能源科技' },
     { industry: '高端装备制造', name: '精密装备' },
@@ -89,13 +87,12 @@
   card.setAttribute('aria-labelledby', 'migrationHeading');
   card.innerHTML = `
     <header class="migration-header">
-      <div><h2 id="migrationHeading">企业迁入迁出地图</h2><p>本月企业跨地区流动 · 演示数据</p></div>
+      <div><h2 id="migrationHeading">合肥市企业迁入迁出地图</h2><p>2026年10月企业跨地区流动 · 合肥场景示例数据</p></div>
       <div class="migration-controls">
         <div class="migration-direction" role="group" aria-label="企业迁移方向">
           <button type="button" data-migration-direction="in" aria-pressed="true"><span>↘ 企业迁入</span><b>${total('in')}</b></button>
           <button type="button" data-migration-direction="out" aria-pressed="false"><span>↗ 企业迁出</span><b>${total('out')}</b></button>
         </div>
-        <button type="button" class="migration-motion" aria-label="暂停流向动画"><i aria-hidden="true">Ⅱ</i><span>暂停动效</span></button>
       </div>
     </header>
     <div class="migration-body">
@@ -107,12 +104,12 @@
       <aside class="migration-sidebar" aria-label="企业迁移地区分布">
         <div class="migration-side-heading"><h3 id="migrationRankTitle">迁入来源</h3><span id="migrationRegionCount"></span></div>
         <div class="migration-total" aria-live="polite"><b id="migrationTotal">28</b><span>家企业</span></div>
-        <div class="migration-net">本月净迁入<strong>+${total('in') - total('out')} 家</strong></div>
+        <div class="migration-net">示例期净迁入<strong>+${total('in') - total('out')} 家</strong></div>
         <ol class="migration-ranking" id="migrationRanking"></ol>
         <section class="migration-insight" aria-labelledby="migrationInsightHeading">
           <h4 id="migrationInsightHeading"><span aria-hidden="true">✦</span> AI 总结与解读</h4>
           <p id="migrationInsightText" aria-live="polite" aria-atomic="true"></p>
-          <small>基于本月演示数据</small>
+          <small>基于2026年10月合肥场景示例数据</small>
         </section>
         <div class="migration-selection" id="migrationSelection" aria-live="polite">点击地区聚焦流向，点击企业数量查看明细。</div>
       </aside>
@@ -131,14 +128,14 @@
         <div><h2 id="migrationEnterpriseTitle"></h2><p id="migrationEnterpriseSummary"></p></div>
         <button type="button" class="migration-detail-close" data-close-migration-details aria-label="关闭企业迁移明细" autofocus>×</button>
       </header>
-      <p class="migration-detail-note" id="migrationEnterpriseDemoNote">演示数据：以下企业名称及迁移记录为原型示例，不代表真实企业。</p>
+      <p class="migration-detail-note" id="migrationEnterpriseDemoNote">合肥场景示例数据：以下企业名称及迁移记录为2026年10月原型示例，不代表真实企业及真实迁移。</p>
       <div class="migration-detail-table-wrap" tabindex="0" role="region" aria-label="企业迁移明细清单，可滚动查看">
         <table class="migration-detail-table">
           <thead><tr><th scope="col">企业名称</th><th scope="col">所属行业</th><th scope="col">迁出地</th><th scope="col">迁入地</th><th scope="col">迁移日期</th></tr></thead>
           <tbody id="migrationEnterpriseRows"></tbody>
         </table>
       </div>
-      <footer class="migration-detail-footer">统计口径：本月跨地区迁移的企业数量，一家企业对应一条明细。</footer>
+      <footer class="migration-detail-footer">统计口径：2026年10月合肥场景示例中的跨地区迁移企业数量，一家企业对应一条明细。</footer>
     </section>`;
   document.body.appendChild(detailsDialog);
   let detailsOpener = null, previousBodyOverflow = '';
@@ -160,7 +157,7 @@
     detailsDialog.dataset.direction = direction;
     detailsDialog.dataset.province = province;
     detailsDialog.querySelector('#migrationEnterpriseTitle').textContent = route + ' · ' + (isIncoming ? '迁入' : '迁出') + '企业明细';
-    detailsDialog.querySelector('#migrationEnterpriseSummary').textContent = migrationMonth + ' · 本月' + (isIncoming ? '迁入' : '迁出') + ' ' + records.length + ' 家 · 演示数据';
+    detailsDialog.querySelector('#migrationEnterpriseSummary').textContent = migrationMonth + ' · ' + (isIncoming ? '迁入' : '迁出') + ' ' + records.length + ' 家 · 合肥场景示例数据';
     detailsDialog.querySelector('#migrationEnterpriseRows').innerHTML = records.map(record => `<tr data-enterprise-id="${esc(record.id)}"><td><b>${esc(record.name)}</b></td><td>${esc(record.industry)}</td><td>${esc(record.from)}</td><td>${esc(record.to)}</td><td><time datetime="${record.date}">${record.date}</time></td></tr>`).join('');
     detailsOpener = opener;
     previousBodyOverflow = document.body.style.overflow;
@@ -192,7 +189,7 @@
   function renderInsight(rows) {
     const count = total(direction), isIncoming = direction === 'in';
     if (!count) {
-      q('#migrationInsightText').textContent = `本月暂无企业${isIncoming ? '迁入' : '迁出'}记录。`;
+      q('#migrationInsightText').textContent = `示例期暂无企业${isIncoming ? '迁入' : '迁出'}记录。`;
       return;
     }
     const leading = rows.slice(0, 3);
@@ -206,8 +203,8 @@
     const leadNote = leading.length === 3 ? `，前三城市合计占${share(leadingCount)}` : '';
     const regionNote = deltaCount ? (isIncoming ? `长三角地区贡献${deltaCount}家（${share(deltaCount)}）；` : `其中${deltaCount}家流向长三角地区（${share(deltaCount)}）；`) : '';
     q('#migrationInsightText').textContent = (isIncoming
-      ? `本月${count}家企业迁入${home.name}，来源覆盖${rows.length}个城市，主要来自${cities}${leadNote}。`
-      : `本月${count}家企业从${home.name}迁出，流向${rows.length}个城市，主要迁往${cities}${leadNote}。`) + regionNote + netNote;
+      ? `示例期${count}家企业迁入${home.name}，来源覆盖${rows.length}个城市，主要来自${cities}${leadNote}。`
+      : `示例期${count}家企业从${home.name}迁出，流向${rows.length}个城市，主要迁往${cities}${leadNote}。`) + regionNote + netNote;
   }
   function curve(item) {
     const outer = point(item.coordinate), inner = point(home.coordinate);
@@ -245,7 +242,7 @@
     const inset = features.map(feature => `<path d="${feature.insetPath}" fill="#dfeafe" stroke="#9ab7e1" stroke-width=".5"/>`).join('');
     q('.migration-svg-host').innerHTML = `<svg viewBox="0 0 1000 680" role="group" aria-labelledby="migrationSvgTitle migrationSvgDescription">
       <title id="migrationSvgTitle">${home.name}企业${direction === 'in' ? '迁入' : '迁出'}流向地图</title>
-      <desc id="migrationSvgDescription">${rows.length} 个地区，共 ${total(direction)} 家企业。${direction === 'in' ? '绿色箭头由各地汇入海州市' : '橙色箭头由海州市向各地发散'}；右侧提供同等信息的可操作地区列表。</desc>
+      <desc id="migrationSvgDescription">${rows.length} 个地区，共 ${total(direction)} 家企业。${direction === 'in' ? '绿色箭头由各地汇入合肥市' : '橙色箭头由合肥市向各地发散'}；右侧提供同等信息的可操作地区列表。</desc>
       <defs><clipPath id="migration-main-clip"><rect x="12" y="18" width="964" height="628"/></clipPath><clipPath id="migration-sea-clip"><rect x="846" y="500" width="119" height="143"/></clipPath><marker id="migration-arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,1L9,5L0,9Z" fill="${direction === 'in' ? '#46aa69' : '#ed883a'}"/></marker></defs>
       <g clip-path="url(#migration-main-clip)">${provinces}${labels}</g>
       <g aria-hidden="true"><text x="48" y="90" font-size="14" fill="#78899f">流动企业数</text><text x="48" y="114" font-size="13" fill="#6a7c94">高</text>${palette.slice().reverse().map((color, i) => `<rect x="49" y="126" width="18" height="${22 * (i + 1)}" fill="${color}"/>`).reverse().join('')}<text x="48" y="254" font-size="13" fill="#6a7c94">低</text><rect x="48" y="274" width="10" height="10" rx="2" fill="#3e79e9"/><text x="66" y="284" font-size="12" fill="#6a7c94">本地</text></g>
@@ -281,7 +278,7 @@
     const tooltip = q('.migration-tooltip');
     tooltip.hidden = !items.length;
     const activeCount = items.reduce((sum, item) => sum + item[direction], 0);
-    if (items.length) tooltip.innerHTML = `<b>${esc(focusLabel(active, items))}</b><strong>${activeCount}</strong>家企业<small>占本月${direction === 'in' ? '迁入' : '迁出'} ${(activeCount / total(direction) * 100).toFixed(1)}% · 演示数据</small>`;
+    if (items.length) tooltip.innerHTML = `<b>${esc(focusLabel(active, items))}</b><strong>${activeCount}</strong>家企业<small>占示例期${direction === 'in' ? '迁入' : '迁出'} ${(activeCount / total(direction) * 100).toFixed(1)}% · 合肥场景示例数据</small>`;
     const chosen = focusRows(selected);
     const selection = q('#migrationSelection');
     if (selection.dataset.selected !== (selected || '')) {
@@ -294,11 +291,6 @@
     const svg = q('svg'), paused = userPaused || !inViewport || document.hidden;
     card.classList.toggle('motion-paused', paused);
     if (svg) { if (paused) svg.pauseAnimations(); else svg.unpauseAnimations(); }
-    const button = q('.migration-motion');
-    button.setAttribute('aria-label', userPaused ? '播放流向动画' : '暂停流向动画');
-    button.setAttribute('aria-pressed', String(userPaused));
-    button.querySelector('i').textContent = userPaused ? '▷' : 'Ⅱ';
-    button.querySelector('span').textContent = userPaused ? '播放动效' : '暂停动效';
   }
   function render() {
     const rows = currentRows(), regions = provinceRows(rows), count = total(direction), isIncoming = direction === 'in';
@@ -307,7 +299,7 @@
     q('#migrationRankTitle').textContent = isIncoming ? '迁入来源省份' : '迁出去向省份';
     q('#migrationRegionCount').textContent = regions.length + ' 个省份';
     q('#migrationTotal').textContent = count;
-    q('#migrationDirectionNote').textContent = isIncoming ? '各地 → 海州市 · 绿色汇入' : '海州市 → 各地 · 橙色迁出';
+    q('#migrationDirectionNote').textContent = isIncoming ? '各地 → 合肥市 · 绿色汇入' : '合肥市 → 各地 · 橙色迁出';
     q('#migrationRanking').innerHTML = regions.map((region, index) => `<li class="migration-rank-row"><button type="button" class="migration-rank-button" data-migration-row="province-${region.province}" aria-pressed="false" aria-label="聚焦${esc(region.name)}${isIncoming ? '迁入来源' : '迁出去向'}"><i>${String(index + 1).padStart(2, '0')}</i><span><b>${esc(region.name)}</b><em><i style="width:${region.count / regions[0].count * 100}%"></i></em></span></button><div class="migration-rank-count"><button type="button" class="migration-count-button" data-migration-details="${region.province}" aria-haspopup="dialog" aria-controls="migrationEnterpriseDialog" aria-label="查看${esc(region.name)}${isIncoming ? '迁入' : '迁出'}的 ${region.count} 家企业明细"><strong>${region.count} 家</strong><span aria-hidden="true">›</span></button><small>${(region.count / count * 100).toFixed(1)}%</small></div></li>`).join('');
     q('#migrationRanking').querySelectorAll('[data-migration-row]').forEach(button => {
       button.addEventListener('click', () => selectRegion(button.dataset.migrationRow));
@@ -325,7 +317,6 @@
   }
   function setDirection(next) { if (next === direction) return; direction = next; selected = null; hovered = null; render(); }
   card.querySelectorAll('[data-migration-direction]').forEach(button => button.addEventListener('click', () => setDirection(button.dataset.migrationDirection)));
-  q('.migration-motion').addEventListener('click', () => { userPaused = !userPaused; syncMotion(); });
   ['in', 'out'].forEach(mode => {
     const metric = vitality.querySelector('.move-card.' + mode);
     metric.setAttribute('role', 'button'); metric.tabIndex = 0;

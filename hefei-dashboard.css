@@ -1,0 +1,15 @@
+#dashboard .industry-donut { background: conic-gradient(#27c7dd 0 2.4%, #7c86f5 2.4% 39.1%, #34cb95 39.1% 100%); }
+#dashboard .donut-center b { font-size: 19px; white-space: nowrap; }
+#dashboard .structure-legend { grid-template-columns: 1fr; gap: 12px; }
+#dashboard .structure-legend span { flex-wrap: wrap; }
+#dashboard .structure-legend small { display: block; width: 100%; padding-left: 16px; color: #8290a2; font-size: 10px; }
+#dashboard .industry-map-card .cluster b { white-space: nowrap; font-size: 11px; }
+#dashboard .industry-map-card .cluster span { white-space: nowrap; }
+#dashboard .hefei-source { margin: 10px 18px 15px; color: #8290a2; font-size: 10px; line-height: 1.7; }
+#dashboard .hefei-source a, #dashboard .hefei-dashboard-note a { color: #2673df; text-decoration: none; }
+#dashboard .hefei-source a:hover, #dashboard .hefei-dashboard-note a:hover { text-decoration: underline; }
+#dashboard .hefei-dashboard-note { margin: 18px 0 0; color: #8290a2; font-size: 10px; line-height: 1.8; }
+#dashboard .ranking-list .rank-row p { min-width: 0; }
+#dashboard .ranking-list .rank-row p > b { display: block; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+#dashboard .ranking-list .rank-row { min-height: 66px; }
+#dashboard .innovation-ranking .rank-row > strong { white-space: nowrap; font-size: 12px; }
