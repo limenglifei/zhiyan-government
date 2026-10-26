@@ -221,7 +221,8 @@
     const palette = ['#dfeafe', '#c8dbfc', '#a7c4f7', '#7ea9f2', '#3e79e9'];
     const provinces = features.map(feature => {
       const count = provinceCounts.get(feature.adcode) || 0;
-      const fill = feature.adcode === home.province ? '#3e79e9' : palette[count ? Math.min(4, Math.ceil(count / maximum * 4)) : 0];
+      // Keep Jiangsu unshaded; city routes, province counts and details remain available.
+      const fill = feature.adcode === home.province ? '#3e79e9' : feature.adcode === 320000 ? palette[0] : palette[count ? Math.min(4, Math.ceil(count / maximum * 4)) : 0];
       return `<path class="migration-province ${feature.adcode === home.province ? 'local' : ''}" data-province="${esc(feature.adcode)}" d="${feature.mainPath}" fill="${fill}"><title>${esc(feature.name || '南海诸岛')}：${count} 家${direction === 'in' ? '迁入来源' : '迁出去向'}企业</title></path>`;
     }).join('');
     const labels = features.filter(feature => feature.name && (feature.centroid || feature.center)).map(feature => {
