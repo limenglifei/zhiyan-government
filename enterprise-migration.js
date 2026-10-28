@@ -100,22 +100,59 @@
         <div class="migration-svg-host"></div>
         <div class="migration-tooltip" id="migrationTooltip" role="status" hidden></div>
         <div class="migration-map-caption"><span><i></i><span id="migrationDirectionNote"></span></span><span>本地位置为示意 · 底图 <a href="https://datav.aliyun.com/portal/school/atlas/area_selector" target="_blank" rel="noopener noreferrer">DataV.GeoAtlas</a></span></div>
-      </div>
-      <aside class="migration-sidebar" aria-label="企业迁移地区分布">
-        <div class="migration-side-heading"><h3 id="migrationRankTitle">迁入来源</h3><span id="migrationRegionCount"></span></div>
-        <div class="migration-total" aria-live="polite"><b id="migrationTotal">28</b><span>家企业</span></div>
-        <div class="migration-net">示例期净迁入<strong>+${total('in') - total('out')} 家</strong></div>
-        <ol class="migration-ranking" id="migrationRanking"></ol>
         <section class="migration-insight" aria-labelledby="migrationInsightHeading">
           <h4 id="migrationInsightHeading"><span aria-hidden="true">✦</span> AI 总结与解读</h4>
           <p id="migrationInsightText" aria-live="polite" aria-atomic="true"></p>
           <small>基于2026年10月合肥场景示例数据</small>
         </section>
+      </div>
+      <aside class="migration-sidebar" aria-label="企业迁移地区分布">
+        <div class="migration-side-heading"><h3 id="migrationRankTitle">迁入来源</h3><span id="migrationRegionCount"></span></div>
+        <div class="migration-total" aria-live="polite"><b id="migrationTotal">28</b><span>家企业</span></div>
+        <div class="migration-net">示例期净迁入<strong>+${total('in') - total('out')} 家</strong></div>
+        <ol class="migration-ranking" id="migrationRanking" tabindex="0" aria-label="省份分布列表，默认展示前10条，可滚动查看更多"></ol>
         <div class="migration-selection" id="migrationSelection" aria-live="polite">点击地区聚焦流向，点击企业数量查看明细。</div>
       </aside>
     </div>`;
   vitality.appendChild(card);
   const q = selector => card.querySelector(selector);
+  const ranking = q('#migrationRanking');
+  let rankingFrame = 0;
+  // Measure the visible rows so wrapped province names never clip the tenth entry.
+  function updateRankingViewport() {
+    rankingFrame = 0;
+    const rows = Array.from(ranking.children);
+    if (!ranking.getClientRects().length || !rows.length) return;
+    if (rows.length <= 10) {
+      ranking.style.maxHeight = 'none';
+      return;
+    }
+    const visibleRows = rows.slice(0, 10);
+    const firstTop = visibleRows[0].getBoundingClientRect().top;
+    const lastBottom = Math.max(...visibleRows.map(row => row.getBoundingClientRect().bottom));
+    const height = lastBottom - firstTop;
+    if (height > 0) {
+      const maxHeight = height + 'px';
+      if (ranking.style.maxHeight !== maxHeight) ranking.style.maxHeight = maxHeight;
+    }
+  }
+  function scheduleRankingViewport() {
+    if (!rankingFrame) rankingFrame = window.requestAnimationFrame(updateRankingViewport);
+  }
+  const rankingResizeObserver = window.ResizeObserver ? new ResizeObserver(scheduleRankingViewport) : null;
+  function observeRankingRows() {
+    if (rankingResizeObserver) {
+      rankingResizeObserver.disconnect();
+      rankingResizeObserver.observe(card);
+      Array.from(ranking.children).slice(0, 10).forEach(row => rankingResizeObserver.observe(row));
+    }
+    scheduleRankingViewport();
+  }
+  window.addEventListener('resize', scheduleRankingViewport, { passive: true });
+  if (document.fonts) {
+    document.fonts.ready.then(scheduleRankingViewport);
+    document.fonts.addEventListener('loadingdone', scheduleRankingViewport);
+  }
 
   const detailsDialog = document.createElement('dialog');
   detailsDialog.id = 'migrationEnterpriseDialog';
@@ -312,6 +349,8 @@
     q('#migrationRanking').querySelectorAll('[data-migration-details]').forEach(button => {
       button.addEventListener('click', () => openDetails(button.dataset.migrationDetails, button));
     });
+    ranking.scrollTop = 0;
+    observeRankingRows();
     renderInsight(rows); renderMap(rows); updateFocus(); syncMotion();
     vitality.querySelector('.move-card.in').classList.toggle('migration-active', isIncoming);
     vitality.querySelector('.move-card.out').classList.toggle('migration-active', !isIncoming);
