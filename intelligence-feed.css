@@ -165,8 +165,21 @@
 
 .if-feed-grid { display: grid; grid-template-columns: minmax(270px, 0.9fr) minmax(330px, 1.25fr); align-items: start; gap: 14px; }
 .if-card { min-width: 0; background: #fff; border: 1px solid var(--if-line); border-radius: 10px; }
-.if-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 17px; border-bottom: 1px solid var(--if-line); }
-.if-list-heading h2 { margin: 0; font-size: 16px; line-height: 1.4; }
+.if-list-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 13px 17px; border-bottom: 1px solid var(--if-line); }
+.if-list-heading-main { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 7px 12px; }
+.if-list-heading h2 { margin: 0; font-size: 16px; line-height: 1.4; white-space: nowrap; }
+.if-list-sort { max-width: 100%; }
+.if-list-sort select {
+  max-width: 100%;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid #d9e3f0;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--if-ink);
+  font-size: 12px;
+}
+.if-list-heading > span { margin-inline-start: auto; white-space: nowrap; }
 .if-list-heading > span,
 .if-event-meta { color: var(--if-muted); font-size: 12px; }
 

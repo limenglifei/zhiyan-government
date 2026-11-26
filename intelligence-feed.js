@@ -293,7 +293,7 @@
   const status = root.querySelector('.if-status');
   const settingsStatus = settingsDialog.querySelector('.if-status');
   const settingsList = settingsDialog.querySelector('.if-settings-list');
-  const emptyFeedFilters = { read: '', search: '', sentiment: '', eventCodes: [] };
+  const emptyFeedFilters = { read: '', search: '', sentiment: '', publicationRange: '', eventCodes: [] };
   const view = { ...emptyFeedFilters, subscription: '', sort: 'match', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
   let state = readState() || { subscriptions: starterSubscriptions, read: [] };
   let focusBeforeDialog;
@@ -432,7 +432,7 @@
     breakdownMount.innerHTML = `<span class="if-today-breakdown-label">今日舆情</span>${['正面', '反面', '中立'].map(sentiment => `
       <span class="if-badge if-sentiment" data-sentiment="${sentiment}"><span>${sentiment}</span><b>${today.filter(({ event }) => event.sentiment === sentiment).length}</b>条</span>`).join('')}`;
     renderGroupTabs();
-    renderFeed(entries);
+    renderFeed(entries, now);
     if (settingsDialog.open) renderSubscriptionSettings(now);
   }
 
@@ -446,14 +446,16 @@
     groupTabs.scrollLeft = scrollLeft;
   }
 
-  function renderFeed(entries) {
+  function renderFeed(entries, now) {
     const search = normalize(view.search);
+    const range = view.publicationRange ? publicationRanges.get(view.publicationRange) : null;
     const visible = entries.flatMap(entry => {
       const { event, matches } = entry;
       const groupMatch = view.subscription ? matches.find(({ rule }) => rule.id === view.subscription) : null;
       if (view.subscription && !groupMatch) return [];
       if (view.sentiment && event.sentiment !== view.sentiment) return [];
       if (view.eventCodes.length && !event.subtypes.some(code => view.eventCodes.includes(code))) return [];
+      if (range && !publishedInRange(event.time, range, now)) return [];
       const isRead = state.read.includes(event.id);
       const tags = Object.values(event.tags).flat();
       if (view.read === 'unread' && isRead || view.read === 'read' && !isRead) return [];
@@ -466,14 +468,12 @@
     if (view.analysisStream && view.analysisStream.eventId !== view.selected) stopAnalysisStream();
     workspace.innerHTML = `
       <form class="if-filters" aria-label="筛选订阅信息流">
-        <label class="if-search"><span class="if-sr">搜索情报</span><input name="search" type="search" placeholder="搜索标题、城市、主体或来源" value="${esc(view.search)}"></label>
+        <label class="if-search"><span class="if-sr">搜索情报</span><input name="search" type="search" placeholder="搜索标题关键词" value="${esc(view.search)}"></label>
         <button type="submit" class="if-button">搜索</button>
         <label><span class="if-sr">阅读状态</span><select name="read">
           ${option('', '全部状态', view.read)}${option('unread', '仅未读', view.read)}${option('read', '仅已读', view.read)}
         </select></label>
-        <label><span class="if-sr">排序</span><select name="sort">
-          ${option('match', '匹配度优先', view.sort)}${option('time', '发布时间倒序', view.sort)}
-        </select></label>
+        <label><span class="if-sr">发布日期</span><select name="publicationRange">${publicationRangeOptions(view.publicationRange)}</select></label>
         <label><span class="if-sr">舆情性质</span><select name="sentiment">
           ${option('', '全部舆情性质', view.sentiment)}${sentiments.map(label => option(label, label, view.sentiment)).join('')}
         </select></label>
@@ -481,7 +481,15 @@
       </form>
       <div class="if-feed-grid">
         <section class="if-card if-feed" aria-labelledby="ifListHeading">
-          <header class="if-list-heading"><h2 id="ifListHeading">情报总推送</h2><span>${visible.length} 条</span></header>
+          <header class="if-list-heading">
+            <div class="if-list-heading-main">
+              <h2 id="ifListHeading">情报总推送</h2>
+              <label class="if-list-sort"><span class="if-sr">排序</span><select name="sort">
+                ${option('match', '匹配度优先', view.sort)}${option('time', '发布时间倒序', view.sort)}
+              </select></label>
+            </div>
+            <span>${visible.length} 条</span>
+          </header>
           ${visible.length ? visible.map(entry => eventRow(entry, view.selected)).join('') : emptyFeed()}
         </section>
       ${selected ? eventDetail(selected) : '<div class="if-card if-empty if-detail-empty">选择一条情报查看详情</div>'}
@@ -500,12 +508,16 @@
     return `<option value="${esc(value)}"${value === selected ? ' selected' : ''}>${esc(label)}</option>`;
   }
 
+  function publicationRangeOptions(selected) {
+    return Array.from(publicationRanges, ([value, { label }]) => option(value, label, selected)).join('');
+  }
+
   function emptyFeed() {
     const group = state.subscriptions.find(rule => rule.id === view.subscription);
     if (group && !group.enabled) {
       return '<div class="if-empty"><strong>当前订阅分组已暂停</strong><button class="if-link" type="button" data-if-action="settings">打开订阅设置</button></div>';
     }
-    if (view.read || view.search || view.sentiment || view.eventCodes.length) {
+    if (view.read || view.search || view.sentiment || view.publicationRange || view.eventCodes.length) {
       return '<div class="if-empty"><strong>暂无符合当前筛选的情报</strong><button class="if-link" type="button" data-if-action="clear">清空筛选</button></div>';
     }
     if (group) {
@@ -982,7 +994,7 @@
           <div class="if-fields">
             <label class="if-field"><span>订阅名称 <em>必填</em></span><input name="name" required maxlength="60" placeholder="如合肥先进制造动态" value="${esc(data.name)}" autofocus></label>
             <label class="if-field"><span>发布日期范围</span><select name="publicationRange">
-              ${Array.from(publicationRanges, ([value, { label }]) => option(value, label, data.publicationRange)).join('')}
+              ${publicationRangeOptions(data.publicationRange)}
             </select></label>
           </div>
           <fieldset>
@@ -1186,11 +1198,11 @@
   });
 
   workspace.addEventListener('change', event => {
-    if (!event.target.matches('.if-filters select')) return;
+    if (!event.target.matches('.if-filters > label select, .if-list-sort select')) return;
     const { name, value } = event.target;
     view[name] = value;
     render();
-    workspace.querySelector('select[name="' + name + '"]').focus();
+    workspace.querySelector('select[name="' + name + '"]').focus({ preventScroll: true });
   });
 
   settingsDialog.addEventListener('click', event => {
