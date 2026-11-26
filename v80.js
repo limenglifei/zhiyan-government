@@ -28,25 +28,31 @@
   }
 
   function mountConfirmGate(){
-    var support=document.getElementById('support'),composer=document.getElementById('supportPolicyComposerV45'),fileInput=document.getElementById('supportPolicyFileInput');if(!support)return;
+    var support=document.getElementById('support');if(!support)return;
     var previousRun=window.runSupportMatch;
-    if(typeof previousRun==='function')window.runSupportMatch=function(){var text=composer?composer.value.trim():'',hasFile=!!(fileInput&&fileInput.files&&fileInput.files.length),isFullText=!hasFile&&(text.length>55||/[\r\n]/.test(text));parseFlowActive=hasFile||isFullText;if(parseFlowActive){support.classList.add('policy-confirm-pending-v80');support.classList.remove('matching-v80')}return previousRun.apply(this,arguments)};
+    if(typeof previousRun==='function')window.runSupportMatch=function(){
+      var result=previousRun.apply(this,arguments);
+      parseFlowActive=!!document.getElementById('policyParseModalV79')?.classList.contains('open');
+      support.classList.toggle('policy-confirm-pending-v80',parseFlowActive);
+      return result;
+    };
 
     var previousConfirm=window.confirmParsedPolicyV79;
     if(typeof previousConfirm==='function')window.confirmParsedPolicyV79=function(apply){
       var selected=document.querySelectorAll('.policy-project-check-v79:checked');if(!selected.length){return previousConfirm.apply(this,arguments)}
       var before=[];if(typeof knowledgeBaseConfigs!=='undefined')before=knowledgeBaseConfigs.policy.rows.map(function(r){return r.reviewId}).filter(Boolean);
       var result=previousConfirm.apply(this,arguments);
+      if(!result)return result;
       if(apply&&typeof knowledgeBaseConfigs!=='undefined'){var row=knowledgeBaseConfigs.policy.rows.find(function(r){return r.schemaV79&&before.indexOf(r.reviewId)<0});enrichAuditTask(row)}
       support.classList.add('policy-confirm-pending-v80','matching-v80');
       var title=document.getElementById('policyMatchTransitionTitleV80'),text=document.getElementById('policyMatchTransitionTextV80');if(title)title.textContent='解析结果已确认，正在匹配企业';if(text)text.textContent='正在按 '+selected.length+' 个已选政策项目分别诊断申报条件、计算匹配度并合并企业名单…';
       var button=document.getElementById('supportMatchBtn');if(button){button.disabled=true;button.textContent='AI 匹配中…'}
-      setTimeout(function(){support.classList.remove('policy-confirm-pending-v80','matching-v80');support.classList.add('matched');if(button){button.disabled=false;button.textContent='✓ 重新匹配企业'}var resultArea=document.getElementById('supportResultArea');if(resultArea)resultArea.scrollIntoView({behavior:'smooth',block:'start'});notify('已按确认的 '+selected.length+' 个政策项目刷新企业匹配结果')},900);
+      setTimeout(function(){support.classList.remove('match-loading','policy-confirm-pending-v80','matching-v80');support.classList.add('matched');if(button){button.disabled=false;button.textContent='✓ 重新匹配企业'}var resultArea=document.getElementById('supportResultArea');if(resultArea)resultArea.scrollIntoView({behavior:'smooth',block:'start'});window.zhiyanReportNotifications?.completeSupport(true);notify('已按确认的 '+selected.length+' 个政策项目刷新企业匹配结果')},900);
       parseFlowActive=false;return result;
     };
 
     var previousClose=window.closePolicyParseV79;
-    window.closePolicyParseV79=function(){if(typeof previousClose==='function')previousClose();if(parseFlowActive){support.classList.remove('policy-confirm-pending-v80','matching-v80','matched','match-loading');var button=document.getElementById('supportMatchBtn');if(button){button.disabled=false;button.textContent='✦ 一键匹配企业'}parseFlowActive=false;notify('已取消本次政策解析，尚未刷新匹配结果')}};
+    window.closePolicyParseV79=function(){if(typeof previousClose==='function')previousClose();if(parseFlowActive){support.classList.remove('policy-confirm-pending-v80','matching-v80','match-loading');var button=document.getElementById('supportMatchBtn');if(button){button.disabled=false;button.textContent=support.classList.contains('matched')?'✦ 重新匹配企业':'✦ 一键匹配企业'}parseFlowActive=false;notify('已取消本次政策解析，尚未刷新匹配结果')}};
   }
 
   function renderAuditTaskDetail(row){

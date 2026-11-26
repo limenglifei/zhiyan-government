@@ -174,6 +174,12 @@
       getSelection: getSelection,
       getReportContext: function () {
         return reportContext ? JSON.parse(JSON.stringify(reportContext)) : null;
+      },
+      restoreReportContext: function (context) {
+        reportContext = context;
+        pendingContext = null;
+        wasMatched = true;
+        syncVisibility();
       }
     };
     updateSummary();

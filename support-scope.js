@@ -116,6 +116,41 @@ function initializeSupportScope(){
   updateSupportScopeSummary();
 }
 
+function captureSupportReport(parsed){
+  const title=document.getElementById('supportResultTitle').textContent.trim();
+  const project=parsed?document.getElementById('supportPolicyComposerV45')?.value.trim():'';
+  const scores=companies.map(({n,s,status})=>({name:n,score:s,status}));
+  return {title,project,scope:{...supportScope},scores};
+}
+
+function reopenSupportReport(snapshot){
+  const page=document.getElementById('support');
+  if(!snapshot?.title||!Array.isArray(snapshot.scores)||page.classList.contains('match-loading')||page.classList.contains('policy-confirm-pending-v80'))return false;
+  const scores=new Map(snapshot.scores.map((item,order)=>[item.name,{...item,order}]));
+  companies.forEach(company=>{
+    const item=scores.get(company.n);
+    if(item&&Number.isFinite(item.score)){company.s=item.score;company.status=item.status;}
+  });
+  companies.sort((a,b)=>(scores.get(a.n)?.order??0)-(scores.get(b.n)?.order??0));
+  supportScope={...emptySupportScope(),...snapshot.scope};
+  updateSupportScopeSummary();
+  document.getElementById('supportResultTitle').textContent=snapshot.title;
+  document.getElementById('selectedPolicyProjectsV79')?.remove();
+  document.getElementById('policyReviewBannerV79')?.remove();
+  document.getElementById('supportProjectTabsV82')?.remove();
+  const policyName=snapshot.project||snapshot.title.replace(/政策精准扶持名单$/,'');
+  document.getElementById('supportPolicyComposerV45').value=policyName;
+  document.getElementById('supportPolicyInput').value=policyName;
+  const result=document.getElementById('supportResultArea');
+  ci=0;
+  setSupportFilter('all');
+  show('support');
+  page.classList.add('matched');
+  document.getElementById('supportMatchBtn').textContent='✦ 重新匹配企业';
+  result.scrollIntoView({block:'start'});
+  return true;
+}
+
 
 const previousScopeGetCompanies=window.getSupportCompanies;
 window.getSupportCompanies=function(){return previousScopeGetCompanies.apply(this,arguments).filter(({c})=>matchesSupportScope(c))};
@@ -139,6 +174,6 @@ if(scopeHeroDescription)scopeHeroDescription.textContent='选择扶持范围，�
 initializeSupportScope();
 renderCompanies();
 
-Object.assign(window,{openSupportScope,closeSupportScope,removeSupportScope,clearSupportScope,resetSupportScopeDraft});
+Object.assign(window,{openSupportScope,closeSupportScope,removeSupportScope,clearSupportScope,resetSupportScopeDraft,captureSupportReport,reopenSupportReport});
 
 })();

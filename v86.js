@@ -28,8 +28,9 @@
   window.toggleAllPolicyProjectsV79=function(){normalizeProjectSelection()};
   if(typeof legacyConfirmPolicy==='function')window.confirmParsedPolicyV79=function(){
     normalizeProjectSelection();var project=selectedProject();if(!project){notify('请选择 1 个政策项目参与匹配');return}
-    var result=legacyConfirmPolicy.apply(this,arguments),tabs=document.getElementById('supportProjectTabsV82');if(tabs)tabs.remove();
-    var banner=document.getElementById('selectedPolicyProjectsV79');if(banner)banner.innerHTML='<div><h3>本次匹配项目：'+project.name+'</h3><p>系统仅依据当前项目的申报条件、补贴政策和申报时间诊断企业，并按匹配度倒序展示结果。</p></div><div><em>'+project.name+'</em></div>';
+    var result=legacyConfirmPolicy.apply(this,arguments);if(!result)return result;
+    var tabs=document.getElementById('supportProjectTabsV82');if(tabs)tabs.remove();
+    var banner=document.getElementById('selectedPolicyProjectsV79');if(banner){banner.innerHTML='<div><h3></h3><p>系统仅依据当前项目的申报条件、补贴政策和申报时间诊断企业，并按匹配度倒序展示结果。</p></div><div><em></em></div>';banner.querySelector('h3').textContent='本次匹配项目：'+project.name;banner.querySelector('em').textContent=project.name;}
     var title=document.getElementById('supportResultTitle');if(title)title.textContent=project.name+'政策精准扶持名单';return result;
   };
 

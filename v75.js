@@ -62,7 +62,7 @@
     q('#chainReportAllGapV72')?.remove();
 
     const first = q('.gap-card-v58', gapRoot);
-    const label = first?.dataset.gapV72 || q('b', first)?.textContent.trim();
+    const label = first?.dataset.gapV72 || first?.querySelector('b')?.textContent.trim();
     if (first && label && gapRoot.dataset.defaultPriorityV75 !== '1' && typeof window.filterWholeReportByGapV72 === 'function') {
       gapRoot.dataset.defaultPriorityV75 = '1';
       window.filterWholeReportByGapV72(label);

@@ -13,7 +13,7 @@
   function mountModal(){
     if(document.getElementById('policyParseModalV79'))return;
     document.body.insertAdjacentHTML('beforeend','<div class="prototype-modal-backdrop" id="policyParseModalV79" aria-hidden="true"><section class="prototype-modal policy-parse-modal-v79"><header><div><label>AI POLICY PARSING & PROJECT SELECTION</label><h2>政策内容解析与匹配项目确认</h2><p>先核对政策文件信息，再勾选本次参与企业匹配的政策项目。</p></div><button type="button" onclick="closePolicyParseV79()">×</button></header><div class="prototype-modal-body"><div class="policy-source-summary-v79"><div><i>AI</i><div><b id="policySourceNameV79">政策内容</b><span id="policySourceMetaV79">已完成正文解析与项目拆解</span></div></div><em id="policyParseConfidenceV79">解析完整度 96%</em></div><div class="policy-v79-body"><h3>政策文件信息</h3><div class="policy-v79-fields"><label class="policy-v79-field span2"><span>政策标题</span><input id="pv79Title"></label><label class="policy-v79-field"><span>文件分类</span><select id="pv79Category"><option>申报通知</option><option>立项公示</option><option>政策法规</option><option>政策资讯</option></select></label><label class="policy-v79-field"><span>发布时间</span><input id="pv79Date" type="date"></label><label class="policy-v79-field"><span>发文机构</span><input id="pv79Org"></label><label class="policy-v79-field"><span>政策级别</span><select id="pv79Level"><option>国家级</option><option>省级</option><option selected>市级</option><option>区级</option></select></label><label class="policy-v79-field"><span>适用地区</span><input id="pv79Region"></label><label class="policy-v79-field"><span>适用行业</span><input id="pv79Industry"></label><label class="policy-v79-field wide"><span>政策正文</span><textarea id="pv79Body"></textarea></label><label class="policy-v79-field wide"><span>附件及原文链接</span><input id="pv79Attachment"></label></div><div class="project-select-head-v79"><div><h3>选择本次参与匹配的政策项目 <em class="project-selection-count-v79" id="projectSelectionCountV79">已选 3 项</em></h3><p>申报条件、补贴政策和申报时间均归属具体项目，匹配结果按所选项目分别诊断。</p></div><label><input id="selectAllProjectsV79" type="checkbox" checked onchange="toggleAllPolicyProjectsV79(this.checked)"> 全选</label></div><div class="policy-project-list-v79" id="policyProjectListV79"></div></div></div><footer><span>至少选择 1 个项目；未勾选项目不会参与本次企业匹配。</span><button class="only" type="button" onclick="confirmParsedPolicyV79(false)">仅本次使用</button><button class="apply" type="button" onclick="confirmParsedPolicyV79(true)">本次使用并申请加入政策库</button></footer></section></div>');
-    var modal=document.getElementById('policyParseModalV79');modal.addEventListener('click',function(e){if(e.target===modal)closeModal('policyParseModalV79')});
+    var modal=document.getElementById('policyParseModalV79');modal.addEventListener('click',function(e){if(e.target===modal)window.closePolicyParseV79()});
   }
 
   function extractTitle(text){var first=String(text||'').split(/\r?\n/).map(function(x){return x.trim()}).find(Boolean)||'';if(first.length>90)first=first.slice(0,90);return first||'海州市制造业数字化转型扶持政策申报通知'}
@@ -53,7 +53,8 @@
     currentParse=parseSource(source);document.getElementById('policySourceNameV79').textContent=source.kind==='file'?source.name:'已输入政策全文';document.getElementById('policySourceMetaV79').textContent=source.kind==='file'?'附件已解析 · '+Math.max(1,Math.round((source.size||1024)/1024))+' KB':'政策全文已解析 · '+String(source.text||'').length.toLocaleString()+' 字';
     var map={pv79Title:'title',pv79Category:'category',pv79Date:'date',pv79Org:'org',pv79Level:'level',pv79Region:'region',pv79Industry:'industry',pv79Body:'body',pv79Attachment:'attachment'};Object.keys(map).forEach(function(id){document.getElementById(id).value=currentParse[map[id]]});renderProjects();openModal('policyParseModalV79');
   }
-  window.closePolicyParseV79=function(){if(pendingMatchTimer!==null){window.clearTimeout(pendingMatchTimer);pendingMatchTimer=null}closeModal('policyParseModalV79')};
+  function cancelPreliminaryMatch(){if(pendingMatchTimer!==null){window.clearTimeout(pendingMatchTimer);pendingMatchTimer=null}}
+  window.closePolicyParseV79=function(){cancelPreliminaryMatch();closeModal('policyParseModalV79')};
 
   function collectParse(){
     currentParse.title=field('pv79Title');currentParse.category=field('pv79Category');currentParse.date=field('pv79Date');currentParse.org=field('pv79Org');currentParse.level=field('pv79Level');currentParse.region=field('pv79Region');currentParse.industry=field('pv79Industry');currentParse.body=field('pv79Body');currentParse.attachment=field('pv79Attachment');
@@ -68,7 +69,7 @@
   function addReviewRecord(){
     var selected=currentParse.projects.filter(function(p){return p.selected});var row={reviewId:'POL-REVIEW-'+Date.now(),schemaV79:true,title:currentParse.title,sub:'政策解析 · '+selected.length+'个项目参与匹配 · 待审核',category:currentParse.category,level:currentParse.level,org:currentParse.org,date:currentParse.date,industry:currentParse.industry,region:currentParse.region,createdAt:'2026-08-24 16:20',creator:'政策服务人员 · 李敏',reviewStatus:'pending',status:'待审核',body:currentParse.body,attachments:currentParse.attachment,url:'原文链接待补充',projects:currentParse.projects.map(function(p){return Object.assign({},p)}),conditions:selected.map(function(p){return p.name+'：'+p.condition}).join('；'),subsidy:selected.map(function(p){return p.name+'：'+p.subsidy}).join('；'),applicationTime:selected.map(function(p){return p.name+'：'+p.applyTime}).join('；')};knowledgeBaseConfigs.policy.rows.unshift(row);var n=Number(String(knowledgeBaseConfigs.policy.count).replace(/,/g,''))||12680;knowledgeBaseConfigs.policy.count=(n+1).toLocaleString('zh-CN');return row;
   }
-  window.confirmParsedPolicyV79=function(apply){var selected=collectParse();if(!selected)return;closeModal('policyParseModalV79');showSelectedProjects(selected);if(apply){var record=addReviewRecord();showGovernanceBanner(record);notify('已按所选项目完成匹配，并提交政策库审核')}else notify('已按所选项目完成本次匹配，政策内容未申请入库');setTimeout(function(){var area=document.getElementById('supportResultArea');if(area)area.scrollIntoView({behavior:'smooth',block:'start'})},120)};
+  window.confirmParsedPolicyV79=function(apply){var selected=collectParse();if(!selected)return false;closeModal('policyParseModalV79');showSelectedProjects(selected);if(apply){var record=addReviewRecord();showGovernanceBanner(record);notify('已按所选项目提交政策库审核')}return true};
 
   function renderV79Detail(row){
     document.getElementById('kbDetailType').textContent='政策库 · '+(row.reviewStatus==='pending'?'待审核':row.reviewStatus==='rejected'?'已驳回':'已通过');document.getElementById('kbDetailTitle').textContent=row.title;document.getElementById('kbDetailMeta').textContent=row.org+' · '+row.date+' · 创建人 '+row.creator;
@@ -109,7 +110,8 @@
       closeModal('policyParseModalV78');
       var legacyArchive=document.getElementById('policyArchiveModalV77');
       if(legacyArchive){legacyArchive.classList.remove('open');legacyArchive.setAttribute('aria-hidden','true')}
-      /* 同一点击事件内完成结构化解析并打开确认层，不等待匹配结果渲染。 */
+      /* 企业匹配由确认流程启动。 */
+      cancelPreliminaryMatch();
       openParse(source);
       return result;
     };

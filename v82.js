@@ -2,6 +2,7 @@
   'use strict';
   var MAX_PROJECTS=3,activeProject=0,projectTabs=[],baseCompanies=[];
   function notify(text){if(typeof window.toast==='function')window.toast(text)}
+  function escapeProject(value){return String(value).replace(/[&<>]/g,function(character){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[character]})}
   function selectedChecks(){return Array.from(document.querySelectorAll('.policy-project-check-v79:checked'))}
   function selectedProjects(){return selectedChecks().map(function(check){var card=check.closest('.policy-project-card-v79'),title=card&&card.querySelector('header b'),meta=card&&card.querySelector('header span');return {name:title?title.textContent.trim():'政策项目',meta:meta?meta.textContent.trim():'政策项目'}})}
   function enhanceSelectionUi(){
@@ -33,7 +34,7 @@
   function renderProjectTabs(){
     var area=document.getElementById('supportResultArea'),stats=area&&area.querySelector('.support-stats');if(!area||!stats||!projectTabs.length)return;
     var tabs=document.getElementById('supportProjectTabsV82');if(!tabs){tabs=document.createElement('nav');tabs.id='supportProjectTabsV82';tabs.className='support-project-tabs-v82';tabs.setAttribute('role','tablist');stats.insertAdjacentElement('beforebegin',tabs)}
-    tabs.innerHTML=projectTabs.map(function(project,index){var model=projectModel(project,index);return '<button type="button" role="tab" aria-selected="'+(index===activeProject)+'" class="'+(index===activeProject?'active':'')+'" onclick="setSupportProjectTabV82('+index+')"><i>'+String(index+1).padStart(2,'0')+'</i><span><b>'+project.name+'</b><small>'+project.meta+' · 匹配 '+model.total+' 家</small></span></button>'}).join('');
+    tabs.innerHTML=projectTabs.map(function(project,index){var model=projectModel(project,index);return '<button type="button" role="tab" aria-selected="'+(index===activeProject)+'" class="'+(index===activeProject?'active':'')+'" onclick="setSupportProjectTabV82('+index+')"><i>'+String(index+1).padStart(2,'0')+'</i><span><b>'+escapeProject(project.name)+'</b><small>'+escapeProject(project.meta)+' · 匹配 '+model.total+' 家</small></span></button>'}).join('');
   }
   window.setSupportProjectTabV82=function(index){
     if(!projectTabs[index])return;activeProject=index;renderProjectTabs();applyProjectSample(index);var model=projectModel(projectTabs[index],index);updateStats(model);
@@ -45,7 +46,7 @@
   var previousConfirm=window.confirmParsedPolicyV79;
   if(typeof previousConfirm==='function')window.confirmParsedPolicyV79=function(){
     var projects=selectedProjects();if(projects.length>MAX_PROJECTS){notify('一次最多选择 3 个政策项目参与匹配');return}
-    var result=previousConfirm.apply(this,arguments);if(projects.length){projectTabs=projects;activeProject=0;renderProjectTabs();setSupportProjectTabV82(0)}return result;
+    var result=previousConfirm.apply(this,arguments);if(result&&projects.length){projectTabs=projects;activeProject=0;renderProjectTabs();setSupportProjectTabV82(0)}return result;
   };
   var list=document.getElementById('policyProjectListV79');if(list)new MutationObserver(function(){setTimeout(enhanceSelectionUi,0)}).observe(list,{childList:true});enhanceSelectionUi();
   if(typeof prototypeLogicAnnotations!=='undefined')prototypeLogicAnnotations.support.interactions.push(['多项目匹配页签','政策解析确认时勾选 1—3 个项目。','最多允许 3 个项目同时参与；结果按项目生成独立页签，切换页签同步刷新匹配企业数量、排序、状态筛选和条件诊断。']);

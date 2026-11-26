@@ -161,11 +161,13 @@
 <link rel="stylesheet" href="v84.css?v=20260907-fields">
 <link rel="stylesheet" href="brand-logo.css?v=20260920"><link rel="stylesheet" href="dashboard-headlines.css?v=20261016-ranking">
 <link rel="stylesheet" href="hefei-dashboard.css?v=20261028-layout">
+<link rel="stylesheet" href="report-notifications.css?v=20261126">
 </head><body><div class="shell"><aside class="side">
   <div class="brand brand-industrial"><div class="brand-identity"><span class="brand-logo"><img src="assets/zhiyan-industry-logo.png" alt="智研平台" width="2172" height="724" decoding="async" fetchpriority="high"></span><small id="brandSubtitle">产业智能决策系统</small></div></div>
 
   <div class="edition-nav active" data-edition-panel="government">
     <button class="nav active" data-view="dashboard"><span>▦</span>产业运行总览</button>
+    <button class="nav" data-view="intelligenceFeed"><span aria-hidden="true">报</span>情报订阅</button>
     <button class="nav" data-view="supplyRisk"><span>盾</span>供应链风控</button>
     <button class="nav" data-view="supplyEvaluation"><span>评</span>供应链评价<em>AI</em></button>
     <button class="nav" data-view="qa"><span>✦</span>产业智能问答</button>
@@ -622,7 +624,7 @@
 </section>
 <div class="toast" id="toast"></div>
 <script>
-const names={dashboard:'产业运行总览',qa:'产业智能问答',enterprisePolicy:'企业政策匹配',support:'政策精准扶持',chain:'产业链分析',strength:'强链补链深度报告',investment:'招商线索雷达',dueDiligence:'企业尽调助手',supplyRisk:'供应链风控',supplyEvaluation:'供应链评价',dueReport:'招商尽调报告',knowledge:'精品知识库',knowledgeList:'精品知识库',collection:'数据采集',system:'系统管理'};
+const names={dashboard:'产业运行总览',intelligenceFeed:'情报订阅',qa:'产业智能问答',enterprisePolicy:'企业政策匹配',support:'政策精准扶持',chain:'产业链分析',strength:'强链补链深度报告',investment:'招商线索雷达',dueDiligence:'企业尽调助手',supplyRisk:'供应链风控',supplyEvaluation:'供应链评价',dueReport:'招商尽调报告',knowledge:'精品知识库',knowledgeList:'精品知识库',collection:'数据采集',system:'系统管理'};
 const editionConfig={enterprise:{label:'企业版',workspace:'海州智造科技有限公司',account:'海州智造科技有限公司',role:'企业管理员 · 企业版',avatar:'智',subtitle:'企业政策与供应链智能平台',defaultView:'qa',monitorName:'供应链风控'},government:{label:'政府版',workspace:'合肥市产业园区',account:'合肥市',role:'管理员 · 政府版',avatar:'合',subtitle:'产业智能决策系统',defaultView:'dashboard',monitorName:'产业情报监控'}};
 let activeEdition='government';
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('show',x.id===v));const navKey=v==='knowledgeList'?'knowledge':v;document.querySelectorAll('.nav[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===navKey));document.getElementById('crumb').textContent=names[v]||v;const assistant=document.getElementById('floatingProductAssistant'),panel=document.getElementById('productAssistantPanel'),onDashboard=v==='dashboard';if(assistant)assistant.style.display=onDashboard?'flex':'none';if(!onDashboard&&panel){panel.classList.remove('open');panel.setAttribute('aria-hidden','true');if(assistant)assistant.setAttribute('aria-expanded','false')}}
@@ -728,10 +730,10 @@ function selectMonitorTask(key,button){activeMonitorTask=key;ri=0;rf='all';docum
 function scrollMonitorTasks(direction){document.getElementById('monitorTaskCards').scrollBy({left:direction*280,behavior:'smooth'})}
 document.getElementById('startMonitoringBtn').onclick=()=>{const name=document.getElementById('monitorTaskName').value.trim();if(!name){toast('请填写任务名称');return}const key='custom'+Date.now();monitorTaskEvents[key]=risks.slice(0,2);const button=document.createElement('button');button.className='card monitor-task-card';button.dataset.task=key;button.innerHTML=`<i class="purple">新</i><div><b>${name}</b><span>AI 已拆解关键词 · 每小时检索</span></div><em>2 条</em>`;button.onclick=()=>selectMonitorTask(key,button);document.getElementById('monitorTaskCards').appendChild(button);document.getElementById('activeTaskCount').textContent=Number(document.getElementById('activeTaskCount').textContent)+1;closeMonitorTaskModal();selectMonitorTask(key,button);button.scrollIntoView({behavior:'smooth',inline:'center'});toast('监控任务已创建，事件列表已同步刷新')};
 function chooseSupportPolicy(button){document.getElementById('supportPolicyInput').value=button.textContent}
-function runSupportMatch(){const input=document.getElementById('supportPolicyInput'),name=input.value.trim(),button=document.getElementById('supportMatchBtn');if(!name){toast('请输入或选择一个政策名称');input.focus();return}button.disabled=true;button.textContent='AI 匹配中…';document.getElementById('support').classList.add('match-loading');setTimeout(()=>{companies.sort(()=>Math.random()-.5);supportFilter='all';supportPage=1;ci=0;document.querySelectorAll('[data-support-filter]').forEach(b=>b.classList.toggle('active',b.dataset.supportFilter==='all'));renderCompanies();document.getElementById('supportResultTitle').textContent=(input.value.trim()||name)+'政策精准扶持名单';document.getElementById('support').classList.remove('match-loading');document.getElementById('support').classList.add('matched');button.disabled=false;button.textContent='✦ 重新匹配企业';toast('已匹配 186 家当地企业，其中 23 家应享未享')},800)}
+function runSupportMatch(){const input=document.getElementById('supportPolicyInput'),name=input.value.trim(),button=document.getElementById('supportMatchBtn');if(!name){toast('请输入或选择一个政策名称');input.focus();return}button.disabled=true;button.textContent='AI 匹配中…';document.getElementById('support').classList.add('match-loading');setTimeout(()=>{companies.sort(()=>Math.random()-.5);supportFilter='all';supportPage=1;ci=0;document.querySelectorAll('[data-support-filter]').forEach(b=>b.classList.toggle('active',b.dataset.supportFilter==='all'));renderCompanies();document.getElementById('supportResultTitle').textContent=name+'政策精准扶持名单';document.getElementById('support').classList.remove('match-loading');document.getElementById('support').classList.add('matched');button.disabled=false;button.textContent='✦ 重新匹配企业';if(!document.getElementById('support').classList.contains('policy-confirm-pending-v80'))window.zhiyanReportNotifications?.completeSupport();toast('已匹配 186 家当地企业，其中 23 家应享未享')},800)}
 function exportSupportList(){downloadTextFile('政策精准扶持企业名单.txt','政策精准扶持企业名单\n'+companies.map((c,i)=>`${i+1}. ${c.n}｜匹配度 ${c.s}%`).join('\n'))}
 function chooseEnterprise(button){document.getElementById('epSearch').value=button.textContent}
-function runEnterprisePolicyMatch(){const input=document.getElementById('epSearch'),name=input.value.trim(),button=document.getElementById('enterpriseMatchBtn');if(!name){toast('请输入或选择企业名称');input.focus();return}button.disabled=true;button.textContent='AI 匹配中…';document.getElementById('enterprisePolicy').classList.add('match-loading');setTimeout(()=>{document.querySelector('#enterprisePolicy .ep-company h2').textContent=name;document.getElementById('enterprisePolicy').classList.remove('match-loading');document.getElementById('enterprisePolicy').classList.add('matched');button.disabled=false;button.textContent='✦ 重新匹配政策';toast('已匹配 38 项政策，其中 8 项高度匹配');document.querySelector('#enterprisePolicy .ep-overview-grid').scrollIntoView({behavior:'smooth',block:'start'})},800)}
+function runEnterprisePolicyMatch(){const input=document.getElementById('epSearch'),name=input.value.trim(),button=document.getElementById('enterpriseMatchBtn');if(!name){toast('请输入或选择企业名称');input.focus();return}button.disabled=true;button.textContent='AI 匹配中…';document.getElementById('enterprisePolicy').classList.add('match-loading');setTimeout(()=>{document.querySelector('#enterprisePolicy .ep-company h2').textContent=name;document.getElementById('enterprisePolicy').classList.remove('match-loading');document.getElementById('enterprisePolicy').classList.add('matched');button.disabled=false;button.textContent='✦ 重新匹配政策';window.zhiyanReportNotifications?.completePolicy(name);toast('已匹配 38 项政策，其中 8 项高度匹配');document.querySelector('#enterprisePolicy .ep-overview-grid').scrollIntoView({behavior:'smooth',block:'start'})},800)}
 let investRefreshRound=0;function runSmartInvestment(){const button=document.getElementById('smartRecommendBtn');button.disabled=true;button.textContent='AI 推荐中…';setTimeout(()=>{investRefreshRound++;investData.push(investData.shift());investData.forEach((x,i)=>x.score=Math.max(80,Math.min(98,x.score+(i===0?2:-1))));inv=0;renderInvest();document.getElementById('investmentRefreshTime').textContent='AI 已根据最新投资信号动态刷新 · 第 '+investRefreshRound+' 次';button.disabled=false;button.textContent='✦ 智能推荐';toast('招商推荐列表已动态更新')},650)}
 function downloadTextFile(name,content){const blob=new Blob([content],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function exportInvestmentList(){downloadTextFile('招商线索雷达推荐名单.txt','招商线索雷达推荐名单\n'+investData.map((x,i)=>`${i+1}. ${x.name}｜${x.loc}｜投资潜力 ${x.score}`).join('\n'));toast('招商推荐名单已导出')}// chain-fullwidth-modal-v11
@@ -834,7 +836,7 @@ let currentDueCompany='芯源微电子科技股份有限公司';
 function chooseDueCompany(button){const input=document.getElementById('dueCompanyInput');input.value=button.textContent;input.focus()}
 function startDueFromFollowed(name){show('dueDiligence');const input=document.getElementById('dueCompanyInput');input.value=name;document.querySelector('.due-search-hero').scrollIntoView({behavior:'smooth',block:'center'});input.focus();toast('已选择“'+name+'”，可一键生成尽调报告')}
 renderFollowedInvestmentList();
-function runDueDiligence(){const input=document.getElementById('dueCompanyInput'),name=input.value.trim(),button=document.getElementById('dueGenerateBtn');if(!name){toast('请输入需要尽调的企业名称');input.focus();return}button.disabled=true;button.textContent='AI 正在生成…';setTimeout(()=>{button.disabled=false;button.textContent='✦ 生成尽调报告';let item=followedInvestmentCompanies.find(function(x){return x.name===name});if(!item){item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};followedInvestmentCompanies.unshift(item)}else{item.status='report'}renderFollowedInvestmentList();openDueReport(name);toast('招商尽调报告已生成')},900)}
+function runDueDiligence(){const input=document.getElementById('dueCompanyInput'),name=input.value.trim(),button=document.getElementById('dueGenerateBtn');if(!name){toast('请输入需要尽调的企业名称');input.focus();return}button.disabled=true;button.textContent='AI 正在生成…';setTimeout(()=>{button.disabled=false;button.textContent='✦ 生成尽调报告';let item=followedInvestmentCompanies.find(function(x){return x.name===name});if(!item){item={name:name,track:'重点产业链项目',location:'待核验',fit:86,status:'report'};followedInvestmentCompanies.unshift(item)}else{item.status='report'}renderFollowedInvestmentList();openDueReport(name);window.zhiyanReportNotifications?.complete({kind:'due',subject:name});toast('招商尽调报告已生成')},900)}
 function openDueReport(name){currentDueCompany=name||currentDueCompany;closeNodeCompanyList();document.getElementById('dueReportTitle').textContent=currentDueCompany+'招商尽调报告';document.getElementById('dueSummaryCompany').textContent=currentDueCompany;show('dueReport');window.scrollTo({top:0,behavior:'smooth'})}
 function downloadDueReport(){const text=`智研平台｜${currentDueCompany}招商尽调报告\n\n综合评分：92分（A）\n产业适配度：94%\n\nAI研判：企业技术能力、扩产意愿与海州市产业缺口高度匹配，经营稳健、股权结构清晰，建议进入重点招商项目库。\n\n报告模块：企业基本信息、股权与实控人、经营财务、技术创新、司法信用、合规风险、招商适配与90天行动计划。`;downloadTextFile(currentDueCompany+'招商尽调报告.txt',text);toast('尽调报告已下载')}
 document.getElementById('attractionModal').addEventListener('click',e=>{if(e.target.id==='attractionModal')closeAttractionModal()});
@@ -3026,7 +3028,7 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="v59.css?v=1">
 <script src="v59.js?v=1"></script>
 <link rel="stylesheet" href="v60.css?v=1">
-<script src="v60.js?v=1"></script>
+<script src="v60.js?v=20261126"></script>
 <link rel="stylesheet" href="v61.css?v=1">
 <script src="v61.js?v=1"></script>
 <script src="v62.js?v=1"></script>
@@ -3056,13 +3058,13 @@ function renderLogicAnnotations() {}
 <script src="v70.js?v=20261012"></script>
 
 <link rel="stylesheet" href="v71.css?v=1">
-<script src="v71.js?v=1"></script>
+<script src="v71.js?v=20261126"></script>
 
 <link rel="stylesheet" href="v72.css?v=73">
 <link rel="stylesheet" href="v74.css?v=74">
 <script src="v74.js?v=74"></script>
 <link rel="stylesheet" href="v75.css?v=75">
-<script src="v75.js?v=75"></script>
+<script src="v75.js?v=20261126"></script>
 <link rel="stylesheet" href="v76.css?v=76">
 <script src="v76.js?v=76"></script>
 
@@ -3073,14 +3075,14 @@ function renderLogicAnnotations() {}
 <script src="v78.js?v=78"></script>
 
 <link rel="stylesheet" href="v79.css?v=79">
-<script src="v79.js?v=20261012-bulk"></script>
+<script src="v79.js?v=20261126"></script>
 
 <link rel="stylesheet" href="v80.css?v=80">
-<script src="v80.js?v=80"></script>
+<script src="v80.js?v=20261126"></script>
 
-<script src="v81.js?v=20261012-bulk"></script>
+<script src="v81.js?v=20261126"></script>
 
-<script src="v82.js?v=20261012-bulk"></script>
+<script src="v82.js?v=20261126"></script>
 
 <script src="v83.js?v=83"></script>
 
@@ -3090,7 +3092,7 @@ function renderLogicAnnotations() {}
 <script src="v85.js?v=20261009-profile-confirm"></script>
 
 <link rel="stylesheet" href="v86.css?v=86">
-<script src="v86.js?v=20261012-bulk"></script>
+<script src="v86.js?v=20261126"></script>
 
 <link rel="stylesheet" href="v87.css?v=87">
 <script src="v87.js?v=87"></script>
@@ -3178,7 +3180,7 @@ function renderLogicAnnotations() {}
 <link rel="stylesheet" href="support-industry-picker-v120.css?v=120">
 <script src="support-industry-data-v120.js?v=120"></script>
 <script src="support-industry-picker-v120.js?v=120"></script>
-<script src="support-scope.js?v=20261012-bulk"></script>
+<script src="support-scope.js?v=20261126"></script>
 <style id="industry-enterprise-details-styles">
 /* Industry cluster enterprise details */
 .industry-map-card button.cluster{font-family:inherit;text-align:left;cursor:pointer;appearance:none}
@@ -4051,7 +4053,7 @@ window.ZhiyanMigrationGeography = {"type":"FeatureCollection","features":[{"type
 })();
 </script>
 
-<script src="enterprise-target-region.js?v=20261016-region"></script>
+<script src="enterprise-target-region.js?v=20261126"></script>
 
 <script>
 var dashboardHeadlineNews = [
@@ -4130,3 +4132,8 @@ var dashboardHeadlineNews = [
 </script>
 
 <script src="hefei-industry-comparison.js?v=20261028-layout"></script>
+<link rel="stylesheet" href="chain-quality.css?v=20261126-quality">
+<link rel="stylesheet" href="intelligence-feed.css?v=20261126">
+<script src="chain-quality.js?v=20261126-quality"></script>
+<script src="intelligence-feed.js?v=20261126"></script>
+<script src="report-notifications.js?v=20261126"></script>
