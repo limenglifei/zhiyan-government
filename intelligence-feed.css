@@ -163,6 +163,17 @@
 .if-event:focus-visible { position: relative; z-index: 1; }
 .if-event-meta { display: flex; align-items: center; justify-content: space-between; gap: 9px; flex-wrap: wrap; }
 .if-event-meta time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.if-event-footer { flex-wrap: nowrap; min-width: 0; }
+.if-event-publisher { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.if-event-score {
+  flex: none;
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #e8f1ff;
+  color: #215aa5;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 .if-event strong { font-size: 15px; line-height: 1.5; }
 .if-event .if-event-summary {
   display: -webkit-box;

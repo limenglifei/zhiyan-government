@@ -29,6 +29,7 @@
     technology: { label: '技术', examples: '如碳化硅、先进封装' },
     person: { label: '人物', examples: '如林明远' }
   };
+  const dimensionWeights = { city: 5, company: 13, product: 10, technology: 10, person: 12 };
   const levels = ['宏观', '行业', '企业', '个体'];
   const sentiments = ['中立', '反面', '正面'];
   const publicationRanges = new Map([
@@ -290,7 +291,7 @@
   const status = root.querySelector('.if-status');
   const settingsStatus = settingsDialog.querySelector('.if-status');
   const settingsList = settingsDialog.querySelector('.if-settings-list');
-  const view = { subscription: '', read: '', search: '', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
+  const view = { subscription: '', read: '', search: '', sort: 'match', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
   let state = readState() || { subscriptions: starterSubscriptions, read: [] };
   let focusBeforeDialog;
   let focusAfterSettings;
@@ -378,22 +379,41 @@
     return publishedAt >= cutoff.getTime() - publicationOffset && publishedAt <= now;
   }
 
-  function matches(event, rule, now) {
-    return (!rule.eventCodes.length || event.subtypes.some(code => rule.eventCodes.includes(code))) &&
-      (!rule.levels.length || rule.levels.includes(event.level)) &&
-      (!rule.sentiments.length || rule.sentiments.includes(event.sentiment)) &&
-      (!rule.publicationRange || publishedInRange(event.time, publicationRanges.get(rule.publicationRange), now)) &&
-      Object.keys(dimensions).every(key => {
-        const terms = rule.dimensions[key] || [];
-        return !terms.length || terms.some(term => (event.tags[key] || []).some(tag => normalize(tag).includes(normalize(term))));
-      });
+  function matchScore(event, rule, now) {
+    if (rule.levels.length && !rule.levels.includes(event.level)) return null;
+    if (rule.sentiments.length && !rule.sentiments.includes(event.sentiment)) return null;
+    if (rule.publicationRange && !publishedInRange(event.time, publicationRanges.get(rule.publicationRange), now)) return null;
+
+    let score = 60;
+    if (rule.eventCodes.length) {
+      const matches = event.subtypes.filter(code => rule.eventCodes.includes(code));
+      if (!matches.length) return null;
+      // A specific subtype selection contributes more than a broad event category.
+      score += 8 + Math.round(8 / Math.sqrt(rule.eventCodes.length)) + Math.min(2, matches.length - 1);
+    }
+    for (const [key, weight] of Object.entries(dimensionWeights)) {
+      const terms = rule.dimensions[key] || [];
+      if (!terms.length) continue;
+      const tags = (event.tags[key] || []).map(normalize);
+      const keywords = terms.map(normalize);
+      if (keywords.some(term => tags.includes(term))) score += weight;
+      else if (keywords.some(term => tags.some(tag => tag.includes(term)))) score += weight * 0.7;
+      else return null;
+    }
+    if (rule.levels.length) score += Math.round(4 / rule.levels.length);
+    if (rule.sentiments.length) score += Math.round(4 / rule.sentiments.length);
+    return Math.min(100, Math.round(score));
   }
 
   function hits(now = Date.now()) {
     const enabled = state.subscriptions.filter(rule => rule.enabled);
-    return sampleEvents.map(event => ({
-      event, rules: enabled.filter(rule => matches(event, rule, now))
-    })).filter(entry => entry.rules.length).sort((a, b) => b.event.time.localeCompare(a.event.time));
+    return sampleEvents.flatMap(event => {
+      const matches = enabled.flatMap(rule => {
+        const score = matchScore(event, rule, now);
+        return score === null ? [] : [{ rule, score }];
+      });
+      return matches.length ? [{ event, matches }] : [];
+    });
   }
 
   function render() {
@@ -422,13 +442,17 @@
 
   function renderFeed(entries) {
     const search = normalize(view.search);
-    const visible = entries.filter(({ event, rules }) => {
+    const visible = entries.flatMap(entry => {
+      const { event, matches } = entry;
+      const groupMatch = view.subscription ? matches.find(({ rule }) => rule.id === view.subscription) : null;
+      if (view.subscription && !groupMatch) return [];
       const isRead = state.read.includes(event.id);
       const tags = Object.values(event.tags).flat();
-      return (!view.subscription || rules.some(rule => rule.id === view.subscription)) &&
-        (view.read !== 'unread' || !isRead) && (view.read !== 'read' || isRead) &&
-        (!search || normalize([event.title, event.summary, event.sourceName, ...tags].join(' ')).includes(search));
+      if (view.read === 'unread' && isRead || view.read === 'read' && !isRead) return [];
+      if (search && !normalize([event.title, event.summary, publisher(event), ...tags].join(' ')).includes(search)) return [];
+      return [{ ...entry, score: groupMatch?.score ?? Math.max(...matches.map(({ score }) => score)) }];
     });
+    visible.sort((a, b) => (view.sort === 'match' ? b.score - a.score : 0) || b.event.time.localeCompare(a.event.time));
     const selected = visible.find(entry => entry.event.id === view.selected) || visible[0];
     view.selected = selected?.event.id || '';
     if (view.analysisStream && view.analysisStream.eventId !== view.selected) stopAnalysisStream();
@@ -438,6 +462,9 @@
         <button type="submit" class="if-button">搜索</button>
         <label><span class="if-sr">阅读状态</span><select name="read">
           ${option('', '全部状态', view.read)}${option('unread', '仅未读', view.read)}${option('read', '仅已读', view.read)}
+        </select></label>
+        <label><span class="if-sr">排序</span><select name="sort">
+          ${option('match', '匹配度优先', view.sort)}${option('time', '发布时间倒序', view.sort)}
         </select></label>
       </form>
       <div class="if-feed-grid">
@@ -469,17 +496,24 @@
     return `<div class="if-empty"><strong>${message}</strong><button class="if-link" type="button" data-if-action="settings">打开订阅设置</button></div>`;
   }
 
-  function eventRow({ event, rules }, selected) {
+  function publisher(event) {
+    return event.sourceName || '发布机构未披露';
+  }
+
+  function eventRow({ event, score }, selected) {
     const unread = !state.read.includes(event.id);
     return `<button class="if-event" type="button" data-if-action="event" data-if-id="${event.id}" aria-pressed="${event.id === selected}">
       <span class="if-event-meta"><span class="if-badge">${categories.get(event.category).label}</span><time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time.slice(5)}</time></span>
       <strong>${unread ? '<i class="if-unread-dot" aria-label="未读"></i>' : ''}${esc(event.title)}</strong>
       <span class="if-event-summary">${esc(event.summary)}</span>
-      <span class="if-event-meta"><span>${esc((event.tags.city || []).join(' · ') || event.level)}</span><span>${rules.length} 项订阅命中</span></span>
+      <span class="if-event-meta if-event-footer">
+        <span class="if-event-publisher" title="${esc(publisher(event))}">${esc(publisher(event))}</span>
+        <span class="if-event-score" title="按订阅规则计算，满分100分">匹配度 <b>${score}</b> 分</span>
+      </span>
     </button>`;
   }
 
-  function eventDetail({ event, rules }) {
+  function eventDetail({ event, matches }) {
     const unread = !state.read.includes(event.id);
     const tagRows = Object.entries(dimensions)
       .filter(([key]) => event.tags[key]?.length)
@@ -493,7 +527,7 @@
       <header>
         <h2 id="ifEventTitle">${esc(event.title)}</h2>
         <div class="if-detail-meta">
-          <p class="if-detail-date"><span class="if-sr">发文来源机构</span><span class="if-source-name">${esc(event.sourceName || '发布机构未披露')}</span> · <time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time}</time> ${source}</p>
+          <p class="if-detail-date"><span class="if-sr">发文来源机构</span><span class="if-source-name">${esc(publisher(event))}</span> · <time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time}</time> ${source}</p>
           <button class="if-button if-detail-read" type="button" data-if-action="read" data-if-id="${event.id}">${unread ? '标为已读' : '标为未读'}</button>
         </div>
       </header>
@@ -506,7 +540,7 @@
         </dl>
       </section>
       <section><h3>事件摘要</h3><p>${esc(event.summary)}</p></section>
-      <section><h3>命中订阅</h3><ul class="if-matches">${rules.map(rule => `
+      <section><h3>命中订阅</h3><ul class="if-matches">${matches.map(({ rule }) => `
         <li><b>${esc(rule.name)}</b><span>${ruleTags(rule, event).map(esc).join(' · ')}</span></li>`).join('')}</ul>
       </section>
       ${eventAnalysis(event)}
@@ -525,7 +559,7 @@
     if (!event || sourceDialog.open) return;
     sourceDialog.innerHTML = `<article class="if-source-document">
       <header class="if-dialog-header">
-        <div><p>原文 · 原型演示稿</p><h2 id="ifSourceTitle">${esc(event.title)}</h2><p>${esc(event.sourceName || '发布机构未披露')} · ${esc(event.time)}</p></div>
+        <div><p>原文 · 原型演示稿</p><h2 id="ifSourceTitle">${esc(event.title)}</h2><p>${esc(publisher(event))} · ${esc(event.time)}</p></div>
         <button class="if-close" type="button" data-if-source-close aria-label="关闭原文">×</button>
       </header>
       <div class="if-dialog-body"><p>${esc(event.summary)}</p>${event.sourceText ? `<p>${esc(event.sourceText)}</p>` : ''}</div>
@@ -721,7 +755,7 @@
   }
 
   function subscriptionCard(rule, now) {
-    const count = rule.enabled ? sampleEvents.filter(event => matches(event, rule, now)).length : 0;
+    const count = rule.enabled ? sampleEvents.filter(event => matchScore(event, rule, now) !== null).length : 0;
     return `<article class="if-card if-sub">
       <header><h3>${esc(rule.name)} ${rule.sample ? '<span class="if-badge if-plain">示例规则</span>' : ''}</h3><span class="if-sub-state" data-active="${rule.enabled}">${rule.enabled ? '生效中' : '已暂停'}</span></header>
       <div class="if-detail-tags">${ruleTags(rule).map(tag => `<span class="if-badge if-plain">${esc(tag)}</span>`).join('')}</div>
