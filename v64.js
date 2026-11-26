@@ -24,9 +24,21 @@
   window.returnLocalFromRecommendV64=function(){var modal=document.getElementById('nodeCompanyModal');modal.classList.remove('open');setTimeout(function(){openNodeCompanyList(currentNodeCompanyName)},20)};
   function enhanceRecommendV64(){
     var title=document.getElementById('nodeCompanyTitle'),head=document.getElementById('nodeCompanyTableHead'),body=document.getElementById('nodeCompanyRows');if(!title||!head||!body||title.textContent.indexOf('补强推荐企业')<0||head.querySelector('.recommend-select-all-v64'))return;
-    recommendSelectedV64.clear();var companies=nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score}).slice(0,10),oldRows=Array.from(body.querySelectorAll('tr'));
+    var oldRows=Array.from(body.querySelectorAll('tr'));
+    if(!oldRows.length)return;
+    recommendSelectedV64.clear();
+    var companies=nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score}).slice(0,10);
     head.innerHTML='<tr><th class="recommend-select-v64"><input class="recommend-select-all-v64" type="checkbox" onchange="toggleAllRecommendV64(this.checked)"></th><th>推荐企业</th><th>所在地区</th><th>企业荣誉资质</th><th>主要补强能力</th><th>匹配度</th><th>联系方式</th></tr>';
-    body.innerHTML=oldRows.map(function(row,index){var cells=row.children,company=companies[index]||{},name=cells[0]?.querySelector('b')?.textContent.trim()||company.name||'推荐企业',encoded=encodeURIComponent(name),honors=(company.tags||['待核验']).slice(0,3);return'<tr><td class="recommend-select-v64"><input class="recommend-check-v64" type="checkbox" data-name="'+encoded+'" onchange="toggleRecommendV64(decodeURIComponent(this.dataset.name),this.checked)"></td><td>'+cells[0].innerHTML+'</td><td>'+cells[1].innerHTML+'</td><td><div class="honor-tags-v64">'+honors.map(function(tag){return'<span>'+escV64(tag)+'</span>'}).join('')+'</div></td><td>'+cells[2].innerHTML+'</td><td>'+cells[3].innerHTML+'</td><td>'+cells[4].innerHTML+'</td></tr>'}).join('');
+    body.innerHTML=oldRows.map(function(row,index){
+      var cells=row.children,company=companies[index]||{};
+      var name=cells[0]?.querySelector('b')?.textContent.trim()||company.name||'推荐企业';
+      var encoded=encodeURIComponent(name),honors=company.tags||['待核验'];
+      if(row.dataset.recommendTagsV61){
+        var saved=JSON.parse(row.dataset.recommendTagsV61);
+        honors=saved.length?saved:['待核验'];
+      }
+      return '<tr><td class="recommend-select-v64"><input class="recommend-check-v64" type="checkbox" data-name="'+encoded+'" onchange="toggleRecommendV64(decodeURIComponent(this.dataset.name),this.checked)"></td><td>'+cells[0].innerHTML+'</td><td>'+cells[1].innerHTML+'</td><td><div class="honor-tags-v64">'+honors.slice(0,3).map(function(tag){return'<span>'+escV64(tag)+'</span>'}).join('')+'</div></td><td>'+cells[2].innerHTML+'</td><td>'+cells[3].innerHTML+'</td><td>'+cells[4].innerHTML+'</td></tr>';
+    }).join('');
     var footer=document.getElementById('nodeMoreFilterBtn')?.parentElement;if(footer&&!document.getElementById('nodeReturnLocalV64')){var back=document.createElement('button');back.id='nodeReturnLocalV64';back.className='secondary';back.textContent='返回本地挂靠企业';back.onclick=returnLocalFromRecommendV64;footer.insertBefore(back,document.getElementById('nodeMoreFilterBtn'))}updateRecommendBatchV64();
   }
   var recommendBodyV64=document.getElementById('nodeCompanyRows');if(recommendBodyV64)new MutationObserver(function(){setTimeout(enhanceRecommendV64,0)}).observe(recommendBodyV64,{childList:true});

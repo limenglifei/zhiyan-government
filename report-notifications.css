@@ -149,15 +149,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  margin-bottom: 5px;
+  margin-top: 6px;
   font-size: 11px;
-}
-
-.report-notice__meta b {
-  border-radius: 4px;
-  background: #e8effa;
-  color: #305986;
-  padding: 2px 6px;
 }
 
 .report-notice__meta time {
@@ -168,6 +161,8 @@
   position: relative;
   display: block;
   font-size: 13px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .report-notice__item--unread strong::before {
@@ -192,6 +187,7 @@
 .report-notice__item small {
   color: #245eb2;
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .report-notice :focus-visible {

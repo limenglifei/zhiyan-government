@@ -5,19 +5,21 @@
   const sampleReadPrefix = 'zhiyan-government.report-notice-sample-read.v1.';
   const hashPrefix = '#report-notice=';
   const types = {
-    due: { label: '企业尽调', title: '尽调报告已生成' },
-    radar: { label: '招商雷达', title: '强链补链分析报告已生成' },
-    policy: { label: '政策匹配', title: '政策匹配报告已生成' },
-    support: { label: '政策扶持', title: '政策精准扶持报告已生成' },
+    due: { label: '企业尽调', ending: '尽调报告已生成' },
+    radar: { label: '招商雷达', ending: '强链补链分析报告已生成' },
+    policy: { label: '政策匹配', ending: '政策匹配报告已生成' },
+    support: { label: '政策扶持', ending: '扶持名单已生成' },
+    chain: { label: '企业上链', ending: '的企业上链已生成' },
     review: { label: '数据审核' }
   };
   const reviewTargets = { company: '企业库', policy: '政策库' };
   const reviewStatuses = new Set(['approved', 'rejected']);
   const samples = new Map([
     { id: 'demo-report-due', kind: 'due', subject: '芯源微电子科技股份有限公司', createdAt: Date.parse('2026-11-26T10:28:32+08:00'), read: false },
-    { id: 'demo-report-radar', kind: 'radar', subject: '新能源汽车产业链', context: { chainKey: 'newenergy' }, createdAt: Date.parse('2026-11-26T09:56:14+08:00'), read: true },
+    { id: 'demo-report-radar', kind: 'radar', subject: '新能源汽车产业链', context: { chainKey: 'newenergy', nodeName: '动力电池' }, createdAt: Date.parse('2026-11-26T09:56:14+08:00'), read: true },
     { id: 'demo-report-policy', kind: 'policy', subject: '海州智造科技有限公司', context: { mode: 'local', region: null }, createdAt: Date.parse('2026-11-26T09:18:06+08:00'), read: false },
-    { id: 'demo-report-support', kind: 'support', subject: '制造业数字化转型扶持计划', createdAt: Date.parse('2026-11-25T16:42:17+08:00'), read: true }
+    { id: 'demo-report-support', kind: 'support', subject: '制造业数字化转型扶持计划', createdAt: Date.parse('2026-11-25T16:42:17+08:00'), read: true },
+    { id: 'demo-report-chain', kind: 'chain', subject: '新能源汽车产业链', context: { taskId: 'sample-enterprise-chain', chainId: 'sample-nev' }, createdAt: Date.parse('2026-11-26T10:13:00+08:00'), read: true }
   ].map(message => [message.id, message]));
   const messageTime = new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium'
@@ -130,7 +132,8 @@
   function completeSupport(parsed = false) {
     const context = window.captureSupportReport?.(parsed);
     if (!context?.title) return;
-    const subject = context.project || context.title.replace(/政策精准扶持名单$/, '') || context.title;
+    const parsedTitle = parsed ? document.getElementById('pv79Title')?.value.trim() : '';
+    const subject = parsedTitle || context.project || context.title.replace(/政策精准扶持名单$/, '') || context.title;
     complete({ kind: 'support', subject, context });
   }
 
@@ -160,15 +163,22 @@
     return true;
   }
 
+  function radarNode(message) {
+    return typeof message.context?.nodeName === 'string' ? message.context.nodeName.trim() : '';
+  }
+
   function reopen(message) {
     if (message.kind === 'due' && typeof window.openDueReport === 'function') {
       if (document.getElementById('dueGenerateBtn')?.disabled) return false;
       window.openDueReport(message.subject);
       return true;
     }
-    if (message.kind === 'radar') return window.reopenWholeChainReportV71?.(message.context?.chainKey);
+    if (message.kind === 'radar') {
+      return radarNode(message) ? window.reopenNodeRecruitmentReport?.(message.context) : window.reopenWholeChainReportV71?.(message.context?.chainKey);
+    }
     if (message.kind === 'policy') return reopenPolicy(message);
     if (message.kind === 'support') return window.reopenSupportReport?.(message.context);
+    if (message.kind === 'chain') return window.reopenEnterpriseChainNotice?.(message.context, message.subject);
     if (message.kind === 'review' && typeof window.openKnowledgeBase === 'function') {
       window.openKnowledgeBase(message.review.target);
       return true;
@@ -192,7 +202,7 @@
   }
 
   function itemMarkup(message) {
-    const { label, title } = types[message.kind];
+    const { label, ending } = types[message.kind];
     const review = message.kind === 'review' ? message.review : null;
     const item = document.createElement('li');
     item.className = 'report-notice__item' + (message.read ? '' : ' report-notice__item--unread');
@@ -205,14 +215,18 @@
       link.target = '_blank';
       link.rel = 'noopener';
     }
-    link.innerHTML = '<div class="report-notice__meta"><b></b><time></time></div><strong></strong><p></p><small></small>';
-    link.querySelector('b').textContent = review?.library || label;
+    link.innerHTML = '<strong></strong><p hidden></p><div class="report-notice__meta"><time></time><small>查看</small></div>';
+    const node = message.kind === 'radar' ? radarNode(message) : '';
+    const subject = message.subject + (node ? `-${node}` : '');
+    link.querySelector('strong').textContent = review ? `【${review.library}】${review.title}` : `【${label}】你的${subject}${ending}`;
+    if (review) {
+      const body = link.querySelector('p');
+      body.hidden = false;
+      body.textContent = message.subject;
+    }
     const date = new Date(message.createdAt);
     link.querySelector('time').dateTime = date.toISOString();
     link.querySelector('time').textContent = messageTime.format(date);
-    link.querySelector('strong').textContent = review?.title || title;
-    link.querySelector('p').textContent = message.subject;
-    link.querySelector('small').textContent = review ? '查看数据' : '查看报告';
     item.appendChild(link);
     return item;
   }
@@ -231,7 +245,7 @@
       <section class="report-notice__panel" id="reportNoticePanel" aria-labelledby="reportNoticeTitle" hidden>
         <header><h2 id="reportNoticeTitle">消息通知<b class="report-notice__count" aria-hidden="true" hidden></b></h2><button type="button" data-notice-read-all>全部已读</button></header>
         <ul class="report-notice__list"></ul>
-        <p class="report-notice__empty" hidden>报告完成和数据审核的消息会显示在这里。</p>
+        <p class="report-notice__empty" hidden>暂无消息通知</p>
       </section>`;
     actions.insertBefore(root, actions.querySelector('.avatar'));
     const trigger = root.querySelector('.report-notice__trigger');

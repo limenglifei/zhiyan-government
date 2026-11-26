@@ -1,14 +1,141 @@
 /* node-filter-contact-service-and-chain-basic-editor-v61 */
 (function(){
   var activeNodeV61='车规级芯片',activeChainEditIndexV61=null,originalChainCanvasEditV61=window.editChainGraphV47;
+  var nodeReportTimerV61=null;
   function escV61(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
   function contactV61(company,index){var surnames=['张','李','王','陈','刘','赵','周','吴','徐','孙'],roles=['投资发展总监','战略合作负责人','区域拓展总监','董事会办公室主任','政府事务负责人'];var phone='1'+['38','39','86','87','89'][index%5]+'-'+String(5200+index*137).padStart(4,'0')+'-'+String(1600+index*83).padStart(4,'0');return{name:surnames[index%10]+'经理',role:roles[index%roles.length],phone:phone,email:'bd'+String(index+1).padStart(2,'0')+'@enterprise'+String(index+1).padStart(2,'0')+'.cn'}}
   function ensureNodeFilterModalV61(){if(document.getElementById('nodeFilterModalV61'))return;document.body.insertAdjacentHTML('beforeend','<div class="collection-modal-backdrop node-filter-modal-v61" id="nodeFilterModalV61" aria-hidden="true"><section class="collection-modal small" role="dialog" aria-modal="true" aria-labelledby="nodeFilterTitleV61"><header><div><h2 id="nodeFilterTitleV61">节点补强企业粗筛条件</h2><p>确认筛选范围后，AI 将结合节点缺口与企业能力生成推荐名单</p></div><button class="modal-close" onclick="closeNodeFilterV61()">×</button></header><div class="collection-modal-body"><div class="node-filter-target-v61"><span>目标产业链</span><b id="nodeFilterChainV61">新能源汽车产业链</b><span>目标节点</span><b id="nodeFilterNodeV61">车规级芯片</b></div><div class="node-filter-grid-v61"><label><span>重点区域</span><select id="nodeFilterRegionV61"><option>全国</option><option>长三角</option><option>粤港澳大湾区</option><option>京津冀</option><option>中西部地区</option></select></label><label><span>企业阶段</span><select id="nodeFilterStageV61"><option>高成长 / 成熟期</option><option>上市公司</option><option>专精特新企业</option><option>不限</option></select></label><label><span>投资规模</span><select id="nodeFilterScaleV61"><option>1—5 亿元</option><option>5 亿元以上</option><option>5000 万—1 亿元</option><option>不限</option></select></label><label><span>企业荣誉资质</span><select id="nodeFilterHonorV61"><option>不限</option><option>专精特新小巨人</option><option>制造业单项冠军</option><option>国家高新技术企业</option><option>上市公司</option></select></label></div><div class="node-filter-rule-v61"><i>AI</i><div><b>系统自动补充筛选维度</b><p>节点相关度、扩张意愿、风险合规、技术创新、财务营收能力和本地落地适配。</p></div></div></div><footer><button class="secondary" onclick="closeNodeFilterV61()">取消</button><button class="primary" id="nodeFilterConfirmV61" onclick="confirmNodeFilterV61()">确认并开始推荐</button></footer></section></div>')}
   function renderLocalV61(node){if(typeof window.openNodeCompanyList==='function'&&window.openNodeCompanyList!==renderLocalV61)window.openNodeCompanyList(node);activeNodeV61=node;var action=document.getElementById('nodeMoreFilterBtn');if(action){action.disabled=false;action.className='primary';action.textContent='✦ 补强分析与推荐';action.onclick=openNodeFilterV61}}
-  window.openNodeFilterV61=function(){ensureNodeFilterModalV61();activeNodeV61=currentNodeCompanyName||activeNodeV61;document.getElementById('nodeFilterChainV61').textContent=(chainIndustryData[activeChainKey]||chainIndustryData.newenergy).name;document.getElementById('nodeFilterNodeV61').textContent=activeNodeV61;var nodeModal=document.getElementById('nodeCompanyModal');nodeModal.classList.remove('open');nodeModal.setAttribute('aria-hidden','true');var modal=document.getElementById('nodeFilterModalV61');modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'};
-  window.closeNodeFilterV61=function(){var modal=document.getElementById('nodeFilterModalV61');if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}document.body.style.overflow=''};
-  function renderRecommendedV61(){var modal=document.getElementById('nodeCompanyModal'),dialog=modal.querySelector('.node-company-modal');dialog.classList.remove('node-local-stage-v59');dialog.classList.add('node-two-phase-v59','node-recommend-stage-v61');document.getElementById('nodeCompanyTitle').textContent=activeNodeV61+' · 补强推荐企业';var desc=dialog.querySelector('header>div>p');if(desc)desc.textContent='已按粗筛条件完成全国企业召回与精排，联系方式来自企业公开信息与招商线索库，建议接洽前再次核验';var insight=document.getElementById('nodeCompanyAiSummary');if(insight)insight.textContent='本节点优先补强核心产品量产、关键技术研发与链主协同能力。推荐企业均具备较高产业相关度或近期扩张信号。';var companies=nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score}).slice(0,10);document.getElementById('nodeCompanySummary').innerHTML='<span class="metric-static"><span>粗筛候选</span><b>'+companies.length+' 家</b></span><span class="metric-static"><span>高匹配企业</span><b>'+companies.filter(function(x){return x.score>=90}).length+' 家</b></span><span class="metric-static"><span>联系方式已获取</span><b>'+companies.length+' 家</b></span>';document.getElementById('nodeCompanyTableHead').innerHTML='<tr><th>推荐企业</th><th>所在地区</th><th>主要补强能力</th><th>匹配度</th><th>联系方式</th><th>操作</th></tr>';document.getElementById('nodeCompanyRows').innerHTML=companies.map(function(company,index){var ct=contactV61(company,index),encoded=encodeURIComponent(company.name),match=Math.max(82,Number(company.score||88)-Math.floor(index/4));return'<tr><td><b>'+escV61(company.name)+'</b><span>'+escV61((company.tags||['待核验'])[0])+'</span></td><td>'+escV61(String(company.loc||'全国').split(' · ')[0])+'</td><td><span class="node-overflow" title="'+escV61(activeNodeV61+'关键能力补位')+'">'+escV61(activeNodeV61)+'关键能力补位</span></td><td><b class="recommend-fit-v59">'+match+'%</b></td><td><div class="contact-cell-v61"><b>'+ct.name+' · '+ct.role+'</b><span>'+ct.phone+'</span><small>'+ct.email+'</small></div></td><td><button class="node-add-btn-v59" onclick="addNodeCompanyV59(decodeURIComponent(\''+encoded+'\'),this)">＋ 加入招商名单</button></td></tr>'}).join('');document.getElementById('nodeModalNote').textContent='推荐结果按节点相关度、扩张意愿度、风险合规度、技术创新力与财务营收能力综合排序';var action=document.getElementById('nodeMoreFilterBtn');action.className='secondary';action.textContent='← 返回本地挂靠企业';action.onclick=function(){renderLocalV61(activeNodeV61)};modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'}
-  window.confirmNodeFilterV61=function(){var button=document.getElementById('nodeFilterConfirmV61');button.disabled=true;button.textContent='AI 正在粗筛与精排…';setTimeout(function(){button.disabled=false;button.textContent='确认并开始推荐';closeNodeFilterV61();renderRecommendedV61();toast('已完成“'+activeNodeV61+'”节点企业粗筛与推荐')},850)};
+  window.openNodeFilterV61=function(){
+    ensureNodeFilterModalV61();
+    activeNodeV61=currentNodeCompanyName||activeNodeV61;
+    var chainKey=Object.hasOwn(chainIndustryData,activeChainKey)?activeChainKey:'newenergy';
+    var modal=document.getElementById('nodeFilterModalV61');
+    modal.dataset.chainKey=chainKey;
+    modal.dataset.nodeName=activeNodeV61;
+    document.getElementById('nodeFilterChainV61').textContent=chainIndustryData[chainKey].name;
+    document.getElementById('nodeFilterNodeV61').textContent=activeNodeV61;
+    var nodeModal=document.getElementById('nodeCompanyModal');
+    nodeModal.classList.remove('open');
+    nodeModal.setAttribute('aria-hidden','true');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+  };
+  window.closeNodeFilterV61=function(){
+    if(nodeReportTimerV61!==null){
+      clearTimeout(nodeReportTimerV61);
+      nodeReportTimerV61=null;
+      var button=document.getElementById('nodeFilterConfirmV61');
+      if(button){
+        button.disabled=false;
+        button.textContent='确认并开始推荐';
+      }
+    }
+    var modal=document.getElementById('nodeFilterModalV61');
+    if(modal){
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden','true');
+    }
+    document.body.style.overflow='';
+  };
+  function recommendationSnapshotV61(){
+    return nodeExternalCompanies.slice().sort(function(a,b){return b.score-a.score}).slice(0,10).map(function(company){
+      return {name:company.name,loc:company.loc||'全国',tags:(company.tags||[]).slice(0,3),score:Number(company.score)||88};
+    });
+  }
+
+  function recommendationContextV61(context){
+    if(!context||typeof context.chainKey!=='string'||!Object.hasOwn(chainIndustryData,context.chainKey))return null;
+    var nodeName=typeof context.nodeName==='string'?context.nodeName.trim():'';
+    if(!nodeName)return null;
+    var chainName=typeof context.chainName==='string'&&context.chainName.trim()||chainIndustryData[context.chainKey].name;
+    var recommendations=Array.isArray(context.recommendations)?context.recommendations.slice(0,10).filter(function(company){
+      return company&&typeof company.name==='string'&&typeof company.loc==='string'&&Number.isFinite(company.score)&&
+        Array.isArray(company.tags)&&company.tags.every(function(tag){return typeof tag==='string'});
+    }):recommendationSnapshotV61();
+    return {chainKey:context.chainKey,chainName:chainName,nodeName:nodeName,recommendations:recommendations};
+  }
+
+  function renderRecommendedV61(context){
+    var modal=document.getElementById('nodeCompanyModal');
+    var dialog=modal?.querySelector('.node-company-modal');
+    if(!dialog)return false;
+    var nodeName=context.nodeName,companies=context.recommendations;
+    activeNodeV61=nodeName;
+    currentNodeCompanyName=nodeName;
+    modal.dataset.chainKey=context.chainKey;
+    modal.dataset.nodeName=nodeName;
+    dialog.classList.remove('node-local-stage-v59');
+    dialog.classList.add('node-two-phase-v59','node-recommend-stage-v61');
+    document.getElementById('nodeCompanyTitle').textContent=nodeName+' · 补强推荐企业';
+    var desc=dialog.querySelector('header > div > p');
+    if(desc)desc.textContent='外地招商 · '+context.chainName+' · '+nodeName+'。接洽推荐企业前，请核验企业资质与联系方式。';
+    var insight=document.getElementById('nodeCompanyAiSummary');
+    if(insight)insight.textContent='本节点优先补强核心产品量产、关键技术研发与链主协同能力。推荐企业均具备较高产业相关度或近期扩张信号。';
+    document.getElementById('nodeCompanySummary').innerHTML='<span class="metric-static"><span>粗筛候选</span><b>'+companies.length+' 家</b></span><span class="metric-static"><span>高匹配企业</span><b>'+companies.filter(function(company){return company.score>=90}).length+' 家</b></span><span class="metric-static"><span>联系方式已获取</span><b>'+companies.length+' 家</b></span>';
+    var head=document.getElementById('nodeCompanyTableHead');
+    delete head.dataset.v65;
+    head.innerHTML='<tr><th>推荐企业</th><th>所在地区</th><th>主要补强能力</th><th>匹配度</th><th>联系方式</th><th>操作</th></tr>';
+    var body=document.getElementById('nodeCompanyRows');
+    body.innerHTML=companies.map(function(company,index){
+      var ct=contactV61(company,index);
+      var match=Math.max(82,company.score-Math.floor(index/4));
+      var ability=escV61(nodeName+'关键能力补位');
+      return '<tr data-recommend-tags-v61="'+escV61(JSON.stringify(company.tags))+'"><td><b>'+escV61(company.name)+'</b><span>'+escV61(company.tags[0]||'待核验')+'</span></td>'+
+        '<td>'+escV61(company.loc.split(' · ')[0])+'</td><td><span class="node-overflow" title="'+ability+'">'+ability+'</span></td>'+
+        '<td><b class="recommend-fit-v59">'+match+'%</b></td><td><div class="contact-cell-v61"><b>'+ct.name+' · '+ct.role+'</b><span>'+ct.phone+'</span><small>'+ct.email+'</small></div></td>'+
+        '<td><button class="node-add-btn-v59" data-company="'+escV61(company.name)+'" onclick="addNodeCompanyV59(this.dataset.company,this)">＋ 加入招商名单</button></td></tr>';
+    }).join('');
+    var note=document.getElementById('nodeModalNote');
+    note.textContent=companies.length?'推荐结果按节点相关度、扩张意愿度、风险合规度、技术创新力与财务营收能力综合排序':'暂无符合条件的推荐企业。';
+    var action=document.getElementById('nodeMoreFilterBtn');
+    action.className='secondary';
+    action.style.display='inline-flex';
+    action.disabled=false;
+    action.textContent='← 返回本地挂靠企业';
+    action.onclick=function(){renderLocalV61(nodeName)};
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    return true;
+  }
+
+  window.reopenNodeRecruitmentReport=function(saved){
+    if(nodeReportTimerV61!==null)return false;
+    var context=recommendationContextV61(saved);
+    if(!context)return false;
+    closeNodeFilterV61();
+    window.show?.('investment');
+    window.openInvestmentWorkspaceV113?.();
+    window.renderIndustryGraph(context.chainKey);
+    var select=document.getElementById('localChainSelect');
+    if(select)select.value=context.chainKey;
+    pendingFoundationChainKey=context.chainKey;
+    var nodes=Array.from(document.querySelectorAll('#chainFlow .chain-node'));
+    var node=nodes.find(function(button){return button.dataset.chain===context.nodeName});
+    if(node)nodes.forEach(function(button){button.classList.toggle('selected',button===node)});
+    return renderRecommendedV61(context);
+  };
+
+  window.confirmNodeFilterV61=function(){
+    var button=document.getElementById('nodeFilterConfirmV61');
+    var modal=document.getElementById('nodeFilterModalV61');
+    if(!button||!modal?.classList.contains('open')||button.disabled||nodeReportTimerV61!==null)return;
+    var context=recommendationContextV61({chainKey:modal.dataset.chainKey,nodeName:modal.dataset.nodeName});
+    if(!context)return;
+    button.disabled=true;
+    button.textContent='AI 正在粗筛与精排…';
+    nodeReportTimerV61=setTimeout(function(){
+      nodeReportTimerV61=null;
+      button.disabled=false;
+      button.textContent='确认并开始推荐';
+      closeNodeFilterV61();
+      if(!renderRecommendedV61(context))return;
+      window.zhiyanReportNotifications?.complete({kind:'radar',subject:context.chainName,context:context});
+      toast('已完成“'+context.nodeName+'”节点企业粗筛与推荐');
+    },850);
+  };
   var previousNodeOpenV61=window.openNodeCompanyList;window.openNodeCompanyList=function(node){previousNodeOpenV61(node);activeNodeV61=node;var action=document.getElementById('nodeMoreFilterBtn');if(action){action.disabled=false;action.className='primary';action.textContent='✦ 补强分析与推荐';action.onclick=openNodeFilterV61}};
   document.addEventListener('click',function(event){var node=event.target.closest&&event.target.closest('#chainFlow .chain-node');if(!node)return;setTimeout(function(){activeNodeV61=node.dataset.chain;var action=document.getElementById('nodeMoreFilterBtn');if(action){action.className='primary';action.textContent='✦ 补强分析与推荐';action.onclick=openNodeFilterV61}},0)},true);
 

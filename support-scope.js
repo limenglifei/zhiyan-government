@@ -120,7 +120,8 @@ function captureSupportReport(parsed){
   const title=document.getElementById('supportResultTitle').textContent.trim();
   const project=parsed?document.getElementById('supportPolicyComposerV45')?.value.trim():'';
   const scores=companies.map(({n,s,status})=>({name:n,score:s,status}));
-  return {title,project,scope:{...supportScope},scores};
+  const companyName=getSupportCompanies().find(({index})=>index===ci)?.c.n||'';
+  return {title,project,scope:{...supportScope},scores,companyName};
 }
 
 function reopenSupportReport(snapshot){
@@ -144,6 +145,13 @@ function reopenSupportReport(snapshot){
   const result=document.getElementById('supportResultArea');
   ci=0;
   setSupportFilter('all');
+  const matchingCompanies=getSupportCompanies();
+  const position=matchingCompanies.findIndex(({c})=>c.n===snapshot.companyName);
+  if(position>=0&&matchingCompanies[position].index!==ci){
+    ci=matchingCompanies[position].index;
+    supportPage=Math.floor(position/supportPageSize)+1;
+    renderCompanies();
+  }
   show('support');
   page.classList.add('matched');
   document.getElementById('supportMatchBtn').textContent='✦ 重新匹配企业';

@@ -219,6 +219,7 @@
     const rows = knowledgeBaseConfigs.chain.rows;
     const savedGraphs = readSavedGraphs();
     const rowKeys = new WeakMap();
+    window.getChainGraphRecordId = (row) => rowKeys.get(row) || null;
     rows.slice().forEach((row) => {
       const key = `seed:${row.id || row.title}`;
       rowKeys.set(row, key);
