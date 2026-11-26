@@ -7,8 +7,7 @@
     ['advantage', '优势环节描述修正'], ['weak', '薄弱环节描述修正'], ['enterprise', '链主及重点企业修正'],
     ['structure', '产业链结构描述修正'], ['source', '数据来源依据修正']
   ];
-  const models = ['deepseek-v4-flash', 'deepseek-v4-pro', 'spark-x2.6'];
-  const defaultModel = 'deepseek-v4-pro';
+  const qualityModel = '星火 X2.6';
   const storageKey = 'zhiyan-government-quality-graphs-v1';
   const pdfBase = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/';
   const ocrBase = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/';
@@ -330,12 +329,10 @@
         <div class="cq-body">
           <aside class="cq-input" aria-label="质检设置">
             <div class="cq-settings">
-              <label class="cq-model"><span>AI 模型</span><select id="chainQualityModel" required>
-                ${models.map((model) => `<option value="${model}"${model === defaultModel ? ' selected' : ''}>${model}</option>`).join('')}
-              </select></label>
+              <div class="cq-model"><span>AI 模型</span><strong class="cq-model-value" id="chainQualityModel">${qualityModel}</strong></div>
               <label class="cq-web"><span>联网搜索</span><input type="checkbox" role="switch" id="chainQualityWeb"></label>
             </div>
-            <p class="cq-note">模型和联网搜索为原型配置，当前使用本地规则与图谱识别质检。</p>
+            <p class="cq-note">联网搜索为原型配置，当前使用本地规则与图谱识别质检。</p>
             <h3>标准产业链图谱 <small>选填</small></h3>
             <p>支持 PNG、JPG、WebP 和 PDF，单个文件不超过 20 MB。</p>
             <label class="cq-upload"><span>上传参照图谱</span><input type="file" id="chainQualityFile" accept=".png,.jpg,.jpeg,.webp,.pdf"></label>
@@ -363,7 +360,6 @@
     const input = byId('chainQualityFile');
     const readButton = byId('chainQualityRead');
     const readStatus = byId('chainQualityReadStatus');
-    const model = byId('chainQualityModel');
     const web = byId('chainQualityWeb');
     const runButton = byId('chainQualityRun');
     const summary = byId('chainQualitySummary');
@@ -416,7 +412,6 @@
       pendingDescriptions.clear();
       activeDimension = '';
       removeAttachment();
-      model.value = defaultModel;
       web.checked = false;
       summary.textContent = '检查环节覆盖、重复节点和拆解粒度。';
       runConfig.hidden = true;
@@ -440,7 +435,7 @@
           attachmentName: attachment?.name, attachmentMatched: referenceCount > 0, linkedCompanies
         })
       );
-      currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results, model: model.value, webEnabled: web.checked };
+      currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results, model: qualityModel, webEnabled: web.checked };
       summary.textContent = `已检查 ${graphBuilderNodes.length} 个画布节点${referenceCount ? `，自动比对 ${referenceCount} 个图谱节点` : '，基于当前画布与入库资料'}。按 8 类汇总，发现 ${results.length} 项建议。`;
       runConfig.textContent = `AI 模型 ${currentReport.model} · 联网搜索${currentReport.webEnabled ? '开启' : '关闭'}`;
       runConfig.hidden = false;
@@ -711,7 +706,7 @@
       dimensionMount.querySelector(`[data-cq-dimension="${previous}"]`)?.focus({ preventScroll: true });
     });
 
-    [model, web].forEach((control) => control.addEventListener('change', () => invalidateReport()));
+    web.addEventListener('change', () => invalidateReport());
     byId('chainQualityRemove').addEventListener('click', removeAttachment);
     byId('chainQualityPage').addEventListener('change', () => {
       clearRecognition();
