@@ -539,23 +539,48 @@
       const item = document.createElement('article');
       item.className = 'cq-issue';
       item.dataset.cqKind = issue.kind;
-      item.innerHTML = '<div class="cq-issue-heading"><span></span><h5></h5></div><p></p><small></small><dl class="cq-changes"></dl>';
-      item.querySelector('.cq-issue-heading span').hidden = !issue.stage;
-      item.querySelector('.cq-issue-heading span').textContent = parentLabel(issue.stage);
+      item.innerHTML = `
+        <div class="cq-issue-heading">
+          <span class="cq-section-label">问题类型</span>
+          <span class="cq-issue-kind"></span><span class="cq-issue-stage"></span>
+        </div>
+        <h5></h5>
+        <table class="cq-comparison" aria-label="修改前后对照">
+          <thead><tr><th scope="col">原先是什么</th><th scope="col">修改后是什么</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="cq-rationale" role="group" aria-label="修改理由和依据">
+          <h6>修改理由和依据</h6>
+          <dl>
+            <div><dt>修改理由</dt><dd class="cq-reason"></dd></div>
+            <div><dt>依据</dt><dd><span class="cq-basis"></span><span class="cq-review-state" hidden>待核验</span></dd></div>
+          </dl>
+        </div>`;
+      item.querySelector('.cq-issue-kind').textContent = dimensions.find(([kind]) => kind === issue.kind)?.[1] || '';
+      const stage = item.querySelector('.cq-issue-stage');
+      stage.hidden = !issue.stage;
+      stage.textContent = parentLabel(issue.stage);
       item.querySelector('h5').textContent = issue.title;
-      item.querySelector('p').textContent = issue.detail;
-      item.querySelector('small').textContent = issue.basis;
+      const basis = String(issue.basis ?? '').trim();
+      item.querySelector('.cq-reason').textContent = issue.detail || '待补充';
+      item.querySelector('.cq-basis').textContent = basis || '未提供依据';
+      item.querySelector('.cq-review-state').hidden = Boolean(basis)
+        && issue.action !== 'review' && !['enterprise', 'source'].includes(issue.kind);
 
-      const changes = item.querySelector('.cq-changes');
-      issue.changes.forEach(({ label, current, suggestion }) => {
-        const change = document.createElement('div');
-        change.innerHTML = '<dt class="cq-change-label"></dt><dd><span class="cq-before"></span><span class="cq-after"></span></dd>';
-        change.querySelector('dt').textContent = label;
-        const before = change.querySelector('.cq-before');
-        before.hidden = current == null || current === '';
-        before.textContent = `当前 ${current ?? ''}`;
-        change.querySelector('.cq-after').textContent = `建议 ${suggestion}`;
-        changes.append(change);
+      const comparison = item.querySelector('.cq-comparison tbody');
+      const changes = issue.changes?.length ? issue.changes : [{}];
+      changes.forEach(({ label, current, suggestion }, fieldIndex) => {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td><span class="cq-change-label"></span><p class="cq-before"></p></td><td><span class="cq-change-label"></span><p class="cq-after"></p></td>';
+        row.querySelectorAll('.cq-change-label').forEach((field) => {
+          field.hidden = !label;
+          field.textContent = label || '';
+        });
+        const missingBefore = issue.kind === 'add' && fieldIndex === 0 ? '原先无此节点' : '—';
+        const missingAfter = issue.kind === 'delete' ? '删除该节点' : '—';
+        row.querySelector('.cq-before').textContent = current == null || current === '' ? missingBefore : current;
+        row.querySelector('.cq-after').textContent = suggestion == null || suggestion === '' ? missingAfter : suggestion;
+        comparison.append(row);
       });
       const footer = document.createElement('div');
       footer.className = 'cq-issue-action';
