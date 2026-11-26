@@ -108,19 +108,20 @@
   const starterSubscriptions = [
     {
       id: 'sample-tech', name: '合肥先进制造动态', enabled: true, sample: true,
-      dimensions: { city: ['合肥市'] }, levels: [], sentiments: [], category: '4', subtypes: ['4.1', '4.2', '4.4']
+      dimensions: { city: ['合肥市'] }, levels: [], sentiments: [], eventCodes: ['4.1', '4.2', '4.4']
     },
     {
       id: 'sample-business', name: '合肥制造业政策与项目', enabled: true, sample: true,
-      dimensions: { city: ['合肥市'] }, levels: ['行业'], sentiments: [], category: '1', subtypes: ['1.2', '1.3']
+      dimensions: { city: ['合肥市'] }, levels: ['行业'], sentiments: [], eventCodes: ['1.2', '1.3']
     },
     {
       id: 'sample-supply', name: '皖江关键零部件交付', enabled: true, sample: true,
-      dimensions: { company: ['皖江精密制造'] }, levels: [], sentiments: ['反面'], category: '6', subtypes: ['6.3', '6.4']
+      dimensions: { company: ['皖江精密制造'] }, levels: [], sentiments: ['反面'], eventCodes: ['6.3', '6.4']
     }
   ];
-  const storageKey = 'zhiyan-intelligence-feed-v1';
-  const emptyRule = { dimensions: {}, levels: [], sentiments: [], category: '', subtypes: [] };
+  const storageKey = 'zhiyan-intelligence-feed-v2';
+  const legacyStorageKey = 'zhiyan-intelligence-feed-v1';
+  const emptyRule = { dimensions: {}, levels: [], sentiments: [], eventCodes: [] };
   const main = document.querySelector('.main');
   if (!main) return;
 
@@ -163,15 +164,33 @@
 
   function readState() {
     try {
-      const stored = JSON.parse(localStorage.getItem(storageKey));
+      const stored = JSON.parse(localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey));
       if (!stored || !Array.isArray(stored.subscriptions) || !Array.isArray(stored.read)) return null;
       return {
-        subscriptions: stored.subscriptions.filter(isValidSubscription),
+        subscriptions: stored.subscriptions.map(migrateSubscription).filter(isValidSubscription),
         read: stored.read.filter(id => sampleEvents.some(event => event.id === id))
       };
     } catch (error) {
       return null;
     }
+  }
+
+  function orderedEventCodes(selected) {
+    return [...subtypeLabels.keys()].filter(code => selected.has(code));
+  }
+
+  function migrateSubscription(rule) {
+    if (!rule || typeof rule !== 'object') return null;
+    const { category, subtypes, ...current } = rule;
+    if (Array.isArray(current.eventCodes)) {
+      if (!current.eventCodes.every(code => subtypeLabels.has(code))) return null;
+      return { ...current, eventCodes: orderedEventCodes(new Set(current.eventCodes)) };
+    }
+    if (!Array.isArray(subtypes)) return null;
+    if (category === '' && !subtypes.length) return { ...current, eventCodes: [] };
+    const parent = categories.get(category);
+    if (!parent || !subtypes.length || !subtypes.every(code => parent.subtypes.some(subtype => subtype.code === code))) return null;
+    return { ...current, eventCodes: orderedEventCodes(new Set(subtypes)) };
   }
 
   function isValidSubscription(rule) {
@@ -181,10 +200,7 @@
         (Array.isArray(rule.dimensions[key]) && rule.dimensions[key].every(value => typeof value === 'string' && value.trim()))) &&
       Array.isArray(rule.levels) && rule.levels.every(level => levels.includes(level)) &&
       Array.isArray(rule.sentiments) && rule.sentiments.every(sentiment => sentiments.includes(sentiment)) &&
-      Array.isArray(rule.subtypes) && (rule.category === '' ? rule.subtypes.length === 0 :
-        rule.subtypes.length >= 1 && rule.subtypes.length <= 3 &&
-        new Set(rule.subtypes).size === rule.subtypes.length &&
-        rule.subtypes.every(code => categories.get(rule.category)?.subtypes.some(subtype => subtype.code === code)));
+      Array.isArray(rule.eventCodes) && rule.eventCodes.every(code => subtypeLabels.has(code));
   }
 
   function setStatus(message) {
@@ -203,7 +219,7 @@
   }
 
   function matches(event, rule) {
-    return (!rule.category || (event.category === rule.category && event.subtypes.some(code => rule.subtypes.includes(code)))) &&
+    return (!rule.eventCodes.length || event.subtypes.some(code => rule.eventCodes.includes(code))) &&
       (!rule.levels.length || rule.levels.includes(event.level)) &&
       (!rule.sentiments.length || rule.sentiments.includes(event.sentiment)) &&
       Object.keys(dimensions).every(key => {
@@ -389,8 +405,9 @@
       const matched = event ? values.filter(term => (event.tags[key] || []).some(tag => normalize(tag).includes(normalize(term)))) : values;
       if (matched.length) tags.push(label + ' ' + matched.join('、'));
     }
-    const subtypes = event ? rule.subtypes.filter(code => event.subtypes.includes(code)) : rule.subtypes;
-    if (subtypes.length) tags.push(subtypes.map(code => code + ' ' + subtypeLabels.get(code)).join('、'));
+    const eventTypes = event ? rule.eventCodes.filter(code => event.subtypes.includes(code)).map(code => code + ' ' + subtypeLabels.get(code)) :
+      shortEventLabels(rule.eventCodes);
+    if (eventTypes.length) tags.push(...eventTypes);
     if (rule.levels.length) tags.push('影响层级 ' + (event ? event.level : rule.levels.join('、')));
     if (rule.sentiments.length) tags.push('舆情性质 ' + (event ? event.sentiment : rule.sentiments.join('、')));
     return tags;
@@ -422,6 +439,182 @@
     return entries.map(({ code, label }) => `<label class="if-chip"><input type="checkbox" name="${name}" value="${esc(code)}"${checked.includes(code) ? ' checked' : ''}><span>${esc(label)}</span></label>`).join('');
   }
 
+  function shortEventLabels(codes) {
+    const selected = new Set(codes);
+    const labels = catalog.flatMap(category => {
+      const leaves = category.subtypes.filter(({ code }) => selected.has(code));
+      return leaves.length === category.subtypes.length
+        ? [category.code + ' ' + category.label + '（全部）']
+        : leaves.map(({ code, label }) => code + ' ' + label);
+    });
+    return labels.length > 4 ? [...labels.slice(0, 4), '另 ' + (labels.length - 4) + ' 项'] : labels;
+  }
+
+  function eventPickerMarkup() {
+    return `<fieldset class="if-event-field">
+      <legend>事件类型</legend>
+      <button class="if-event-picker-toggle" type="button" aria-expanded="false" aria-controls="ifEventPicker" aria-describedby="ifEventPickerHint">
+        <span data-if-event-value>不限事件类型</span><i aria-hidden="true">⌄</i>
+      </button>
+      <div class="if-event-picker-summary" data-if-event-summary hidden></div>
+      <p class="if-help if-event-picker-hint" id="ifEventPickerHint">可跨类别多选，勾选一级即选中该类全部二级事件。任一所选事件类型命中即可。</p>
+      <div class="if-event-picker" id="ifEventPicker" hidden>
+        <div class="if-event-picker-search"><input type="search" autocomplete="off" spellcheck="false" aria-label="搜索事件类型名称或编码" placeholder="搜索事件类型名称或编码"></div>
+        <div class="if-event-picker-columns">
+          <div role="group" aria-labelledby="ifEventParentsTitle">
+            <div class="if-event-picker-column-title" id="ifEventParentsTitle">一级事件类型</div>
+            <div class="if-event-picker-options" data-if-event-parents></div>
+          </div>
+          <div role="group" aria-labelledby="ifEventChildrenTitle">
+            <div class="if-event-picker-column-title" id="ifEventChildrenTitle">二级事件类型</div>
+            <div class="if-event-picker-options" data-if-event-leaves></div>
+          </div>
+        </div>
+        <div class="if-event-picker-footer">
+          <span data-if-event-count role="status"></span>
+          <div><button class="if-link" type="button" data-if-event-clear>清空</button>
+            <button class="if-button" type="button" data-if-event-cancel>取消</button>
+            <button class="if-button if-primary" type="button" data-if-event-confirm>确定</button></div>
+        </div>
+      </div>
+    </fieldset>`;
+  }
+
+  function eventPickerGroups(query) {
+    if (!query) return catalog;
+    if (categories.has(query)) return [categories.get(query)];
+    if (subtypeLabels.has(query)) {
+      const category = categories.get(query.split('.')[0]);
+      return [{ ...category, subtypes: category.subtypes.filter(({ code }) => code === query) }];
+    }
+    const tokens = query.split(/\s+/);
+    return catalog.flatMap(category => {
+      const parent = normalize(category.code + ' ' + category.label);
+      const subtypes = category.subtypes.filter(({ code, label }) => {
+        const path = parent + ' ' + normalize(code + ' ' + label);
+        return tokens.every(token => path.includes(token));
+      });
+      return subtypes.length ? [{ ...category, subtypes }] : [];
+    });
+  }
+
+  function bindEventPicker(form, initialCodes) {
+    const field = form.querySelector('.if-event-field');
+    const trigger = field.querySelector('.if-event-picker-toggle');
+    const summary = field.querySelector('[data-if-event-summary]');
+    const panel = field.querySelector('.if-event-picker');
+    const search = panel.querySelector('input[type="search"]');
+    const parents = panel.querySelector('[data-if-event-parents]');
+    const leaves = panel.querySelector('[data-if-event-leaves]');
+    const count = panel.querySelector('[data-if-event-count]');
+    const clear = panel.querySelector('[data-if-event-clear]');
+    const confirm = panel.querySelector('[data-if-event-confirm]');
+    let applied = initialCodes;
+    let draft = new Set(applied);
+    let active = applied[0]?.split('.')[0] || catalog[0].code;
+    let visibleGroups = catalog;
+
+    function renderApplied() {
+      trigger.querySelector('[data-if-event-value]').textContent = applied.length ? '已选 ' + applied.length + ' 项二级事件类型' : '不限事件类型';
+      summary.hidden = !applied.length;
+      summary.innerHTML = shortEventLabels(applied).map(label => `<span class="if-badge">${esc(label)}</span>`).join('');
+    }
+
+    function updateSelection() {
+      parents.querySelectorAll('[data-if-parent]').forEach(input => {
+        const all = categories.get(input.dataset.ifParent).subtypes;
+        const selected = all.filter(({ code }) => draft.has(code)).length;
+        input.checked = selected === all.length;
+        input.indeterminate = selected > 0 && selected < all.length;
+      });
+      leaves.querySelectorAll('[data-if-leaf]').forEach(input => { input.checked = draft.has(input.dataset.ifLeaf); });
+      const branches = new Set([...draft].map(code => code.split('.')[0])).size;
+      count.textContent = draft.size ? '已选 ' + draft.size + ' 项，覆盖 ' + branches + ' 类' : '已选 0 项';
+      clear.disabled = draft.size === 0;
+    }
+
+    function renderChildren(group) {
+      parents.querySelectorAll('[data-if-drill]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.ifDrill === group?.code));
+      });
+      leaves.scrollTop = 0;
+      leaves.innerHTML = group ? group.subtypes.map(({ code, label }) => `
+        <label class="if-event-leaf">
+          <input type="checkbox" value="${code}" data-if-leaf="${code}">
+          <span class="if-event-code">${code}</span><span>${esc(label)}</span>
+        </label>`).join('') : '<p class="if-event-picker-empty">暂无可显示的二级事件类型</p>';
+      updateSelection();
+    }
+
+    function renderColumns() {
+      visibleGroups = eventPickerGroups(normalize(search.value));
+      parents.innerHTML = visibleGroups.length ? visibleGroups.map(({ code, label }) => `
+        <div class="if-event-parent">
+          <label><input type="checkbox" value="${code}" data-if-parent="${code}" aria-label="选择 ${code} ${esc(label)} 下的全部二级事件"></label>
+          <button type="button" data-if-drill="${code}" aria-pressed="false">
+            <span class="if-event-code">${code}</span><span>${esc(label)}</span><span class="if-event-next" aria-hidden="true">›</span>
+          </button>
+        </div>`).join('') : '<p class="if-event-picker-empty">没有找到匹配的事件类型</p>';
+      parents.scrollTop = 0;
+      renderChildren(visibleGroups.find(group => group.code === active) || visibleGroups[0]);
+    }
+
+    function closePicker() {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      renderApplied();
+      showFormError('');
+      trigger.focus();
+    }
+
+    trigger.addEventListener('click', () => {
+      if (!panel.hidden) return closePicker();
+      draft = new Set(applied);
+      search.value = '';
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      renderColumns();
+      panel.scrollIntoView({ block: 'nearest' });
+      search.focus({ preventScroll: true });
+    });
+    search.addEventListener('input', renderColumns);
+    parents.addEventListener('click', event => {
+      const button = event.target.closest('[data-if-drill]');
+      if (!button) return;
+      active = button.dataset.ifDrill;
+      renderChildren(visibleGroups.find(group => group.code === active));
+    });
+    panel.addEventListener('change', event => {
+      const input = event.target;
+      const parent = categories.get(input.dataset.ifParent);
+      const codes = parent ? parent.subtypes.map(({ code }) => code) : [input.dataset.ifLeaf];
+      if (!subtypeLabels.has(codes[0])) return;
+      for (const code of codes) {
+        if (input.checked) draft.add(code);
+        else draft.delete(code);
+      }
+      updateSelection();
+    });
+    clear.addEventListener('click', () => { draft.clear(); updateSelection(); });
+    panel.querySelector('[data-if-event-cancel]').addEventListener('click', closePicker);
+    confirm.addEventListener('click', () => {
+      applied = orderedEventCodes(draft);
+      closePicker();
+    });
+    form.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && event.target === search) event.preventDefault();
+      if (event.key !== 'Escape' || panel.hidden) return;
+      event.preventDefault();
+      closePicker();
+    });
+    renderApplied();
+    return {
+      codes: () => applied,
+      needsConfirmation: () => !panel.hidden && (applied.length !== draft.size || !applied.every(code => draft.has(code))),
+      confirm
+    };
+  }
+
   function formDialog(rule) {
     const data = rule || { name: '', ...emptyRule };
     focusBeforeDialog = document.activeElement;
@@ -443,49 +636,24 @@
             <fieldset><legend>影响层级</legend><div class="if-chips">${chips('levels', levels.map(label => ({ code: label, label })), data.levels)}</div></fieldset>
             <fieldset><legend>舆情性质</legend><div class="if-chips">${chips('sentiments', sentiments.map(label => ({ code: label, label })), data.sentiments)}</div></fieldset>
           </div>
-          <fieldset>
-            <legend>事件类型</legend>
-            <label class="if-field"><span>一级事件类型</span>
-              <select name="category" aria-describedby="ifCategoryHint">
-                ${option('', '不限事件类型', data.category)}
-                ${catalog.map(({ code, label }) => option(code, code + ' ' + label, data.category)).join('')}
-              </select>
-            </label>
-            <p class="if-help if-category-hint" id="ifCategoryHint">一级单选。选定一级后，从对应二级类型中选择 1–3 项。</p>
-            <div class="if-subtype-field" hidden>
-              <p class="if-subtype-heading" id="ifSubtypeHeading"><b>二级事件类型</b><span data-if-subtype-count></span></p>
-              <div class="if-chips" role="group" aria-labelledby="ifSubtypeHeading" data-if-subtypes></div>
-            </div>
-          </fieldset>
+          ${eventPickerMarkup()}
           <p class="if-form-error" role="alert" hidden></p>
         </div>
         <footer class="if-dialog-footer"><button class="if-button" type="button" data-if-close>取消</button><button class="if-button if-primary" type="submit">保存订阅</button></footer>
       </form>`;
     const form = dialog.querySelector('form');
-    const category = form.elements.namedItem('category');
-    renderSubtypes(category.value, data.subtypes);
-    form.addEventListener('change', event => {
-      if (event.target === category) renderSubtypes(category.value, []);
-      if (event.target.name === 'subtypes') updateSubtypeLimit();
-      showFormError('');
+    const picker = bindEventPicker(form, data.eventCodes);
+    form.addEventListener('change', () => showFormError(''));
+    form.addEventListener('submit', event => {
+      if (picker.needsConfirmation()) {
+        event.preventDefault();
+        showFormError('请先确认事件类型选择。');
+        picker.confirm.focus();
+        return;
+      }
+      submitRule(event, rule, picker.codes());
     });
-    form.addEventListener('submit', event => submitRule(event, rule));
     dialog.showModal();
-  }
-
-  function renderSubtypes(category, selected) {
-    const field = dialog.querySelector('.if-subtype-field');
-    field.hidden = !category;
-    field.querySelector('[data-if-subtypes]').innerHTML = category ? chips('subtypes',
-      categories.get(category).subtypes.map(({ code, label }) => ({ code, label: code + ' ' + label })), selected) : '';
-    updateSubtypeLimit();
-  }
-
-  function updateSubtypeLimit() {
-    const inputs = [...dialog.querySelectorAll('input[name="subtypes"]')];
-    const count = inputs.filter(input => input.checked).length;
-    inputs.forEach(input => { input.disabled = count >= 3 && !input.checked; });
-    dialog.querySelector('[data-if-subtype-count]').textContent = '已选 ' + count + ' / 3';
   }
 
   function showFormError(message) {
@@ -498,33 +666,30 @@
     return [...new Map(value.split(/[、,，;；\n]+/).map(term => term.trim()).filter(Boolean).map(term => [normalize(term), term])).values()];
   }
 
-  function submitRule(event, original) {
+  function submitRule(event, original, eventCodes) {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = new FormData(form);
     const name = fields.get('name').trim();
-    const category = fields.get('category');
-    const subtypes = fields.getAll('subtypes');
     const selectedLevels = fields.getAll('levels');
     const selectedSentiments = fields.getAll('sentiments');
     const terms = Object.fromEntries(Object.keys(dimensions).map(key => [key, splitTerms(fields.get(key))]));
     const rule = {
       id: original?.id || (window.crypto?.randomUUID?.() || 'subscription-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
       name, enabled: original?.enabled ?? true, sample: false,
-      dimensions: terms, levels: selectedLevels, sentiments: selectedSentiments, category, subtypes
+      dimensions: terms, levels: selectedLevels, sentiments: selectedSentiments, eventCodes
     };
     if (!name) {
       showFormError('请填写订阅名称。');
       form.elements.namedItem('name').focus();
       return;
     }
-    if (!category && !selectedLevels.length && !selectedSentiments.length && !Object.values(terms).some(values => values.length)) {
+    if (!eventCodes.length && !selectedLevels.length && !selectedSentiments.length && !Object.values(terms).some(values => values.length)) {
       showFormError('请至少设置一个订阅条件。');
       return;
     }
     if (!isValidSubscription(rule)) {
-      showFormError('请从所选一级事件下选择 1–3 个二级类型。');
-      dialog.querySelector('[name="subtypes"]')?.focus();
+      showFormError('订阅条件包含无法识别的选项，请检查后重试。');
       return;
     }
     if (!original) Object.assign(view, { tab: 'feed', subscription: rule.id, read: '', search: '', selected: '' });
@@ -625,7 +790,7 @@
     if (focusBeforeDialog?.isConnected) focusBeforeDialog.focus();
   });
   window.addEventListener('storage', event => {
-    if (event.key !== storageKey && event.key !== null) return;
+    if (event.key !== storageKey && event.key !== legacyStorageKey && event.key !== null) return;
     state = readState() || { subscriptions: starterSubscriptions, read: [] };
     render();
   });
