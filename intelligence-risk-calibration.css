@@ -1,0 +1,79 @@
+.irc-card {
+  --irc-line: #dce6f3;
+  --irc-blue: #1d62cb;
+  background: #fff;
+  border: 1px solid var(--irc-line);
+  border-radius: 12px;
+  color: #1c365b;
+  padding: 20px;
+}
+
+.irc-card [hidden] { display: none !important; }
+.irc-header, .irc-actions { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.irc-header h2 { margin: 0 0 5px; font-size: 17px; }
+.irc-header p, .irc-method p { margin: 0; color: #536780; font-size: 13px; line-height: 1.6; }
+.irc-header > div { flex: 1 1 320px; }
+.irc-fields, .irc-sample { display: grid; gap: 10px; margin-top: 15px; }
+.irc-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.irc-sample { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.irc-card label { display: grid; gap: 5px; min-width: 0; font-size: 13px; font-weight: 650; }
+.irc-card small { font-weight: 400; color: #62748a; }
+.irc-wide { grid-column: 1 / -1; }
+.irc-card :is(select, input, textarea) {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d3dfef;
+  border-radius: 7px;
+  background: #fbfdff;
+  color: #24394f;
+  font: inherit;
+  font-weight: 400;
+  padding: 8px 9px;
+}
+
+.irc-card textarea { resize: vertical; line-height: 1.6; }
+.irc-current { margin: 8px 0 0; color: #315c8e; font-size: 12px; overflow-wrap: anywhere; }
+.irc-actions { justify-content: flex-start; margin-top: 12px; gap: 8px; }
+.irc-button {
+  padding: 7px 12px;
+  background: #fff;
+  color: var(--irc-blue);
+  border: 1px solid #cbdcf4;
+  border-radius: 7px;
+  min-height: 35px;
+  font: inherit;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.irc-primary { border-color: var(--irc-blue); background: var(--irc-blue); color: #fff; }
+.irc-button:hover { background: #edf4ff; }
+.irc-primary:hover { background: #164fa6; }
+.irc-button:disabled { cursor: default; color: #7c8da3; background: #f3f6fa; }
+.irc-card :is(select, input, textarea, button, a, summary):focus-visible { outline: 2px solid #246dde; outline-offset: 2px; }
+.irc-status { margin: 10px 0 0; color: #315b8d; font-size: 13px; }
+.irc-status.irc-error { color: #aa3227; }
+.irc-result {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 12px 0 0;
+  gap: 8px;
+}
+
+.irc-result > div { padding: 8px 10px; background: #f1f6fd; border: 1px solid var(--irc-line); border-radius: 7px; }
+.irc-result dt { font-size: 12px; color: #536c8c; }
+.irc-result dd { margin: 2px 0 0; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.irc-method { margin-top: 12px; font-size: 13px; }
+.irc-method summary { color: var(--irc-blue); cursor: pointer; }
+.irc-method p { margin-top: 7px; }
+
+@media (max-width: 760px) {
+  .irc-card { padding: 13px; }
+  .irc-fields { grid-template-columns: minmax(0, 1fr); }
+  .irc-result { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+  .irc-sample { grid-template-columns: minmax(0, 1fr); }
+}
