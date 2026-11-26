@@ -198,21 +198,21 @@
     item.className = 'report-notice__item' + (message.read ? '' : ' report-notice__item--unread');
     const link = document.createElement('a');
     link.dataset.noticeId = message.id;
+    if (!message.read) link.setAttribute('aria-description', '未读');
     const standalone = safeRadarHref(message.href);
     link.href = standalone || hashPrefix + encodeURIComponent(message.id);
     if (standalone) {
       link.target = '_blank';
       link.rel = 'noopener';
     }
-    const sampleBadge = message.sample ? '<em class="report-notice__sample">样例</em>' : '';
-    link.innerHTML = `<div class="report-notice__meta"><div class="report-notice__tags"><b></b>${sampleBadge}</div><time></time></div><strong></strong><p></p><small></small>`;
+    link.innerHTML = '<div class="report-notice__meta"><b></b><time></time></div><strong></strong><p></p><small></small>';
     link.querySelector('b').textContent = review?.library || label;
     const date = new Date(message.createdAt);
     link.querySelector('time').dateTime = date.toISOString();
     link.querySelector('time').textContent = messageTime.format(date);
-    link.querySelector('strong').textContent = (message.read ? '' : '未读 · ') + (review?.title || title);
+    link.querySelector('strong').textContent = review?.title || title;
     link.querySelector('p').textContent = message.subject;
-    link.querySelector('small').textContent = review ? '查看数据' : message.sample ? '查看样例报告' : '查看报告';
+    link.querySelector('small').textContent = review ? '查看数据' : '查看报告';
     item.appendChild(link);
     return item;
   }
@@ -232,7 +232,7 @@
         <header><h2 id="reportNoticeTitle">消息通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
         <div class="report-notice__filters" role="group" aria-label="通知筛选">
           <button type="button" data-notice-filter="all" aria-pressed="true">全部消息</button>
-          <button type="button" data-notice-filter="unread" aria-pressed="false">未读</button>
+          <button type="button" data-notice-filter="unread" aria-pressed="false" aria-label="仅看未读消息"><i aria-hidden="true"></i><b aria-hidden="true">0</b></button>
         </div>
         <ul class="report-notice__list"></ul>
         <p class="report-notice__empty" hidden></p>
@@ -245,23 +245,27 @@
     const empty = root.querySelector('.report-notice__empty');
     const filters = root.querySelector('.report-notice__filters');
     const unreadFilter = filters.querySelector('[data-notice-filter="unread"]');
+    const filterCount = unreadFilter.querySelector('b');
     const readAll = root.querySelector('[data-notice-read-all]');
     let filter = 'all';
 
     update = () => {
       const all = messages();
       const unread = all.filter(message => !message.read);
+      const count = unread.length > 99 ? '99+' : String(unread.length);
       badge.hidden = !unread.length;
-      badge.textContent = unread.length > 99 ? '99+' : String(unread.length);
+      badge.textContent = count;
       trigger.setAttribute('aria-label', unread.length ? `消息通知，${unread.length} 条未读` : '消息通知');
       if (panel.hidden) return;
       readAll.disabled = !unread.length;
-      unreadFilter.textContent = unread.length ? `未读（${unread.length}）` : '未读';
+      unreadFilter.setAttribute('aria-label', `仅看未读消息，${unread.length} 条`);
+      unreadFilter.classList.toggle('has-unread', Boolean(unread.length));
+      filterCount.textContent = count;
       const items = filter === 'unread' ? unread : all;
       const focusId = document.activeElement?.dataset.noticeId;
       list.replaceChildren(...items.map(itemMarkup));
       empty.hidden = !!items.length;
-      empty.textContent = filter === 'unread' ? '暂无未读消息' : '报告完成和数据审核的消息会显示在这里。';
+      empty.textContent = filter === 'unread' ? '暂无符合筛选的消息' : '报告完成和数据审核的消息会显示在这里。';
       if (focusId) Array.from(list.querySelectorAll('a')).find(link => link.dataset.noticeId === focusId)?.focus();
     };
 

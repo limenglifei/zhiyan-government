@@ -64,7 +64,7 @@
   root.setAttribute('aria-labelledby', 'irTitle');
   root.innerHTML = `
     <header class="ir-heading">
-      <div><button class="ir-link ir-back" type="button" data-ir-action="back">‹ 返回情报订阅</button>
+      <div><button class="ir-link ir-back" type="button" data-ir-action="back">‹ 返回产业情报中心</button>
         <h1 id="irTitle">产业节点风险传导与预警</h1><p>把政策与经营波动映射到产业节点，查看逐级传导、供需缺口与预警。</p></div>
       <span class="ir-model-tag">示例产业链 · 场景估算</span>
     </header>
