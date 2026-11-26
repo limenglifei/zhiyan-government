@@ -2,6 +2,8 @@
   'use strict';
 
   const stages = { up: '上游', mid: '中游', down: '下游', service: '配套服务' };
+  const models = ['deepseek-v4-flash', 'deepseek-v4-pro', 'spark-x2.6'];
+  const defaultModel = 'deepseek-v4-pro';
   const storageKey = 'zhiyan-government-quality-graphs-v1';
   const pdfBase = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/';
   const ocrBase = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/';
@@ -15,6 +17,7 @@
   const trimDiagramText = (name) => name.trim().replace(/(?<=\p{Script=Han})\s+(?=\p{Script=Han})/gu, '');
   const nodeKey = (node) => `${nodeStage(node)}:${canonical(node.name)}`;
   const attachmentType = (file) => /\.pdf$/i.test(file.name) ? 'pdf' : /\.(png|jpe?g|webp)$/i.test(file.name) ? 'image' : '';
+  const emptyReferences = () => ({ up: [], mid: [], down: [], service: [] });
 
   function reviewGraph(nodes, references, evidence, linkedCompanies) {
     const issues = [];
@@ -75,7 +78,7 @@
   }
 
   function suggestReferenceNodes(lines) {
-    const result = { up: [], mid: [], down: [], service: [] };
+    const result = emptyReferences();
     const headers = Object.keys(stages).map((key) => {
       const heading = lines.find((line) => canonical(line.text) === stages[key]);
       return heading && { ...heading, key };
@@ -87,11 +90,11 @@
     const ordered = headers.sort((a, b) => a[axis] - b[axis]);
     lines.forEach((line) => {
       const name = trimDiagramText(line.text);
-      if (name.length < 2 || name.length > 30 || !/[\p{L}]/u.test(name) || !isNodeName(name)) return;
+      if (name.length < 2 || name.length > 30 || !/[\p{L}]/u.test(name) || !isNodeName(name) || !isEditableName(name)) return;
       if (line.confidence < 55 || /[|\[\]]|图表|^图\s*\d|产业链|资料来源|证券研究所|^来源|^[a-z\s]{1,3}$/.test(name) || Object.values(stages).includes(canonical(name))) return;
       if (axis === 'x' && line.y <= Math.min(...headers.map((item) => item.y))) return;
       const header = ordered.reduce((nearest, item) => Math.abs(item[axis] - line[axis]) < Math.abs(nearest[axis] - line[axis]) ? item : nearest);
-      if (!result[header.key].includes(name)) result[header.key].push(name);
+      if (!result[header.key].some((item) => canonical(item) === canonical(name))) result[header.key].push(name);
     });
     return result;
   }
@@ -244,7 +247,8 @@
     let recognitionRun = 0;
     let reading = false;
     let referencePage;
-    let referenceConfirmed = false;
+    let recognitionAttempted = false;
+    let references = emptyReferences();
     let currentReport;
     let restoreFocus;
 
@@ -257,7 +261,14 @@
           <button type="button" class="cq-close" aria-label="关闭 AI 质检">×</button>
         </header>
         <div class="cq-body">
-          <aside class="cq-input" aria-label="质检参照">
+          <aside class="cq-input" aria-label="质检设置">
+            <div class="cq-settings">
+              <label class="cq-model"><span>AI 模型</span><select id="chainQualityModel" required>
+                ${models.map((model) => `<option value="${model}"${model === defaultModel ? ' selected' : ''}>${model}</option>`).join('')}
+              </select></label>
+              <label class="cq-web"><span>联网搜索</span><input type="checkbox" role="switch" id="chainQualityWeb"></label>
+            </div>
+            <p class="cq-note">模型和联网搜索为原型配置，当前使用本地规则与图谱识别质检。</p>
             <h3>标准产业链图谱 <small>选填</small></h3>
             <p>支持 PNG、JPG、WebP 和 PDF，单个文件不超过 20 MB。</p>
             <label class="cq-upload"><span>上传参照图谱</span><input type="file" id="chainQualityFile" accept=".png,.jpg,.jpeg,.webp,.pdf"></label>
@@ -269,16 +280,10 @@
             </div>
             <p class="cq-feedback" id="chainQualityReadStatus" role="status"></p>
             <details class="cq-raw" id="chainQualityRaw" hidden><summary>查看识别原文</summary><pre id="chainQualityRawText"></pre></details>
-            <details class="cq-reference" id="chainQualityReference">
-              <summary>录入或核对参照节点</summary>
-              <p>请核对节点名称与所属环节，多个节点用顿号或换行分隔。</p>
-              ${Object.entries(stages).map(([key, name]) => `<label>${name}<textarea data-cq-stage="${key}" rows="2" maxlength="1500"></textarea></label>`).join('')}
-              <label class="cq-confirm"><input type="checkbox" id="chainQualityConfirm">我已核对参照节点与环节</label>
-            </details>
-            <p class="cq-note">当前质检使用结构规则和参照节点比对。识别组件首次使用需联网，附件在浏览器内处理。</p>
+            <p class="cq-note">附件在浏览器内识别并自动用于图谱比对。</p>
           </aside>
           <section class="cq-results" aria-labelledby="chainQualityResultsTitle">
-            <div class="cq-results-head"><div><h3 id="chainQualityResultsTitle">质检建议</h3><p id="chainQualitySummary" role="status"></p></div><button class="primary" type="button" id="chainQualityRun">开始质检</button></div>
+            <div class="cq-results-head"><div><h3 id="chainQualityResultsTitle">质检建议</h3><p id="chainQualitySummary" role="status"></p><p class="cq-run-config" id="chainQualityRunConfig" hidden></p></div><button class="primary" type="button" id="chainQualityRun">开始质检</button></div>
             <div class="cq-issues" id="chainQualityIssues"></div>
           </section>
         </div>
@@ -289,26 +294,19 @@
     const input = byId('chainQualityFile');
     const readButton = byId('chainQualityRead');
     const readStatus = byId('chainQualityReadStatus');
-    const confirm = byId('chainQualityConfirm');
+    const model = byId('chainQualityModel');
+    const web = byId('chainQualityWeb');
     const runButton = byId('chainQualityRun');
     const summary = byId('chainQualitySummary');
+    const runConfig = byId('chainQualityRunConfig');
     const issuesMount = byId('chainQualityIssues');
-    const fields = [...dialog.querySelectorAll('[data-cq-stage]')];
-
-    function getReferences() {
-      return Object.fromEntries(fields.map((field) => {
-        const uniqueNames = new Map();
-        field.value.split(/[、,，;；\n]/).map((name) => name.trim()).filter(isNodeName)
-          .forEach((name) => uniqueNames.set(canonical(name), name));
-        return [field.dataset.cqStage, [...uniqueNames.values()]];
-      }));
-    }
 
     function invalidateReport(message) {
       if (!currentReport) return;
       currentReport = null;
       issuesMount.replaceChildren();
       summary.textContent = message || '质检条件已变更，请重新运行。';
+      runConfig.hidden = true;
       runButton.textContent = '开始质检';
     }
 
@@ -316,13 +314,13 @@
       recognitionRun++;
       reading = false;
       referencePage = null;
-      referenceConfirmed = false;
-      confirm.checked = false;
-      fields.forEach((field) => { field.value = ''; });
+      recognitionAttempted = false;
+      references = emptyReferences();
       byId('chainQualityRaw').hidden = true;
       byId('chainQualityRawText').textContent = '';
       readStatus.textContent = '';
       readButton.disabled = false;
+      runButton.disabled = false;
     }
 
     function removeAttachment() {
@@ -342,31 +340,22 @@
       currentReport = null;
       updatedByQuality = false;
       removeAttachment();
+      model.value = defaultModel;
+      web.checked = false;
       summary.textContent = '检查环节覆盖、重复节点和拆解粒度。';
+      runConfig.hidden = true;
       issuesMount.replaceChildren();
       runButton.textContent = '开始质检';
-      byId('chainQualityReference').open = false;
     }
 
     function updateResults() {
-      const references = getReferences();
-      const referenceNames = Object.values(references).flat();
-      const referenceCount = referenceNames.length;
-      if (referenceNames.some((name) => !isEditableName(name))) {
-        summary.textContent = '参照节点名称须在 40 字以内，且不可包含尖括号或控制字符。';
-        byId('chainQualityReference').open = true;
-        return;
-      }
-      if (referenceCount && !referenceConfirmed) {
-        summary.textContent = '请先核对并确认参照节点，或清空参照后仅进行结构质检。';
-        byId('chainQualityReference').open = true;
-        confirm.focus();
-        return;
-      }
-      const evidence = attachment ? `参照图谱 · ${attachment.name}${referencePage ? ` · 第 ${referencePage} 页` : ''}` : '手工录入的参照节点';
+      const referenceCount = Object.values(references).flat().length;
+      const evidence = attachment ? `参照图谱 · ${attachment.name}${referencePage ? ` · 第 ${referencePage} 页` : ''}` : '';
       const results = reviewGraph(graphBuilderNodes, references, evidence, activeRow?.linkedCompanies || []);
-      currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results };
-      summary.textContent = `已检查 ${graphBuilderNodes.length} 个画布节点${referenceCount ? `，对照 ${referenceCount} 个参照节点` : '，仅进行结构质检'}。发现 ${results.length} 项建议。`;
+      currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results, model: model.value, webEnabled: web.checked };
+      summary.textContent = `已检查 ${graphBuilderNodes.length} 个画布节点${referenceCount ? `，自动比对 ${referenceCount} 个图谱节点` : '，仅进行结构质检'}。发现 ${results.length} 项建议。`;
+      runConfig.textContent = `AI 模型 ${currentReport.model} · 联网搜索${currentReport.webEnabled ? '开启' : '关闭'}`;
+      runConfig.hidden = false;
       runButton.textContent = '重新质检';
       issuesMount.replaceChildren();
       if (!results.length) {
@@ -514,22 +503,17 @@
     dialog.querySelectorAll('.cq-close').forEach((button) => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('close', () => restoreFocus?.focus());
     dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
-    runButton.addEventListener('click', updateResults);
+    runButton.addEventListener('click', async () => {
+      if (attachment && !recognitionAttempted && !await recognizeAttachment()) return;
+      updateResults();
+    });
     issuesMount.addEventListener('click', (event) => {
       const button = event.target.closest('[data-cq-issue]');
       const issue = button && currentReport?.results[Number(button.dataset.cqIssue)];
       if (issue) applyIssue(issue);
     });
 
-    fields.forEach((field) => field.addEventListener('input', () => {
-      referenceConfirmed = false;
-      confirm.checked = false;
-      invalidateReport();
-    }));
-    confirm.addEventListener('change', () => {
-      referenceConfirmed = confirm.checked;
-      invalidateReport();
-    });
+    [model, web].forEach((control) => control.addEventListener('change', () => invalidateReport()));
     byId('chainQualityRemove').addEventListener('click', removeAttachment);
     byId('chainQualityPage').addEventListener('change', () => {
       clearRecognition();
@@ -559,8 +543,8 @@
       byId('chainQualityPage').value = '1';
     });
 
-    readButton.addEventListener('click', async () => {
-      if (!attachment || reading) return;
+    async function recognizeAttachment() {
+      if (!attachment || reading) return false;
       const file = attachment;
       const type = attachmentType(file);
       const page = byId('chainQualityPage');
@@ -568,34 +552,39 @@
       if (type === 'pdf' && (!Number.isInteger(pageNumber) || pageNumber < 1)) {
         readStatus.textContent = '请输入从 1 开始的 PDF 页码。';
         page.focus();
-        return;
+        return false;
       }
       clearRecognition();
       invalidateReport();
       const run = recognitionRun;
       reading = true;
       readButton.disabled = true;
+      runButton.disabled = true;
       readStatus.textContent = '正在读取附件并加载识别组件…';
       const onProgress = (progress) => { if (run === recognitionRun) readStatus.textContent = `正在识别图谱文字 · ${progress}%`; };
       try {
         const lines = type === 'pdf' ? await readPdf(file, pageNumber, onProgress) : await readImage(await imageToCanvas(file), onProgress);
-        if (run !== recognitionRun) return;
-        const suggestions = suggestReferenceNodes(lines);
+        if (run !== recognitionRun) return false;
+        references = suggestReferenceNodes(lines);
         referencePage = pageNumber;
         byId('chainQualityRaw').hidden = !lines.length;
         byId('chainQualityRawText').textContent = lines.map((line) => line.text).join('\n');
-        fields.forEach((field) => { field.value = suggestions[field.dataset.cqStage].join('、'); });
-        readStatus.textContent = lines.length ? '识别完成。请对照原图核对、修正节点和环节。' : '未识别到文字，可打开原图后手工录入参照节点。';
+        const count = Object.values(references).flat().length;
+        readStatus.textContent = count ? `已识别 ${count} 个图谱节点，将自动参与质检比对。` :
+          (lines.length ? '已提取文字，暂无法识别节点所属环节，将进行结构质检。' : '未识别到图谱文字，将进行结构质检。');
       } catch (error) {
-        if (run === recognitionRun) readStatus.textContent = `${error.message.startsWith('PDF 共 ') ? error.message : '暂未识别出图谱文字'}。可打开附件并手工录入参照节点。`;
+        if (run === recognitionRun) readStatus.textContent = `${error.message.startsWith('PDF 共 ') ? error.message : '暂未识别出图谱文字'}。本次将进行结构质检。`;
       } finally {
         if (run === recognitionRun) {
           reading = false;
+          recognitionAttempted = true;
           readButton.disabled = false;
-          byId('chainQualityReference').open = true;
+          runButton.disabled = false;
         }
       }
-    });
+      return run === recognitionRun;
+    }
+    readButton.addEventListener('click', recognizeAttachment);
     resetSession();
   }
 
