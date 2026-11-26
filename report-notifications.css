@@ -115,7 +115,8 @@
 .report-notice__list {
   margin: 0;
   padding: 0;
-  max-height: min(448px, calc(100vh - 160px));
+  max-height: min(560px, calc(100vh - 160px));
+  border-radius: 0 0 12px 12px;
   overflow: auto;
   overscroll-behavior: contain;
   list-style: none;
@@ -149,12 +150,20 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  margin-top: 6px;
+  margin-bottom: 5px;
   font-size: 11px;
+}
+
+.report-notice__meta b {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e8effa;
+  color: #305986;
 }
 
 .report-notice__meta time {
   color: #5d7187;
+  text-align: end;
 }
 
 .report-notice__item strong {

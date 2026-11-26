@@ -5,12 +5,12 @@
   const sampleReadPrefix = 'zhiyan-government.report-notice-sample-read.v1.';
   const hashPrefix = '#report-notice=';
   const types = {
-    due: { label: '企业尽调', ending: '尽调报告已生成' },
-    radar: { label: '招商雷达', ending: '强链补链分析报告已生成' },
-    policy: { label: '政策匹配', ending: '政策匹配报告已生成' },
-    support: { label: '政策扶持', ending: '扶持名单已生成' },
-    chain: { label: '企业上链', ending: '的企业上链已生成' },
-    review: { label: '数据审核' }
+    due: { label: '企业尽调', title: '尽调报告已生成' },
+    radar: { label: '招商雷达', title: '强链补链分析报告已生成' },
+    policy: { label: '政策匹配', title: '政策匹配报告已生成' },
+    support: { label: '政策扶持', title: '扶持名单已生成' },
+    chain: { label: '企业上链', title: '企业上链已生成', action: '查看任务' },
+    review: { label: '数据审核', action: '查看数据' }
   };
   const reviewTargets = { company: '企业库', policy: '政策库' };
   const reviewStatuses = new Set(['approved', 'rejected']);
@@ -202,7 +202,7 @@
   }
 
   function itemMarkup(message) {
-    const { label, ending } = types[message.kind];
+    const { label, title, action = '查看报告' } = types[message.kind];
     const review = message.kind === 'review' ? message.review : null;
     const item = document.createElement('li');
     item.className = 'report-notice__item' + (message.read ? '' : ' report-notice__item--unread');
@@ -215,15 +215,12 @@
       link.target = '_blank';
       link.rel = 'noopener';
     }
-    link.innerHTML = '<strong></strong><p hidden></p><div class="report-notice__meta"><time></time><small>查看</small></div>';
+    link.innerHTML = '<div class="report-notice__meta"><b></b><time></time></div><strong></strong><p></p><small></small>';
     const node = message.kind === 'radar' ? radarNode(message) : '';
-    const subject = message.subject + (node ? `-${node}` : '');
-    link.querySelector('strong').textContent = review ? `【${review.library}】${review.title}` : `【${label}】你的${subject}${ending}`;
-    if (review) {
-      const body = link.querySelector('p');
-      body.hidden = false;
-      body.textContent = message.subject;
-    }
+    link.querySelector('b').textContent = review?.library || label;
+    link.querySelector('strong').textContent = review?.title || title;
+    link.querySelector('p').textContent = message.subject + (node ? `-${node}` : '');
+    link.querySelector('small').textContent = action;
     const date = new Date(message.createdAt);
     link.querySelector('time').dateTime = date.toISOString();
     link.querySelector('time').textContent = messageTime.format(date);
