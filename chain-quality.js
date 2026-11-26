@@ -2,13 +2,18 @@
   'use strict';
 
   const stages = { up: '上游', mid: '中游', down: '下游', service: '配套服务' };
+  const dimensions = [
+    ['add', '新增子节点'], ['delete', '删除子节点'], ['revise', '修正子节点属性'],
+    ['advantage', '优势环节描述修正'], ['weak', '薄弱环节描述修正'], ['enterprise', '链主及重点企业修正'],
+    ['structure', '产业链结构描述修正'], ['source', '数据来源依据修正']
+  ];
   const models = ['deepseek-v4-flash', 'deepseek-v4-pro', 'spark-x2.6'];
   const defaultModel = 'deepseek-v4-pro';
   const storageKey = 'zhiyan-government-quality-graphs-v1';
   const pdfBase = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/';
   const ocrBase = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/';
   const maxFileSize = 20 * 1024 * 1024;
-  const savedFields = ['title', 'sub', 'nodes', 'weak', 'advantage', 'updatedAt', 'description', 'regionScope', 'structure', 'graphNodes', 'networkSupplement', 'graphSourceNote'];
+  const savedFields = ['title', 'sub', 'nodes', 'weak', 'advantage', 'advantageSegments', 'advantageLinks', 'lead', 'linkedCompanies', 'updatedAt', 'description', 'regionScope', 'structure', 'graphNodes', 'networkSupplement', 'graphSourceNote', 'graphSources'];
   const byId = (id) => document.getElementById(id);
   const canonical = (name) => String(name || '').normalize('NFKC').toLowerCase().replace(/[\s·,，。]+/g, '');
   const nodeStage = (node) => (node.nodeType || node.type) === '配套服务' ? 'service' : node.stage;
@@ -18,17 +23,42 @@
   const nodeKey = (node) => `${nodeStage(node)}:${canonical(node.name)}`;
   const attachmentType = (file) => /\.pdf$/i.test(file.name) ? 'pdf' : /\.(png|jpe?g|webp)$/i.test(file.name) ? 'image' : '';
   const emptyReferences = () => ({ up: [], mid: [], down: [], service: [] });
+  const parentLabel = (stage) => stage === 'service' ? '下游 · 配套服务' : (Object.hasOwn(stages, stage) ? stages[stage] : '未指定环节');
+  const nodeType = (node) => node.nodeType || node.type || '一般节点';
+  const nodeStrength = (node) => node.strength || '普通';
 
-  function reviewGraph(nodes, references, evidence, linkedCompanies) {
+  function nodeChanges(current, proposed) {
+    return [
+      ['子节点名称', current?.name, proposed.name],
+      ['节点类型', current && nodeType(current), proposed.nodeType],
+      ['节点强弱', current && nodeStrength(current), proposed.strength]
+    ].map(([label, currentValue, suggestion]) => ({ label, current: currentValue, suggestion }));
+  }
+
+  function addition(stage, name, basis, attributes) {
+    const type = stage === 'service' ? '配套服务' : attributes?.nodeType || '一般节点';
+    const strength = attributes?.strength || '普通';
+    return {
+      kind: 'add', action: 'add', stage, name, nodeType: type, strength, basis,
+      title: name ? `新增建议 · ${name}` : `补充${parentLabel(stage)}节点`,
+      detail: name ? '参照图谱列出了该节点。确认适用后可加入当前骨架，分类和强弱可在画布内调整。' :
+        '当前骨架缺少这一环节的有效节点，可按产业范围在画布内补录。',
+      label: name ? '加入画布' : '进入新增',
+      changes: [...nodeChanges(null, { name: name || '在画布填写', nodeType: type, strength }),
+        { label: '挂靠父级', suggestion: parentLabel(stage) }]
+    };
+  }
+
+  function reviewGraph(nodes, references, annotations, evidence, linkedCompanies) {
     const issues = [];
     const retained = new Map();
     const contains = (name, stage) => nodes.some((node) => nodeKey(node) === `${stage}:${canonical(name)}`);
-    const hasLinks = (name) => linkedCompanies.some((company) => company.node === name);
+    const hasLinks = (name) => linkedCompanies.some((company) => canonical(company?.node) === canonical(name));
 
     Object.keys(stages).forEach((stage) => {
       if (stage === 'service' || nodes.some((node) => nodeStage(node) === stage && isNodeName(node.name))) return;
       if (references[stage].length) return;
-      issues.push({ action: 'add', stage, title: `补充${stages[stage]}节点`, detail: '骨架中缺少这个环节的实际节点。请根据产业范围补录。', basis: '骨架环节覆盖', label: '进入新增' });
+      issues.push(addition(stage, null, '骨架环节覆盖'));
     });
 
     nodes.forEach((node, index) => {
@@ -36,24 +66,46 @@
       const name = node.name;
       const key = nodeKey(node);
       const first = retained.get(key);
-      if (!isNodeName(name) || !stages[stage]) {
-        issues.push({ action: 'review', index, stage, title: `核对「${name || '未命名节点'}」`, detail: '节点名称为空、仍为占位名称或没有有效环节。', basis: '节点字段检查', label: '定位节点' });
+      if (!isNodeName(name) || !isEditableName(name) || !Object.hasOwn(stages, stage)) {
+        const proposed = { name: '核实并填写规范名称', nodeType: nodeType(node), strength: nodeStrength(node) };
+        issues.push({ kind: 'revise', action: 'edit', index, stage, title: `核对「${name || '未命名节点'}」`,
+          detail: '节点名称或所属环节需要补充，可在画布中修正属性。', basis: '节点字段检查', label: '编辑节点', changes: nodeChanges(node, proposed) });
         return;
       }
       if (first) {
-        const sameType = (first.nodeType || first.type) === (node.nodeType || node.type);
-        const sameStrength = first.strength === node.strength;
+        const sameType = nodeType(first) === nodeType(node);
+        const sameStrength = nodeStrength(first) === nodeStrength(node);
         const removable = sameType && sameStrength && (first.name === name || !hasLinks(name));
-        issues.push({ action: removable ? 'delete' : 'review', index, stage, title: `删除建议 · ${name}`, detail: removable ? `同一环节已有「${first.name}」，可移除重复项。` : '同名节点的类型、强弱或关联企业有所不同，需核对后再处理。', basis: '同环节同名检查', label: removable ? '移除重复项' : '定位节点' });
+        issues.push({ kind: 'delete', action: removable ? 'delete' : 'review', index, stage, title: `删除建议 · ${name}`,
+          detail: removable ? `同一环节已有「${first.name}」，可移除重复项。` : '同名节点的类型、强弱或关联企业有所不同，需核对后再处理。',
+          basis: '同环节同名检查', label: removable ? '移除重复项' : '定位节点',
+          changes: [{ label: '子节点名称', current: name, suggestion: removable ? '删除重复子节点' : '核实后决定是否删除' }] });
         return;
       }
       retained.set(key, node);
 
+      const matchingName = references[stage].find((value) => canonical(value) === canonical(name));
+      const attributes = annotations.get(key);
+      const proposed = { name: matchingName || name, nodeType: attributes?.nodeType || nodeType(node), strength: attributes?.strength || nodeStrength(node) };
+      const nameChanged = proposed.name !== name;
+      const attributesChanged = proposed.nodeType !== nodeType(node) || proposed.strength !== nodeStrength(node);
+      if (nameChanged || attributesChanged) {
+        const linked = nameChanged && hasLinks(name);
+        issues.push({ kind: 'revise', action: linked ? 'review' : 'correct', index, stage, proposed, basis: evidence,
+          title: `属性修正建议 · ${name}`, detail: linked ? '规范名称有差异，请一并核对企业挂靠。' :
+            '对照同一环节的图谱节点，可统一名称或采用图谱中明确标注的类型和强弱。',
+          label: linked ? '定位节点' : (attributesChanged ? '应用属性修正' : '应用名称修正'), changes: nodeChanges(node, proposed) });
+        return;
+      }
       const parts = [...new Set(name.split(/[、/／]|与|及|和/).map((part) => part.trim()).filter(Boolean))];
       if (parts.length < 2 || parts.length > 5 || parts.some((part) => part.length < 2 || !isNodeName(part) || !isEditableName(part))) return;
       const confirmedParts = parts.every((part) => references[stage].some((value) => canonical(value) === canonical(part)));
       const linked = hasLinks(name);
-      issues.push({ action: linked ? 'review' : 'split', index, stage, parts, title: `拆解建议 · ${name}`, detail: `可拆为「${parts.join('」「')}」。${linked ? '当前节点有关联企业，请先核对企业挂靠。' : '拆解后沿用原环节，已有同名节点会保留。'}`, basis: confirmedParts ? evidence : '节点名称粒度检查', label: linked ? '定位节点' : '拆解为独立节点' });
+      const splitProposal = { name: parts.join('、'), nodeType: nodeType(node), strength: nodeStrength(node) };
+      issues.push({ kind: 'revise', action: linked ? 'review' : 'split', index, stage, parts, title: `拆解建议 · ${name}`,
+        detail: linked ? '当前节点有关联企业，拆解前请核对企业挂靠。' : '拆解后沿用原环节和节点属性，已有同名节点会保留。',
+        basis: confirmedParts ? evidence : '节点名称粒度检查', label: linked ? '定位节点' : '拆解为独立节点',
+        changes: nodeChanges(node, splitProposal) });
     });
 
     Object.entries(references).forEach(([stage, names]) => {
@@ -61,10 +113,14 @@
         if (contains(name, stage)) return;
         const existing = nodes.findIndex((node) => canonical(node.name) === canonical(name));
         if (existing >= 0) {
-          issues.push({ action: 'review', index: existing, stage, title: `环节差异 · ${name}`, detail: `参照归属${stages[stage]}，当前归属${stages[nodeStage(nodes[existing])] || '未指定环节'}，请核对产业划分口径。`, basis: evidence, label: '定位节点' });
+          const node = nodes[existing];
+          const proposed = { name, nodeType: nodeType(node), strength: nodeStrength(node) };
+          issues.push({ kind: 'revise', action: 'edit', index: existing, stage, title: `环节差异 · ${name}`,
+            detail: '参照与当前骨架的挂靠环节不同，可核对产业划分后编辑节点。', basis: evidence, label: '编辑节点',
+            changes: [...nodeChanges(node, proposed), { label: '挂靠父级', current: parentLabel(nodeStage(node)), suggestion: parentLabel(stage) }] });
           return;
         }
-        issues.push({ action: 'add', stage, name, title: `新增建议 · ${name}`, detail: `参照在${stages[stage]}列出了该节点，当前骨架尚无同名节点。请核实是否适用于本产业链。`, basis: evidence, label: '加入画布' });
+        issues.push(addition(stage, name, evidence, annotations.get(`${stage}:${canonical(name)}`)));
       });
     });
 
@@ -77,7 +133,7 @@
       .map(({ text, bbox, confidence }) => ({ text: text.trim(), confidence, x: (bbox.x0 + bbox.x1) / 2, y: (bbox.y0 + bbox.y1) / 2 }));
   }
 
-  function suggestReferenceNodes(lines) {
+  function suggestReferenceNodes(lines, annotations) {
     const result = emptyReferences();
     const headers = Object.keys(stages).map((key) => {
       const heading = lines.find((line) => canonical(line.text) === stages[key]);
@@ -89,12 +145,19 @@
     if (spread(axis) < 30) return result;
     const ordered = headers.sort((a, b) => a[axis] - b[axis]);
     lines.forEach((line) => {
-      const name = trimDiagramText(line.text);
+      const text = trimDiagramText(line.text);
+      const attributeLabel = text.match(/[（(](?:(核心节点|一般节点|配套服务)(?:[、，,·/]\s*(强|弱|普通))?|(强|弱|普通))[）)]$/);
+      const name = (attributeLabel ? text.slice(0, attributeLabel.index) : text).trim();
       if (name.length < 2 || name.length > 30 || !/[\p{L}]/u.test(name) || !isNodeName(name) || !isEditableName(name)) return;
       if (line.confidence < 55 || /[|\[\]]|图表|^图\s*\d|产业链|资料来源|证券研究所|^来源|^[a-z\s]{1,3}$/.test(name) || Object.values(stages).includes(canonical(name))) return;
       if (axis === 'x' && line.y <= Math.min(...headers.map((item) => item.y))) return;
       const header = ordered.reduce((nearest, item) => Math.abs(item[axis] - line[axis]) < Math.abs(nearest[axis] - line[axis]) ? item : nearest);
-      if (!result[header.key].some((item) => canonical(item) === canonical(name))) result[header.key].push(name);
+      const stage = attributeLabel?.[1] === '配套服务' ? 'service' : header.key;
+      if (!result[stage].some((item) => canonical(item) === canonical(name))) result[stage].push(name);
+      if (attributeLabel) annotations.set(`${stage}:${canonical(name)}`, {
+        nodeType: stage === 'service' ? '配套服务' : attributeLabel[1],
+        strength: attributeLabel[2] || attributeLabel[3]
+      });
     });
     return result;
   }
@@ -241,7 +304,9 @@
     });
 
     let activeRow;
+    let reviewRow;
     let updatedByQuality = false;
+    const pendingDescriptions = new Set();
     let attachment;
     let attachmentUrl;
     let recognitionRun = 0;
@@ -249,7 +314,9 @@
     let referencePage;
     let recognitionAttempted = false;
     let references = emptyReferences();
+    const annotations = new Map();
     let currentReport;
+    let activeDimension = '';
     let restoreFocus;
 
     actions.insertAdjacentHTML('afterbegin', '<button type="button" id="chainQualityButton" aria-haspopup="dialog">AI 质检</button>');
@@ -284,6 +351,8 @@
           </aside>
           <section class="cq-results" aria-labelledby="chainQualityResultsTitle">
             <div class="cq-results-head"><div><h3 id="chainQualityResultsTitle">质检建议</h3><p id="chainQualitySummary" role="status"></p><p class="cq-run-config" id="chainQualityRunConfig" hidden></p></div><button class="primary" type="button" id="chainQualityRun">开始质检</button></div>
+            <div class="cq-dimensions" id="chainQualityDimensions" role="group" aria-label="八类质检结果" hidden></div>
+            <button type="button" class="cq-link cq-show-all" id="chainQualityShowAll" hidden>查看全部建议</button>
             <div class="cq-issues" id="chainQualityIssues"></div>
           </section>
         </div>
@@ -300,11 +369,15 @@
     const summary = byId('chainQualitySummary');
     const runConfig = byId('chainQualityRunConfig');
     const issuesMount = byId('chainQualityIssues');
+    const dimensionMount = byId('chainQualityDimensions');
+    const showAll = byId('chainQualityShowAll');
 
     function invalidateReport(message) {
       if (!currentReport) return;
       currentReport = null;
       issuesMount.replaceChildren();
+      dimensionMount.hidden = true;
+      showAll.hidden = true;
       summary.textContent = message || '质检条件已变更，请重新运行。';
       runConfig.hidden = true;
       runButton.textContent = '开始质检';
@@ -316,6 +389,7 @@
       referencePage = null;
       recognitionAttempted = false;
       references = emptyReferences();
+      annotations.clear();
       byId('chainQualityRaw').hidden = true;
       byId('chainQualityRawText').textContent = '';
       readStatus.textContent = '';
@@ -339,45 +413,120 @@
     function resetSession() {
       currentReport = null;
       updatedByQuality = false;
+      pendingDescriptions.clear();
+      activeDimension = '';
       removeAttachment();
       model.value = defaultModel;
       web.checked = false;
       summary.textContent = '检查环节覆盖、重复节点和拆解粒度。';
       runConfig.hidden = true;
+      dimensionMount.hidden = true;
+      showAll.hidden = true;
       issuesMount.replaceChildren();
       runButton.textContent = '开始质检';
     }
 
     function updateResults() {
+      if (!window.zhiyanChainQualityMetadata) {
+        summary.textContent = '质检规则暂未加载，请刷新后重试。';
+        return;
+      }
       const referenceCount = Object.values(references).flat().length;
       const evidence = attachment ? `参照图谱 · ${attachment.name}${referencePage ? ` · 第 ${referencePage} 页` : ''}` : '';
-      const results = reviewGraph(graphBuilderNodes, references, evidence, activeRow?.linkedCompanies || []);
+      const linkedCompanies = Array.isArray(activeRow?.linkedCompanies) ? activeRow.linkedCompanies : [];
+      const results = reviewGraph(graphBuilderNodes, references, annotations, evidence, linkedCompanies).concat(
+        window.zhiyanChainQualityMetadata.review({
+          row: reviewRow, nodes: graphBuilderNodes, sourceNote: reviewRow?.graphSourceNote,
+          attachmentName: attachment?.name, attachmentMatched: referenceCount > 0, linkedCompanies
+        })
+      );
       currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results, model: model.value, webEnabled: web.checked };
-      summary.textContent = `已检查 ${graphBuilderNodes.length} 个画布节点${referenceCount ? `，自动比对 ${referenceCount} 个图谱节点` : '，仅进行结构质检'}。发现 ${results.length} 项建议。`;
+      summary.textContent = `已检查 ${graphBuilderNodes.length} 个画布节点${referenceCount ? `，自动比对 ${referenceCount} 个图谱节点` : '，基于当前画布与入库资料'}。按 8 类汇总，发现 ${results.length} 项建议。`;
       runConfig.textContent = `AI 模型 ${currentReport.model} · 联网搜索${currentReport.webEnabled ? '开启' : '关闭'}`;
       runConfig.hidden = false;
       runButton.textContent = '重新质检';
+      renderResults();
+    }
+
+    function renderResults() {
+      const groups = new Map(dimensions.map(([kind]) => [kind, []]));
+      currentReport.results.forEach((issue, index) => groups.get(issue.kind).push({ issue, index }));
+      dimensionMount.replaceChildren(...dimensions.map(([kind, label]) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.cqDimension = kind;
+        button.setAttribute('aria-pressed', String(kind === activeDimension));
+        const title = document.createElement('span');
+        const count = document.createElement('b');
+        title.textContent = label;
+        count.textContent = groups.get(kind).length;
+        button.append(title, count);
+        return button;
+      }));
+      dimensionMount.hidden = false;
+      showAll.hidden = !activeDimension;
+
+      const visibleGroups = dimensions.filter(([kind]) => activeDimension ? kind === activeDimension : groups.get(kind).length);
       issuesMount.replaceChildren();
-      if (!results.length) {
-        const empty = document.createElement('p');
-        empty.className = 'cq-empty';
-        empty.textContent = '本次已检查的规则未发现需要处理的问题。';
-        issuesMount.appendChild(empty);
-        return;
-      }
-      results.forEach((issue, index) => {
-        const item = document.createElement('article');
-        item.className = 'cq-issue';
-        item.innerHTML = '<div><div class="cq-issue-heading"><span></span><h4></h4></div><p></p><small></small></div><button type="button" class="secondary"></button>';
-        item.querySelector('.cq-issue-heading span').textContent = stages[issue.stage] || '骨架';
-        item.querySelector('h4').textContent = issue.title;
-        item.querySelector('p').textContent = issue.detail;
-        item.querySelector('small').textContent = issue.basis;
-        const button = item.querySelector('button');
-        button.textContent = issue.label;
-        button.dataset.cqIssue = index;
-        issuesMount.appendChild(item);
+      if (!visibleGroups.length) issuesMount.append(emptyResult());
+      visibleGroups.forEach(([kind, label]) => {
+        const list = document.createElement('section');
+        list.className = 'cq-result-group';
+        const heading = document.createElement('h4');
+        heading.textContent = label;
+        list.append(heading);
+        const items = groups.get(kind);
+        if (!items.length) list.append(emptyResult());
+        items.forEach(({ issue, index }) => list.append(renderIssue(issue, index)));
+        issuesMount.append(list);
       });
+    }
+
+    function emptyResult() {
+      const empty = document.createElement('p');
+      empty.className = 'cq-empty';
+      empty.textContent = '本次未发现需处理的建议。';
+      return empty;
+    }
+
+    function renderIssue(issue, index) {
+      const item = document.createElement('article');
+      item.className = 'cq-issue';
+      item.dataset.cqKind = issue.kind;
+      item.innerHTML = '<div class="cq-issue-heading"><span></span><h5></h5></div><p></p><small></small><dl class="cq-changes"></dl>';
+      item.querySelector('.cq-issue-heading span').hidden = !issue.stage;
+      item.querySelector('.cq-issue-heading span').textContent = parentLabel(issue.stage);
+      item.querySelector('h5').textContent = issue.title;
+      item.querySelector('p').textContent = issue.detail;
+      item.querySelector('small').textContent = issue.basis;
+
+      const changes = item.querySelector('.cq-changes');
+      issue.changes.forEach(({ label, current, suggestion }) => {
+        const change = document.createElement('div');
+        change.innerHTML = '<dt class="cq-change-label"></dt><dd><span class="cq-before"></span><span class="cq-after"></span></dd>';
+        change.querySelector('dt').textContent = label;
+        const before = change.querySelector('.cq-before');
+        before.hidden = current == null || current === '';
+        before.textContent = `当前 ${current ?? ''}`;
+        change.querySelector('.cq-after').textContent = `建议 ${suggestion}`;
+        changes.append(change);
+      });
+      if (issue.label || issue.action === 'sync') {
+        const footer = document.createElement('div');
+        footer.className = 'cq-issue-action';
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'secondary';
+        button.dataset.cqIssue = index;
+        button.textContent = issue.label || '随画布保存';
+        if (issue.action === 'sync' && pendingDescriptions.has(issue.kind)) {
+          const state = document.createElement('span');
+          state.textContent = '已标记 · 保存画布后生效';
+          footer.append(state);
+        } else footer.append(button);
+        item.append(footer);
+      }
+      return item;
     }
 
     function locateNode(index) {
@@ -396,22 +545,43 @@
         return;
       }
       if (issue.action === 'review') return locateNode(issue.index);
+      if (issue.action === 'edit') {
+        restoreFocus = null;
+        dialog.close();
+        window.openGraphNodeEditorV47(issue.index);
+        byId('graphNodeNameV47').focus();
+        return;
+      }
+      if (issue.action === 'sync') {
+        pendingDescriptions.add(issue.kind);
+        updatedByQuality = true;
+        byId('graphPreviewStatus').textContent = '已标记质检修正 · 待保存';
+        renderResults();
+        runButton.focus();
+        return;
+      }
       if (issue.action === 'add' && !issue.name) {
         dialog.close();
         restoreFocus = null;
         window.openNewGraphNodeV63();
         byId('graphNodeStageV47').value = issue.stage;
+        byId('graphNodeTypeV47').value = issue.nodeType;
+        byId('graphNodeStrengthV116').value = issue.strength;
         byId('graphNodeNameV47').focus();
         return;
       }
       if (issue.action === 'add') {
-        const type = issue.stage === 'service' ? '配套服务' : '一般节点';
-        graphBuilderNodes.push({ stage: issue.stage === 'service' ? 'down' : issue.stage, name: issue.name, type, nodeType: type, strength: '普通', source: '质检参照' });
+        graphBuilderNodes.push({ stage: issue.stage === 'service' ? 'down' : issue.stage, name: issue.name,
+          type: issue.nodeType, nodeType: issue.nodeType, strength: issue.strength, source: '质检参照' });
+      } else if (issue.action === 'correct') {
+        const node = graphBuilderNodes[issue.index];
+        Object.assign(node, issue.proposed, { type: issue.proposed.nodeType });
+        node.source = '质检修正';
       } else if (issue.action === 'split') {
         const source = graphBuilderNodes[issue.index];
         const existing = new Set(graphBuilderNodes.filter((node, index) => index !== issue.index).map(nodeKey));
         const splits = issue.parts.filter((name) => !existing.has(`${issue.stage}:${canonical(name)}`))
-          .map((name) => ({ name, stage: source.stage, type: source.type, nodeType: source.nodeType, strength: '普通', source: '质检拆解' }));
+          .map((name) => ({ name, stage: source.stage, type: nodeType(source), nodeType: nodeType(source), strength: nodeStrength(source), source: '质检拆解' }));
         graphBuilderNodes.splice(issue.index, 1, ...splits);
       } else if (issue.action === 'delete') {
         if (graphBuilderNodes.length <= 2) {
@@ -430,6 +600,7 @@
     const previousOpen = window.openGraphBuilder;
     window.openGraphBuilder = function () {
       activeRow = null;
+      reviewRow = null;
       resetSession();
       return previousOpen.apply(this, arguments);
     };
@@ -437,6 +608,7 @@
     const previousOpenBasic = window.openChainBasicV61;
     window.openChainBasicV61 = function (index) {
       activeRow = rows[index];
+      reviewRow = activeRow && { ...activeRow };
       resetSession();
       return previousOpenBasic.apply(this, arguments);
     };
@@ -454,7 +626,17 @@
       const key = previousKey || `local:${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       rowKeys.set(row, key);
       row.structure = Object.keys(stages).map((stage) => row.graphNodes.filter((node) => nodeStage(node) === stage).map((node) => node.name).join('、') || '待补充').join(' → ');
-      const fields = key.startsWith('seed:') ? savedFields : [...savedFields, 'category', 'level', 'companies', 'rate', 'score', 'lead'];
+      if (pendingDescriptions.size) {
+        const corrected = window.zhiyanChainQualityMetadata.summarize(row.graphNodes);
+        pendingDescriptions.forEach((kind) => { row[kind] = corrected[kind]; });
+      }
+      if (pendingDescriptions.has('advantage')) {
+        ['advantageSegments', 'advantageLinks'].forEach((field) => {
+          if (field in row) row[field] = Array.isArray(row[field])
+            ? row.graphNodes.filter((node) => nodeStrength(node) === '强').map((node) => node.name) : row.advantage;
+        });
+      }
+      const fields = key.startsWith('seed:') ? savedFields : [...savedFields, 'category', 'level', 'companies', 'rate', 'score'];
       savedGraphs[key] = Object.fromEntries(fields.map((field) => [field, row[field]]));
       try {
         writeSavedGraph(key, savedGraphs[key]);
@@ -462,13 +644,14 @@
         toast('已保存到本次会话，浏览器无法保存质检修改');
       }
       updatedByQuality = false;
+      pendingDescriptions.clear();
       return result;
     };
 
     const previousOpenCanvas = window.openChainCanvasFromBasicV61;
     window.openChainCanvasFromBasicV61 = function () {
       const sources = new Map((activeRow?.graphNodes || [])
-        .filter((node) => node.source === '质检参照' || node.source === '质检拆解')
+        .filter((node) => ['质检参照', '质检拆解', '质检修正'].includes(node.source))
         .map((node) => [nodeKey(node), node.source]));
       const result = previousOpenCanvas.apply(this, arguments);
       if (sources.size) {
@@ -511,6 +694,21 @@
       const button = event.target.closest('[data-cq-issue]');
       const issue = button && currentReport?.results[Number(button.dataset.cqIssue)];
       if (issue) applyIssue(issue);
+    });
+    dimensionMount.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-cq-dimension]');
+      if (!button || !currentReport) return;
+      const kind = button.dataset.cqDimension;
+      activeDimension = activeDimension === kind ? '' : kind;
+      renderResults();
+      dimensionMount.querySelector(`[data-cq-dimension="${kind}"]`).focus({ preventScroll: true });
+    });
+    showAll.addEventListener('click', () => {
+      if (!currentReport) return;
+      const previous = activeDimension;
+      activeDimension = '';
+      renderResults();
+      dimensionMount.querySelector(`[data-cq-dimension="${previous}"]`)?.focus({ preventScroll: true });
     });
 
     [model, web].forEach((control) => control.addEventListener('change', () => invalidateReport()));
@@ -565,7 +763,7 @@
       try {
         const lines = type === 'pdf' ? await readPdf(file, pageNumber, onProgress) : await readImage(await imageToCanvas(file), onProgress);
         if (run !== recognitionRun) return false;
-        references = suggestReferenceNodes(lines);
+        references = suggestReferenceNodes(lines, annotations);
         referencePage = pageNumber;
         byId('chainQualityRaw').hidden = !lines.length;
         byId('chainQualityRawText').textContent = lines.map((line) => line.text).join('\n');

@@ -51,7 +51,7 @@
   border-bottom: 1px solid #e5edf6;
 }
 
-.cq-head h2, .cq-dialog h3, .cq-dialog h4, .cq-dialog p {
+.cq-head h2, .cq-dialog h3, .cq-dialog h4, .cq-dialog h5, .cq-dialog p {
   margin: 0;
 }
 
@@ -294,17 +294,56 @@
   cursor: wait;
 }
 
-.cq-issues {
+.cq-dimensions {
   display: grid;
-  gap: 10px;
-  margin-top: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 7px;
+  margin-top: 14px;
 }
 
-.cq-issue {
+.cq-dimensions button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 5px;
+  min-height: 38px;
+  padding: 7px 8px;
+  border: 1px solid #dbe7f4;
+  border-radius: 7px;
+  background: #f7faff;
+  color: #30567d;
+  font: inherit;
+  font-size: 12px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.cq-dimensions button:hover,
+.cq-dimensions button[aria-pressed="true"] {
+  border-color: #90b7eb;
+  background: #eaf3ff;
+  color: #194f96;
+}
+
+.cq-dimensions b {
+  min-width: 17px;
+  color: #3e628a;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.cq-show-all { margin-top: 6px; font-size: 12px; }
+
+.cq-issues, .cq-result-group {
+  display: grid;
+  gap: 10px;
+}
+
+.cq-issues { margin-top: 16px; row-gap: 18px; }
+.cq-result-group > h4 { color: #203e61; font-size: 14px; }
+
+.cq-issue {
+  min-width: 0;
   padding: 13px;
   border: 1px solid #dbe7f4;
   border-radius: 9px;
@@ -327,7 +366,7 @@
   font-size: 11px;
 }
 
-.cq-issue h4 {
+.cq-issue h5 {
   color: #203e61;
   font-size: 14px;
   line-height: 1.5;
@@ -346,6 +385,29 @@
   font-size: 12px;
 }
 
+.cq-changes {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+  padding: 9px 10px;
+  border-radius: 6px;
+  background: #f4f8fd;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cq-changes > div {
+  display: grid;
+  grid-template-columns: minmax(85px, .35fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.cq-change-label { color: #2e5176; font-weight: 650; }
+.cq-changes dd { display: grid; gap: 2px; margin: 0; }
+.cq-before { color: #596e87; }
+.cq-after { color: #1c548b; }
+.cq-issue-action { display: flex; justify-content: flex-end; margin-top: 9px; color: #2d6b54; font-size: 12px; }
+
 .cq-foot {
   border-top: 1px solid #e5edf6;
 }
@@ -361,5 +423,9 @@
   .cq-input { border-right: 0; border-bottom: 1px solid #e5edf6; }
   .cq-head, .cq-foot, .cq-input, .cq-results { padding: 13px 16px; }
   .cq-head h2 { font-size: 19px; }
-  .cq-issue { flex-wrap: wrap; }
+  .cq-issue { padding: 10px; }
+}
+
+@media (max-width: 430px) {
+  .cq-changes > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
