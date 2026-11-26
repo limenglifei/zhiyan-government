@@ -149,7 +149,7 @@
   const overview = root.querySelector('.if-overview');
   const workspace = root.querySelector('.if-workspace');
   const status = root.querySelector('.if-status');
-  const view = { tab: 'feed', subscription: '', read: '', search: '', selected: '' };
+  const view = { tab: 'feed', subscription: '', read: '', search: '', selected: '', collapsedAnalysis: new Set() };
   let state = readState() || { subscriptions: starterSubscriptions, read: [] };
   let focusBeforeDialog;
 
@@ -308,6 +308,7 @@
         <div class="if-detail-tags">${event.subtypes.map(code => `<span class="if-badge if-plain">${code} ${subtypeLabels.get(code)}</span>`).join('')}</div>
       </header>
       <section><h3>事件摘要</h3><p>${esc(event.summary)}</p></section>
+      ${eventAnalysis(event)}
       <section><h3>事件标签</h3>
         <dl class="if-tag-rows"><div><dt>影响层级</dt><dd><span class="if-badge if-plain">${event.level}</span></dd></div>${tagRows.join('')}</dl>
       </section>
@@ -316,6 +317,69 @@
       </section>
       <footer><button class="if-button" type="button" data-if-action="read" data-if-id="${event.id}">${unread ? '标为已读' : '标为未读'}</button></footer>
     </article>`;
+  }
+
+  function eventAnalysis(event) {
+    const analysis = window.zhiyanIntelligenceAnalysis?.[event.id];
+    const expanded = !view.collapsedAnalysis.has(event.id);
+    return `<section class="if-analysis" aria-labelledby="ifAnalysisTitle">
+      <header class="if-analysis-head">
+        <div><h3 id="ifAnalysisTitle">AI 推理分析</h3><p>${analysis ? '基于当前示例情报的条件研判' : '暂无这条情报的推理分析'}</p></div>
+        ${analysis ? `<button type="button" class="if-button if-analysis-toggle" data-if-action="analysis" data-if-id="${esc(event.id)}"
+          aria-expanded="${expanded}" aria-controls="ifAnalysisBody">${expanded ? '收起分析' : '展开分析'}</button>` : ''}
+      </header>
+      ${analysis ? analysisBody(analysis, expanded) : ''}
+    </section>`;
+  }
+
+  function analysisBody(analysis, expanded) {
+    return `<div id="ifAnalysisBody" class="if-analysis-body"${expanded ? '' : ' hidden'}>
+      ${analysis.summary ? `<p class="if-analysis-summary">${esc(analysis.summary)}</p>` : ''}
+      <div class="if-analysis-block">
+        <h4>产业链传导路径</h4>
+        <ol class="if-transmission">
+          ${analysis.transmission.map(({ segment, impact }) => `
+            <li><strong>${esc(segment)}</strong><p>${esc(impact)}</p></li>`).join('')}
+        </ol>
+      </div>
+      <div class="if-analysis-impacts">
+        ${impactCard('行业影响', analysis.industry)}
+        ${impactCard('企业影响', analysis.enterprise)}
+      </div>
+      <div class="if-analysis-block">
+        <h4>企业负责人如何应对</h4>
+        <dl class="if-analysis-owners">
+          ${analysis.owners.map(({ role, responsibility }) => `
+            <div><dt>${esc(role)}</dt><dd>${esc(responsibility)}</dd></div>`).join('')}
+        </dl>
+      </div>
+      <div class="if-analysis-block">
+        <h4>应对措施</h4>
+        <ul class="if-analysis-actions">
+          ${analysis.actions.map(({ priority, title, detail }) => `
+            <li><span class="if-analysis-priority" data-priority="${esc(priority)}">${esc(priority)}</span><div><strong>${esc(title)}</strong><p>${esc(detail)}</p></div></li>`).join('')}
+        </ul>
+      </div>
+      <aside class="if-analysis-evidence">
+        <h4>依据与待核验事项</h4><p>${esc(analysis.verification)}</p>
+      </aside>
+    </div>`;
+  }
+
+  function impactCard(title, { impact, watch }) {
+    return `<article class="if-analysis-impact">
+      <h4>${title}</h4><p>${esc(impact)}</p>
+      <p class="if-analysis-watch"><b>观察项</b> ${esc(watch)}</p>
+    </article>`;
+  }
+
+  function toggleAnalysis(button, id) {
+    const expanded = view.collapsedAnalysis.has(id);
+    if (expanded) view.collapsedAnalysis.delete(id);
+    else view.collapsedAnalysis.add(id);
+    button.setAttribute('aria-expanded', String(expanded));
+    button.textContent = expanded ? '收起分析' : '展开分析';
+    workspace.querySelector('#ifAnalysisBody').hidden = !expanded;
   }
 
   function ruleTags(rule, event) {
@@ -515,6 +579,7 @@
     if (action === 'create') return formDialog();
     if (action === 'edit' && rule) return formDialog(rule);
     if (action === 'remove' && rule) return confirmRemove(rule);
+    if (action === 'analysis') return toggleAnalysis(button, id);
     setStatus('');
     if (action === 'feed' || action === 'subscriptions') view.tab = action;
     if (action === 'ruleFeed' && rule) Object.assign(view, { tab: 'feed', subscription: rule.id, read: '', search: '', selected: '' });
