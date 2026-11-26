@@ -115,7 +115,7 @@
 .report-notice__list {
   margin: 0;
   padding: 0;
-  max-height: min(560px, calc(100vh - 160px));
+  max-height: min(560px, calc(100vh - 190px));
   border-radius: 0 0 12px 12px;
   overflow: auto;
   overscroll-behavior: contain;
