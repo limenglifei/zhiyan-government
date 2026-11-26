@@ -229,7 +229,7 @@
         <i class="report-notice__badge" aria-hidden="true" hidden></i>
       </button>
       <section class="report-notice__panel" id="reportNoticePanel" aria-labelledby="reportNoticeTitle" hidden>
-        <header><h2 id="reportNoticeTitle">消息通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
+        <header><h2 id="reportNoticeTitle">消息通知<b class="report-notice__count" aria-hidden="true" hidden></b></h2><button type="button" data-notice-read-all>全部已读</button></header>
         <ul class="report-notice__list"></ul>
         <p class="report-notice__empty" hidden>报告完成和数据审核的消息会显示在这里。</p>
       </section>`;
@@ -237,16 +237,20 @@
     const trigger = root.querySelector('.report-notice__trigger');
     const badge = root.querySelector('.report-notice__badge');
     const panel = root.querySelector('.report-notice__panel');
+    const count = panel.querySelector('.report-notice__count');
     const list = root.querySelector('.report-notice__list');
     const empty = root.querySelector('.report-notice__empty');
     const readAll = root.querySelector('[data-notice-read-all]');
 
     update = () => {
       const all = messages();
-      const hasUnread = all.some(message => !message.read);
+      const unreadCount = all.filter(message => !message.read).length;
+      const hasUnread = unreadCount > 0;
       badge.hidden = !hasUnread;
       trigger.setAttribute('aria-label', hasUnread ? '消息通知，有未读消息' : '消息通知');
       if (panel.hidden) return;
+      count.hidden = !hasUnread;
+      count.textContent = unreadCount > 99 ? '99+' : String(unreadCount || '');
       readAll.disabled = !hasUnread;
       const focusId = document.activeElement?.dataset.noticeId;
       list.replaceChildren(...all.map(itemMarkup));
