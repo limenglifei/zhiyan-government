@@ -26,20 +26,24 @@
     },
     {
       kind: 'delete', stage: 'mid', title: '删除重复的传感器模组封装节点',
-      detail: '两条演示记录属于同一父级，名称和属性均一致。带工序编号的记录保留。',
+      detail: '同一父级下，无工序编号的副本与主节点的名称和属性一致。副本未挂靠企业，删除后保留工序编号为 DEMO-M03 的主节点及其企业和证据关系。',
       basis: '演示资料 · 同环节节点比对',
       changes: [
-        { label: '待删除子节点', current: '传感器模组封装（无工序编号的副本）', suggestion: '删除重复副本，保留工序编号为 DEMO-M03 的节点' },
-        { label: '挂靠关系', current: '重复副本未挂靠企业', suggestion: '保留主节点上的企业和证据关系' }
+        { label: '子节点名称', current: '传感器模组封装' },
+        { label: '节点类型', current: '核心节点' },
+        { label: '节点强弱', current: '强' },
+        { label: '挂靠父级', current: '中游 · 封装与整机标定' }
       ]
     },
     {
       kind: 'delete', stage: 'down', title: '删除已被正式节点替代的占位项',
-      detail: '「其他终端应用」是演示初稿的占位节点。其原有范围已由正式节点覆盖。',
+      detail: '工业设备状态监测和产线过程监测已覆盖「其他终端应用」。核对挂靠后删除占位项，保留两个正式节点及各自的应用说明。',
       basis: '演示资料 · 应用场景对照表',
       changes: [
-        { label: '待删除子节点', current: '其他终端应用', suggestion: '核对挂靠后删除占位项' },
-        { label: '保留子节点', current: '工业设备状态监测、产线过程监测', suggestion: '保留两个正式节点及各自的应用说明' }
+        { label: '子节点名称', current: '其他终端应用' },
+        { label: '节点类型', current: '一般节点' },
+        { label: '节点强弱', current: '普通' },
+        { label: '挂靠父级', current: '下游 · 终端场景与应用' }
       ]
     },
     {

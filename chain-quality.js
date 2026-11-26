@@ -78,7 +78,7 @@
         issues.push({ kind: 'delete', action: removable ? 'delete' : 'review', index, stage, title: `删除建议 · ${name}`,
           detail: removable ? `同一环节已有「${first.name}」，可移除重复项。` : '同名节点的类型、强弱或关联企业有所不同，需核对后再处理。',
           basis: '同环节同名检查', label: removable ? '移除重复项' : '定位节点',
-          changes: [{ label: '子节点名称', current: name, suggestion: removable ? '删除重复子节点' : '核实后决定是否删除' }] });
+          changes: [...nodeChanges(node, {}), { label: '挂靠父级', current: parentLabel(stage) }] });
         return;
       }
       retained.set(key, node);
@@ -535,6 +535,45 @@
       return empty;
     }
 
+    function renderIssueValues(issue) {
+      const changes = issue.changes?.length ? issue.changes : [{}];
+      const shownValue = (value) => value == null || value === '' ? '—' : value;
+      if (issue.kind === 'add' || issue.kind === 'delete') {
+        const adding = issue.kind === 'add';
+        const fields = document.createElement('section');
+        fields.className = 'cq-node-fields';
+        fields.innerHTML = '<h6></h6><dl></dl>';
+        fields.querySelector('h6').textContent = adding ? '拟新增节点' : '拟删除节点';
+        const list = fields.querySelector('dl');
+        changes.forEach(({ label, current, suggestion }) => {
+          const field = document.createElement('div');
+          field.innerHTML = '<dt class="cq-change-label"></dt><dd></dd>';
+          field.querySelector('dt').textContent = label || '';
+          field.querySelector('dd').textContent = shownValue(adding ? suggestion : current);
+          list.append(field);
+        });
+        return fields;
+      }
+
+      const table = document.createElement('table');
+      table.className = 'cq-comparison';
+      table.setAttribute('aria-label', '修改前后对照');
+      table.innerHTML = '<thead><tr><th scope="col">原先是什么</th><th scope="col">修改后是什么</th></tr></thead><tbody></tbody>';
+      const comparison = table.querySelector('tbody');
+      changes.forEach(({ label, current, suggestion }) => {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td><span class="cq-change-label"></span><p class="cq-before"></p></td><td><span class="cq-change-label"></span><p class="cq-after"></p></td>';
+        row.querySelectorAll('.cq-change-label').forEach((field) => {
+          field.hidden = !label;
+          field.textContent = label || '';
+        });
+        row.querySelector('.cq-before').textContent = shownValue(current);
+        row.querySelector('.cq-after').textContent = shownValue(suggestion);
+        comparison.append(row);
+      });
+      return table;
+    }
+
     function renderIssue(issue, index) {
       const item = document.createElement('article');
       item.className = 'cq-issue';
@@ -545,10 +584,6 @@
           <span class="cq-issue-kind"></span><span class="cq-issue-stage"></span>
         </div>
         <h5></h5>
-        <table class="cq-comparison" aria-label="修改前后对照">
-          <thead><tr><th scope="col">原先是什么</th><th scope="col">修改后是什么</th></tr></thead>
-          <tbody></tbody>
-        </table>
         <div class="cq-rationale" role="group" aria-label="修改理由和依据">
           <h6>修改理由和依据</h6>
           <dl>
@@ -567,21 +602,7 @@
       item.querySelector('.cq-review-state').hidden = Boolean(basis)
         && issue.action !== 'review' && !['enterprise', 'source'].includes(issue.kind);
 
-      const comparison = item.querySelector('.cq-comparison tbody');
-      const changes = issue.changes?.length ? issue.changes : [{}];
-      changes.forEach(({ label, current, suggestion }, fieldIndex) => {
-        const row = document.createElement('tr');
-        row.innerHTML = '<td><span class="cq-change-label"></span><p class="cq-before"></p></td><td><span class="cq-change-label"></span><p class="cq-after"></p></td>';
-        row.querySelectorAll('.cq-change-label').forEach((field) => {
-          field.hidden = !label;
-          field.textContent = label || '';
-        });
-        const missingBefore = issue.kind === 'add' && fieldIndex === 0 ? '原先无此节点' : '—';
-        const missingAfter = issue.kind === 'delete' ? '删除该节点' : '—';
-        row.querySelector('.cq-before').textContent = current == null || current === '' ? missingBefore : current;
-        row.querySelector('.cq-after').textContent = suggestion == null || suggestion === '' ? missingAfter : suggestion;
-        comparison.append(row);
-      });
+      item.append(renderIssueValues(issue));
       const footer = document.createElement('div');
       footer.className = 'cq-issue-action';
       function decisionButton(action, label, className) {
