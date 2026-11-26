@@ -62,7 +62,8 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5edf6;
 }
 
 .report-notice__panel h2 {
@@ -82,8 +83,7 @@
   cursor: pointer;
 }
 
-.report-notice__panel button:hover,
-.report-notice__filters button[aria-pressed="true"] {
+.report-notice__panel button:hover {
   background: #edf4ff;
   color: #205cb1;
 }
@@ -92,31 +92,6 @@
   color: #79869a;
   background: transparent;
   cursor: default;
-}
-
-.report-notice__filters {
-  display: flex;
-  gap: 6px;
-  padding: 0 16px 10px;
-  border-bottom: 1px solid #e5edf6;
-}
-
-.report-notice__filters [data-notice-filter="unread"] {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-}
-
-.report-notice__filters i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #8493a8;
-}
-
-.report-notice__filters .has-unread i {
-  background: var(--report-notice-unread-color);
 }
 
 .report-notice__list {

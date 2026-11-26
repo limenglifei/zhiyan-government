@@ -230,12 +230,8 @@
       </button>
       <section class="report-notice__panel" id="reportNoticePanel" aria-labelledby="reportNoticeTitle" hidden>
         <header><h2 id="reportNoticeTitle">消息通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
-        <div class="report-notice__filters" role="group" aria-label="通知筛选">
-          <button type="button" data-notice-filter="all" aria-pressed="true">全部消息</button>
-          <button type="button" data-notice-filter="unread" aria-pressed="false" aria-label="仅看未读消息"><i aria-hidden="true"></i></button>
-        </div>
         <ul class="report-notice__list"></ul>
-        <p class="report-notice__empty" hidden></p>
+        <p class="report-notice__empty" hidden>报告完成和数据审核的消息会显示在这里。</p>
       </section>`;
     actions.insertBefore(root, actions.querySelector('.avatar'));
     const trigger = root.querySelector('.report-notice__trigger');
@@ -243,25 +239,18 @@
     const panel = root.querySelector('.report-notice__panel');
     const list = root.querySelector('.report-notice__list');
     const empty = root.querySelector('.report-notice__empty');
-    const filters = root.querySelector('.report-notice__filters');
-    const unreadFilter = filters.querySelector('[data-notice-filter="unread"]');
     const readAll = root.querySelector('[data-notice-read-all]');
-    let filter = 'all';
 
     update = () => {
       const all = messages();
-      const unread = all.filter(message => !message.read);
-      const hasUnread = unread.length > 0;
+      const hasUnread = all.some(message => !message.read);
       badge.hidden = !hasUnread;
       trigger.setAttribute('aria-label', hasUnread ? '消息通知，有未读消息' : '消息通知');
       if (panel.hidden) return;
       readAll.disabled = !hasUnread;
-      unreadFilter.classList.toggle('has-unread', hasUnread);
-      const items = filter === 'unread' ? unread : all;
       const focusId = document.activeElement?.dataset.noticeId;
-      list.replaceChildren(...items.map(itemMarkup));
-      empty.hidden = !!items.length;
-      empty.textContent = filter === 'unread' ? '暂无符合筛选的消息' : '报告完成和数据审核的消息会显示在这里。';
+      list.replaceChildren(...all.map(itemMarkup));
+      empty.hidden = !!all.length;
       if (focusId) Array.from(list.querySelectorAll('a')).find(link => link.dataset.noticeId === focusId)?.focus();
     };
 
@@ -273,17 +262,10 @@
     }
 
     trigger.addEventListener('click', () => toggle(panel.hidden));
-    filters.addEventListener('click', event => {
-      const selected = event.target.closest('[data-notice-filter]');
-      if (!selected) return;
-      filter = selected.dataset.noticeFilter;
-      filters.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button === selected)));
-      update();
-    });
     readAll.addEventListener('click', () => {
       messages().forEach(markRead);
       update();
-      filters.querySelector('[aria-pressed="true"]').focus();
+      (list.querySelector('a') || trigger).focus();
     });
     list.addEventListener('click', event => {
       const link = event.target.closest('a[data-notice-id]');
