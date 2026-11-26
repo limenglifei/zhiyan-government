@@ -291,7 +291,45 @@
 
 .cq-dialog button:disabled {
   opacity: .62;
-  cursor: wait;
+  cursor: default;
+}
+
+.cq-result-modes {
+  display: flex;
+  gap: 12px;
+  margin-top: 9px;
+  border-bottom: 1px solid #e5edf6;
+}
+
+.cq-result-modes button {
+  padding: 8px 3px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #556b84;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cq-result-modes button[aria-pressed="true"] {
+  border-color: #1a65c3;
+  color: #215b9c;
+  font-weight: 700;
+}
+
+.cq-results .cq-results-note {
+  margin-top: 9px;
+  color: #526683;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.cq-results .cq-action-status {
+  padding: 7px 9px;
+  border-radius: 6px;
+  background: #edf6ff;
+  color: #245689;
 }
 
 .cq-dimensions {
@@ -406,7 +444,17 @@
 .cq-changes dd { display: grid; gap: 2px; margin: 0; }
 .cq-before { color: #596e87; }
 .cq-after { color: #1c548b; }
-.cq-issue-action { display: flex; justify-content: flex-end; margin-top: 9px; color: #2d6b54; font-size: 12px; }
+.cq-issue-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+  font-size: 12px;
+}
+
+.cq-decision-status { color: #315d79; }
 
 .cq-foot {
   border-top: 1px solid #e5edf6;

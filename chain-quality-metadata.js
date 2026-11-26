@@ -129,20 +129,20 @@
       const details = [publisher, date, url || reference].filter(present).join(' · ') || '缺少发布机构、日期和原始出处';
 
       if (key && seen.has(key)) {
-        changes.push({ label: '建议删除重复明细 · ' + label, current: details, suggestion: '与已登记来源使用同一原始出处，保留信息较完整的一条。' });
+        changes.push({ id: index, label: '建议删除重复明细 · ' + label, current: details, suggestion: '与已登记来源使用同一原始出处，保留信息较完整的一条。' });
         return;
       }
       if (key) seen.add(key);
       if (source.authoritative === false || (/转载|二手/.test(text(source.type)) && (!url || !present(publisher)))) {
         changes.push({
-          label: '建议删除或替换 · ' + label, current: details,
+          id: index, label: '建议删除或替换 · ' + label, current: details,
           suggestion: '登记信息不足以确认一手出处。请追溯正式原文，无法确认时从构建依据中移除。'
         });
         return;
       }
       if (!present(title) || !present(publisher) || !present(date) || (!url && !present(reference)) || source.verified === false) {
         changes.push({
-          label: '待核验明细 · ' + label, current: details,
+          id: index, label: '待核验明细 · ' + label, current: details,
           suggestion: '补齐标题、发布机构、发布或更新时间和原始链接或文件编号，再确认可用于哪些节点。'
         });
         return;
@@ -172,13 +172,12 @@
         suggestion: '优先补录适用的行业标准原文、主管部门公开文件。企业角色使用企业公告或主管部门公开名录交叉核验。'
       });
     }
-    if (!changes.length) return null;
-    return {
-      kind: 'source', title: '修正产业链构建的数据来源依据',
-      detail: '核对数据来源概述和逐条证据，保留能够回溯的原始出处。',
+    return changes.map((change) => ({
+      kind: 'source', id: change.id, title: change.label,
+      detail: '核对出处与适用范围，保留可回溯的来源依据。',
       basis: '已登记的数据来源信息与本次质检附件',
-      changes
-    };
+      changes: [{ ...change, label: change.label === '修改来源概述' ? '来源概述' : '来源明细' }]
+    }));
   }
 
   function inspectCanvas(nodes) {
@@ -208,7 +207,7 @@
       checkSegment('weak', safeRow.weak, weakNames),
       checkEnterprises(safeRow, canvas, linkedCompanies),
       checkStructure(safeRow, stageNames),
-      checkSources(safeRow, sourceNote, attachmentName, attachmentMatched)
+      ...checkSources(safeRow, sourceNote, attachmentName, attachmentMatched)
     ].filter(Boolean);
   }
 

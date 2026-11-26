@@ -306,6 +306,10 @@
     let reviewRow;
     let updatedByQuality = false;
     const pendingDescriptions = new Set();
+    const reportChoices = new Map();
+    const exampleChoices = new Map();
+    const nodeIds = new WeakMap();
+    let nodeId = 0;
     let attachment;
     let attachmentUrl;
     let recognitionRun = 0;
@@ -315,7 +319,8 @@
     let references = emptyReferences();
     const annotations = new Map();
     let currentReport;
-    let activeDimension = '';
+    let resultsMode = 'report';
+    const selectedDimensions = { report: '', examples: '' };
     let restoreFocus;
 
     actions.insertAdjacentHTML('afterbegin', '<button type="button" id="chainQualityButton" aria-haspopup="dialog">AI 质检</button>');
@@ -348,12 +353,18 @@
           </aside>
           <section class="cq-results" aria-labelledby="chainQualityResultsTitle">
             <div class="cq-results-head"><div><h3 id="chainQualityResultsTitle">质检建议</h3><p id="chainQualitySummary" role="status"></p><p class="cq-run-config" id="chainQualityRunConfig" hidden></p></div><button class="primary" type="button" id="chainQualityRun">开始质检</button></div>
+            <div class="cq-result-modes" id="chainQualityModes" role="group" aria-label="质检建议视图">
+              <button type="button" data-cq-mode="report" aria-pressed="true">本次质检</button>
+              <button type="button" data-cq-mode="examples" aria-pressed="false">示例建议</button>
+            </div>
+            <p class="cq-results-note" id="chainQualityExamplesNote" hidden>示例使用演示资料，操作仅影响示例状态。</p>
+            <p class="cq-results-note cq-action-status" id="chainQualityActionStatus" role="status" hidden></p>
             <div class="cq-dimensions" id="chainQualityDimensions" role="group" aria-label="八类质检结果" hidden></div>
             <button type="button" class="cq-link cq-show-all" id="chainQualityShowAll" hidden>查看全部建议</button>
             <div class="cq-issues" id="chainQualityIssues"></div>
           </section>
         </div>
-        <footer class="cq-foot"><p>处理建议后，请在画布中保存到产业链库。</p><button class="secondary cq-close" type="button">返回画布</button></footer>
+        <footer class="cq-foot"><p>画布修正需保存到产业链库后生效。</p><button class="primary" type="button" id="chainQualityApplyAll" disabled>全部修正</button></footer>
       </dialog>`);
 
     const dialog = byId('chainQualityDialog');
@@ -367,16 +378,18 @@
     const issuesMount = byId('chainQualityIssues');
     const dimensionMount = byId('chainQualityDimensions');
     const showAll = byId('chainQualityShowAll');
+    const modes = byId('chainQualityModes');
+    const examplesNote = byId('chainQualityExamplesNote');
+    const actionStatus = byId('chainQualityActionStatus');
+    const applyAll = byId('chainQualityApplyAll');
 
     function invalidateReport(message) {
       if (!currentReport) return;
       currentReport = null;
-      issuesMount.replaceChildren();
-      dimensionMount.hidden = true;
-      showAll.hidden = true;
+      setActionStatus('');
       summary.textContent = message || '质检条件已变更，请重新运行。';
-      runConfig.hidden = true;
       runButton.textContent = '开始质检';
+      renderResults();
     }
 
     function clearRecognition() {
@@ -410,15 +423,17 @@
       currentReport = null;
       updatedByQuality = false;
       pendingDescriptions.clear();
-      activeDimension = '';
+      reportChoices.clear();
+      exampleChoices.clear();
+      selectedDimensions.report = '';
+      selectedDimensions.examples = '';
+      resultsMode = 'report';
+      setActionStatus('');
       removeAttachment();
       web.checked = false;
       summary.textContent = '检查环节覆盖、重复节点和拆解粒度。';
-      runConfig.hidden = true;
-      dimensionMount.hidden = true;
-      showAll.hidden = true;
-      issuesMount.replaceChildren();
       runButton.textContent = '开始质检';
+      renderResults();
     }
 
     function updateResults() {
@@ -443,9 +458,45 @@
       renderResults();
     }
 
+    function resultsForView() {
+      return resultsMode === 'examples' ? window.zhiyanChainQualityExamples : currentReport?.results;
+    }
+
+    function decisionKey(issue) {
+      if (issue.action === 'sync') return `description:${issue.kind}`;
+      const node = graphBuilderNodes[issue.index];
+      if (node && !nodeIds.has(node)) nodeIds.set(node, ++nodeId);
+      return JSON.stringify([issue.kind, issue.id, issue.action, issue.stage, issue.title, issue.basis, nodeIds.get(node), issue.changes]);
+    }
+
+    function decisionFor(issue) {
+      return resultsMode === 'examples' ? exampleChoices.get(issue) : reportChoices.get(decisionKey(issue));
+    }
+
+    function setActionStatus(message) {
+      actionStatus.hidden = !message;
+      actionStatus.textContent = message;
+    }
+
     function renderResults() {
+      const examples = resultsMode === 'examples';
+      const results = resultsForView();
+      const activeDimension = selectedDimensions[resultsMode];
+      modes.querySelectorAll('[data-cq-mode]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.cqMode === resultsMode));
+      });
+      summary.hidden = examples;
+      examplesNote.hidden = !examples;
+      runConfig.hidden = examples || !currentReport;
+      applyAll.disabled = !results?.some((issue) => !decisionFor(issue));
+      if (!results) {
+        issuesMount.replaceChildren();
+        dimensionMount.hidden = true;
+        showAll.hidden = true;
+        return;
+      }
       const groups = new Map(dimensions.map(([kind]) => [kind, []]));
-      currentReport.results.forEach((issue, index) => groups.get(issue.kind).push({ issue, index }));
+      results.forEach((issue, index) => groups.get(issue.kind).push({ issue, index }));
       dimensionMount.replaceChildren(...dimensions.map(([kind, label]) => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -506,21 +557,31 @@
         change.querySelector('.cq-after').textContent = `建议 ${suggestion}`;
         changes.append(change);
       });
-      if (issue.label || issue.action === 'sync') {
-        const footer = document.createElement('div');
-        footer.className = 'cq-issue-action';
+      const footer = document.createElement('div');
+      footer.className = 'cq-issue-action';
+      function decisionButton(action, label, className) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'secondary';
+        button.className = className;
         button.dataset.cqIssue = index;
-        button.textContent = issue.label || '随画布保存';
-        if (issue.action === 'sync' && pendingDescriptions.has(issue.kind)) {
-          const state = document.createElement('span');
-          state.textContent = '已标记 · 保存画布后生效';
-          footer.append(state);
-        } else footer.append(button);
-        item.append(footer);
+        button.dataset.cqDecision = action;
+        button.textContent = label;
+        return button;
       }
+      const decision = decisionFor(issue);
+      if (decision) {
+        const state = document.createElement('span');
+        state.className = 'cq-decision-status';
+        const confirmed = resultsMode === 'examples' ? '已采纳 · 示例' :
+          (issue.action === 'sync' ? '已采纳 · 保存画布后生效' : '已采纳 · 待人工核验');
+        state.textContent = decision === 'deferred' ? '不采纳' : confirmed;
+        footer.append(state, decisionButton('reopen', '恢复处理', 'cq-link'));
+      } else {
+        const confirm = decisionButton('confirm', '采纳', 'primary cq-decision-confirm');
+        if (issue.label) confirm.title = issue.label;
+        footer.append(confirm, decisionButton('defer', '不采纳', 'secondary cq-decision-defer'));
+      }
+      item.append(footer);
       return item;
     }
 
@@ -533,12 +594,16 @@
       card.querySelector('button')?.focus({ preventScroll: true });
     }
 
-    function applyIssue(issue) {
+    function validateReport() {
       if (currentReport?.fingerprint !== JSON.stringify(graphBuilderNodes)) {
         invalidateReport('画布内容已变化，请重新质检后再处理建议。');
         runButton.focus();
-        return;
+        return false;
       }
+      return true;
+    }
+
+    function openIssueEditor(issue) {
       if (issue.action === 'review') return locateNode(issue.index);
       if (issue.action === 'edit') {
         restoreFocus = null;
@@ -547,25 +612,22 @@
         byId('graphNodeNameV47').focus();
         return;
       }
-      if (issue.action === 'sync') {
-        pendingDescriptions.add(issue.kind);
-        updatedByQuality = true;
-        byId('graphPreviewStatus').textContent = '已标记质检修正 · 待保存';
-        renderResults();
-        runButton.focus();
-        return;
-      }
-      if (issue.action === 'add' && !issue.name) {
-        dialog.close();
-        restoreFocus = null;
-        window.openNewGraphNodeV63();
-        byId('graphNodeStageV47').value = issue.stage;
-        byId('graphNodeTypeV47').value = issue.nodeType;
-        byId('graphNodeStrengthV116').value = issue.strength;
-        byId('graphNodeNameV47').focus();
-        return;
-      }
+      dialog.close();
+      restoreFocus = null;
+      window.openNewGraphNodeV63();
+      byId('graphNodeStageV47').value = issue.stage;
+      byId('graphNodeTypeV47').value = issue.nodeType;
+      byId('graphNodeStrengthV116').value = issue.strength;
+      byId('graphNodeNameV47').focus();
+    }
+
+    function canApplyToCanvas(issue) {
+      return ['correct', 'split', 'delete'].includes(issue.action) || (issue.action === 'add' && Boolean(issue.name));
+    }
+
+    function mutateNode(issue) {
       if (issue.action === 'add') {
+        if (graphBuilderNodes.some((node) => nodeKey(node) === `${issue.stage}:${canonical(issue.name)}`)) return false;
         graphBuilderNodes.push({ stage: issue.stage === 'service' ? 'down' : issue.stage, name: issue.name,
           type: issue.nodeType, nodeType: issue.nodeType, strength: issue.strength, source: '质检参照' });
       } else if (issue.action === 'correct') {
@@ -579,17 +641,86 @@
           .map((name) => ({ name, stage: source.stage, type: nodeType(source), nodeType: nodeType(source), strength: nodeStrength(source), source: '质检拆解' }));
         graphBuilderNodes.splice(issue.index, 1, ...splits);
       } else if (issue.action === 'delete') {
-        if (graphBuilderNodes.length <= 2) {
-          summary.textContent = '画布保存至少需要 2 个节点，请先补充其他节点再删除重复项。';
-          return;
-        }
+        if (graphBuilderNodes.length <= 2) return false;
         graphBuilderNodes.splice(issue.index, 1);
       }
+      return true;
+    }
+
+    function refreshCanvasReport() {
       updatedByQuality = true;
       window.renderGraphNodes();
       byId('graphPreviewStatus').textContent = '已应用质检建议 · 待保存';
       updateResults();
-      runButton.focus();
+    }
+
+    function chooseIssue(issue, index, action) {
+      const isExample = resultsMode === 'examples';
+      if (!isExample && !validateReport()) return;
+      const choices = isExample ? exampleChoices : reportChoices;
+      const key = isExample ? issue : decisionKey(issue);
+      if (action === 'reopen') {
+        choices.delete(key);
+        if (!isExample && issue.action === 'sync') pendingDescriptions.delete(issue.kind);
+      } else if (action === 'defer') {
+        choices.set(key, 'deferred');
+      } else if (!isExample && canApplyToCanvas(issue)) {
+        if (mutateNode(issue)) {
+          refreshCanvasReport();
+          setActionStatus('已修正 · 保存画布后生效');
+        } else setActionStatus('画布保存至少需要 2 个节点，请先补充节点。');
+        runButton.focus({ preventScroll: true });
+        return;
+      } else if (!isExample && ['review', 'edit', 'add'].includes(issue.action)) {
+        choices.set(key, 'confirmed');
+        renderResults();
+        openIssueEditor(issue);
+        return;
+      } else {
+        choices.set(key, 'confirmed');
+        if (!isExample && issue.action === 'sync') pendingDescriptions.add(issue.kind);
+      }
+      setActionStatus('');
+      renderResults();
+      issuesMount.querySelector(`[data-cq-issue="${index}"]`)?.focus({ preventScroll: true });
+    }
+
+    function chooseAll() {
+      if (resultsMode === 'examples') {
+        const pending = resultsForView().filter((issue) => !exampleChoices.has(issue));
+        pending.forEach((issue) => exampleChoices.set(issue, 'confirmed'));
+        renderResults();
+        setActionStatus(`已采纳 ${pending.length} 条示例建议。`);
+        return;
+      }
+      if (!validateReport()) return;
+      const pending = currentReport.results
+        .map((issue) => ({ issue, key: decisionKey(issue) }))
+        .filter(({ key }) => !reportChoices.has(key));
+      const canvas = pending.filter(({ issue }) => canApplyToCanvas(issue))
+        .sort((a, b) => (b.issue.index ?? -1) - (a.issue.index ?? -1));
+      let applied = 0;
+      let toSave = 0;
+      let toReview = 0;
+      canvas.forEach(({ issue }) => { if (mutateNode(issue)) applied++; });
+      pending.forEach(({ issue, key }) => {
+        if (canApplyToCanvas(issue)) return;
+        reportChoices.set(key, 'confirmed');
+        if (issue.action === 'sync') {
+          pendingDescriptions.add(issue.kind);
+          toSave++;
+        } else toReview++;
+      });
+      if (applied) refreshCanvasReport();
+      else renderResults();
+      const message = [
+        applied ? `已修正 ${applied} 条画布建议 · 保存画布后生效` : '',
+        toSave ? `${toSave} 条描述修正待保存` : '',
+        toReview ? `${toReview} 条建议待人工核验` : '',
+        applied < canvas.length ? '还有可在画布中核对的建议' : ''
+      ].filter(Boolean).join('。');
+      setActionStatus(message ? message + '。' : '');
+      if (applyAll.disabled) runButton.focus({ preventScroll: true });
     }
 
     const previousOpen = window.openGraphBuilder;
@@ -613,11 +744,14 @@
       const beforeLength = rows.length;
       const name = byId('graphModelName').value.trim();
       const valid = name && graphBuilderNodes.length >= 2;
+      const deferredDescriptionFields = ['advantage', 'weak', 'structure'].filter((kind) => reportChoices.get(`description:${kind}`) === 'deferred');
+      const sourceDeferred = [...reportChoices].some(([key, choice]) => choice === 'deferred' && key.startsWith('["source",'));
       const result = previousSave.apply(this, arguments);
       if (!valid || builder.classList.contains('open')) return result;
       const row = activeRow || (rows.length > beforeLength ? rows[0] : null);
       const previousKey = row && rowKeys.get(row);
-      if (!row || !Array.isArray(row.graphNodes) || (!updatedByQuality && !savedGraphs[previousKey])) return result;
+      if (!row || !Array.isArray(row.graphNodes) ||
+        (!updatedByQuality && !pendingDescriptions.size && !deferredDescriptionFields.length && !sourceDeferred && !savedGraphs[previousKey])) return result;
       const key = previousKey || `local:${crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
       rowKeys.set(row, key);
       row.structure = Object.keys(stages).map((stage) => row.graphNodes.filter((node) => nodeStage(node) === stage).map((node) => node.name).join('、') || '待补充').join(' → ');
@@ -629,6 +763,12 @@
         ['advantageSegments', 'advantageLinks'].forEach((field) => {
           if (field in row) row[field] = Array.isArray(row[field])
             ? row.graphNodes.filter((node) => nodeStrength(node) === '强').map((node) => node.name) : row.advantage;
+        });
+      }
+      if (reviewRow) {
+        const deferredFields = sourceDeferred ? [...deferredDescriptionFields, 'graphSourceNote'] : deferredDescriptionFields;
+        deferredFields.forEach((field) => {
+          if (Object.hasOwn(reviewRow, field)) row[field] = reviewRow[field];
         });
       }
       const fields = key.startsWith('seed:') ? savedFields : [...savedFields, 'category', 'level', 'companies', 'rate', 'score'];
@@ -682,29 +822,42 @@
     dialog.addEventListener('close', () => restoreFocus?.focus());
     dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
     runButton.addEventListener('click', async () => {
+      resultsMode = 'report';
+      setActionStatus('');
+      renderResults();
       if (attachment && !recognitionAttempted && !await recognizeAttachment()) return;
       updateResults();
     });
     issuesMount.addEventListener('click', (event) => {
-      const button = event.target.closest('[data-cq-issue]');
-      const issue = button && currentReport?.results[Number(button.dataset.cqIssue)];
-      if (issue) applyIssue(issue);
+      const button = event.target.closest('[data-cq-decision]');
+      if (!button) return;
+      const index = Number(button.dataset.cqIssue);
+      const issue = resultsForView()?.[index];
+      if (issue) chooseIssue(issue, index, button.dataset.cqDecision);
+    });
+    modes.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-cq-mode]');
+      if (!button || button.dataset.cqMode === resultsMode) return;
+      resultsMode = button.dataset.cqMode;
+      setActionStatus('');
+      renderResults();
     });
     dimensionMount.addEventListener('click', (event) => {
       const button = event.target.closest('[data-cq-dimension]');
-      if (!button || !currentReport) return;
+      if (!button || !resultsForView()) return;
       const kind = button.dataset.cqDimension;
-      activeDimension = activeDimension === kind ? '' : kind;
+      selectedDimensions[resultsMode] = selectedDimensions[resultsMode] === kind ? '' : kind;
       renderResults();
       dimensionMount.querySelector(`[data-cq-dimension="${kind}"]`).focus({ preventScroll: true });
     });
     showAll.addEventListener('click', () => {
-      if (!currentReport) return;
-      const previous = activeDimension;
-      activeDimension = '';
+      if (!resultsForView()) return;
+      const previous = selectedDimensions[resultsMode];
+      selectedDimensions[resultsMode] = '';
       renderResults();
       dimensionMount.querySelector(`[data-cq-dimension="${previous}"]`)?.focus({ preventScroll: true });
     });
+    applyAll.addEventListener('click', chooseAll);
 
     web.addEventListener('change', () => invalidateReport());
     byId('chainQualityRemove').addEventListener('click', removeAttachment);
