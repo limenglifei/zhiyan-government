@@ -125,7 +125,7 @@
 }
 .if-status { margin: 0 0 12px; padding: 9px 12px; border-radius: 6px; background: #eaf2fe; color: #22558d; font-size: 12px; }
 
-.if-filters { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.if-filters { position: relative; display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
 .if-search { width: min(100%, 275px); }
 .if-filters > label :is(input, select),
 .if-field :is(input, select) {
@@ -142,15 +142,38 @@
 .if-field input::placeholder { color: #657994; }
 .if-filters > label select { max-width: 176px; }
 .if-feed-event-filter {
-  position: relative;
   min-width: 0;
   max-width: 100%;
   margin: 0;
   padding: 0;
   border: 0;
 }
-.if-feed-event-filter:has(.if-event-picker:not([hidden])) { flex-basis: 100%; }
-.if-feed-event-filter .if-event-picker-toggle { width: auto; min-width: min(126px, 100%); max-width: 100%; }
+.if-feed-event-filter .if-event-picker-toggle { width: 160px; max-width: 100%; }
+.if-feed-event-filter [data-if-event-value] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.if-feed-event-filter .if-event-picker {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  width: min(440px, 100%);
+  margin-top: 0;
+  box-shadow: 0 10px 24px #1f477b29;
+}
+.if-publication-window {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--if-line);
+  border-radius: 7px;
+}
+.if-publication-window legend { padding: 0 4px; color: var(--if-muted); font-size: 12px; }
+.if-publication-window .if-field { flex: 1 1 180px; max-width: 222px; }
+.if-publication-window .if-form-error { flex-basis: 100%; }
 
 .if-sr {
   position: absolute;
