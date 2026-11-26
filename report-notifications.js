@@ -2,17 +2,29 @@
   'use strict';
 
   const prefix = 'zhiyan-government.report-notice.v1.';
+  const sampleReadPrefix = 'zhiyan-government.report-notice-sample-read.v1.';
   const hashPrefix = '#report-notice=';
   const types = {
     due: { label: '企业尽调', title: '尽调报告已生成' },
     radar: { label: '招商雷达', title: '强链补链分析报告已生成' },
     policy: { label: '政策匹配', title: '政策匹配报告已生成' },
-    support: { label: '政策扶持', title: '政策精准扶持报告已生成' }
+    support: { label: '政策扶持', title: '政策精准扶持报告已生成' },
+    review: { label: '数据审核' }
   };
+  const reviewTargets = { company: '企业库', policy: '政策库' };
+  const reviewStatuses = new Set(['approved', 'rejected']);
+  const samples = new Map([
+    { id: 'demo-report-due', kind: 'due', subject: '芯源微电子科技股份有限公司', createdAt: Date.parse('2026-11-26T10:28:32+08:00'), read: false },
+    { id: 'demo-report-radar', kind: 'radar', subject: '新能源汽车产业链', context: { chainKey: 'newenergy' }, createdAt: Date.parse('2026-11-26T09:56:14+08:00'), read: true },
+    { id: 'demo-report-policy', kind: 'policy', subject: '海州智造科技有限公司', context: { mode: 'local', region: null }, createdAt: Date.parse('2026-11-26T09:18:06+08:00'), read: false },
+    { id: 'demo-report-support', kind: 'support', subject: '制造业数字化转型扶持计划', createdAt: Date.parse('2026-11-25T16:42:17+08:00'), read: true }
+  ].map(message => [message.id, message]));
   const messageTime = new Intl.DateTimeFormat('zh-CN', {
     timeZone: 'Asia/Shanghai', dateStyle: 'short', timeStyle: 'medium'
   });
   const volatile = new Map();
+  const volatileSampleReads = new Set();
+  let sampleSupportContext;
   let update = () => {};
 
   function knownType(kind) {
@@ -21,7 +33,13 @@
 
   function valid(message) {
     return message && typeof message.id === 'string' && knownType(message.kind) &&
-      typeof message.subject === 'string' && Number.isFinite(message.createdAt);
+      typeof message.subject === 'string' && Number.isFinite(message.createdAt) &&
+      (message.kind !== 'review' || validReview(message.review));
+  }
+
+  function validReview(review) {
+    return review && Object.hasOwn(reviewTargets, review.target) && reviewStatuses.has(review.status) &&
+      typeof review.library === 'string' && typeof review.title === 'string' && review.title.trim();
   }
 
   function read(key) {
@@ -40,6 +58,22 @@
     } catch { volatile.set(key, message); }
   }
 
+  function readSample(message) {
+    let read = message.read || volatileSampleReads.has(message.id);
+    if (!read) {
+      try { read = localStorage.getItem(sampleReadPrefix + message.id) === '1'; }
+      catch { /* Keep the current tab's read state. */ }
+    }
+    return { ...message, sample: true, read, context: message.kind === 'support' ? sampleSupportContext : message.context };
+  }
+
+  function findMessage(id) {
+    const stored = read(prefix + id);
+    if (stored) return stored;
+    const sample = samples.get(id);
+    return sample ? readSample(sample) : null;
+  }
+
   function messages() {
     const keys = new Set(volatile.keys());
     try {
@@ -48,7 +82,10 @@
         if (key?.startsWith(prefix)) keys.add(key);
       }
     } catch { /* In private contexts the current tab keeps its own notifications. */ }
-    return Array.from(keys, read).filter(Boolean).sort((a, b) => b.createdAt - a.createdAt);
+    const stored = Array.from(keys, read).filter(Boolean);
+    const ids = new Set(stored.map(message => message.id));
+    const examples = [...samples.values()].filter(message => !ids.has(message.id)).map(readSample);
+    return [...stored, ...examples].sort((a, b) => b.createdAt - a.createdAt);
   }
 
   function safeRadarHref(href) {
@@ -61,17 +98,24 @@
     return '';
   }
 
-  function complete({ kind, subject, context, href, id } = {}) {
-    if (!knownType(kind) || typeof subject !== 'string' || !subject.trim()) return null;
+  function addMessage(message, id) {
     const messageId = id || window.crypto?.randomUUID?.() || Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
     const existing = read(prefix + messageId);
     if (existing) return existing.id;
-    write({
-      id: messageId, kind, subject: subject.trim(), context,
-      href: kind === 'radar' ? safeRadarHref(href) : '', createdAt: Date.now(), read: false
-    });
+    write({ ...message, id: messageId, createdAt: Date.now(), read: false });
     update();
     return messageId;
+  }
+
+  function complete({ kind, subject, context, href, id } = {}) {
+    if (!knownType(kind) || kind === 'review' || typeof subject !== 'string' || !subject.trim()) return null;
+    return addMessage({ kind, subject: subject.trim(), context, href: kind === 'radar' ? safeRadarHref(href) : '' }, id);
+  }
+
+  function completeReview({ library, title, body, target, status } = {}) {
+    const review = { library: library || reviewTargets[target], title, target, status };
+    if (!validReview(review) || typeof body !== 'string' || !body.trim()) return null;
+    return addMessage({ kind: 'review', subject: body.trim(), review: { ...review, title: title.trim() } });
   }
 
   function completePolicy(subject) {
@@ -90,10 +134,16 @@
     complete({ kind: 'support', subject, context });
   }
 
-  window.zhiyanReportNotifications = { complete, completePolicy, completeSupport };
+  window.zhiyanReportNotifications = { complete, completePolicy, completeSupport, completeReview };
 
   function markRead(message) {
-    if (!message.read) write({ ...message, read: true });
+    if (message.read) return;
+    if (message.sample) {
+      try { localStorage.setItem(sampleReadPrefix + message.id, '1'); }
+      catch { volatileSampleReads.add(message.id); }
+      return;
+    }
+    write({ ...message, read: true });
   }
 
   function reopenPolicy(message) {
@@ -119,17 +169,21 @@
     if (message.kind === 'radar') return window.reopenWholeChainReportV71?.(message.context?.chainKey);
     if (message.kind === 'policy') return reopenPolicy(message);
     if (message.kind === 'support') return window.reopenSupportReport?.(message.context);
+    if (message.kind === 'review' && typeof window.openKnowledgeBase === 'function') {
+      window.openKnowledgeBase(message.review.target);
+      return true;
+    }
     return false;
   }
 
   function openSavedReport(id) {
-    const message = read(prefix + id);
+    const message = findMessage(id);
     if (!message) {
-      window.toast?.('当前浏览器没有这条报告记录');
+      window.toast?.('当前浏览器没有这条消息');
       return false;
     }
     if (!reopen(message)) {
-      window.toast?.('暂时无法打开该报告，请在当前任务完成后重试');
+      window.toast?.('暂时无法打开该消息，请在当前任务完成后重试');
       return false;
     }
     markRead(message);
@@ -139,6 +193,7 @@
 
   function itemMarkup(message) {
     const { label, title } = types[message.kind];
+    const review = message.kind === 'review' ? message.review : null;
     const item = document.createElement('li');
     item.className = 'report-notice__item' + (message.read ? '' : ' report-notice__item--unread');
     const link = document.createElement('a');
@@ -149,13 +204,15 @@
       link.target = '_blank';
       link.rel = 'noopener';
     }
-    link.innerHTML = '<div class="report-notice__meta"><b></b><time></time></div><strong></strong><p></p><small>查看报告</small>';
-    link.querySelector('b').textContent = label;
+    const sampleBadge = message.sample ? '<em class="report-notice__sample">样例</em>' : '';
+    link.innerHTML = `<div class="report-notice__meta"><div class="report-notice__tags"><b></b>${sampleBadge}</div><time></time></div><strong></strong><p></p><small></small>`;
+    link.querySelector('b').textContent = review?.library || label;
     const date = new Date(message.createdAt);
     link.querySelector('time').dateTime = date.toISOString();
     link.querySelector('time').textContent = messageTime.format(date);
-    link.querySelector('strong').textContent = (message.read ? '' : '未读 · ') + title;
+    link.querySelector('strong').textContent = (message.read ? '' : '未读 · ') + (review?.title || title);
     link.querySelector('p').textContent = message.subject;
+    link.querySelector('small').textContent = review ? '查看数据' : message.sample ? '查看样例报告' : '查看报告';
     item.appendChild(link);
     return item;
   }
@@ -163,15 +220,16 @@
   function mount() {
     const actions = document.querySelector('.topbar .top-actions');
     if (!actions) return;
+    sampleSupportContext = window.captureSupportReport?.(false);
     const root = document.createElement('div');
     root.className = 'report-notice';
     root.innerHTML = `
-      <button type="button" class="report-notice__trigger" aria-label="报告通知" aria-expanded="false" aria-controls="reportNoticePanel" title="报告通知">
+      <button type="button" class="report-notice__trigger" aria-label="消息通知" aria-expanded="false" aria-controls="reportNoticePanel" title="消息通知">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg>
         <b class="report-notice__badge" aria-hidden="true" hidden></b>
       </button>
       <section class="report-notice__panel" id="reportNoticePanel" aria-labelledby="reportNoticeTitle" hidden>
-        <header><h2 id="reportNoticeTitle">报告通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
+        <header><h2 id="reportNoticeTitle">消息通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
         <div class="report-notice__filters" role="group" aria-label="通知筛选">
           <button type="button" data-notice-filter="all" aria-pressed="true">全部消息</button>
           <button type="button" data-notice-filter="unread" aria-pressed="false">未读</button>
@@ -195,7 +253,7 @@
       const unread = all.filter(message => !message.read);
       badge.hidden = !unread.length;
       badge.textContent = unread.length > 99 ? '99+' : String(unread.length);
-      trigger.setAttribute('aria-label', unread.length ? `报告通知，${unread.length} 条未读` : '报告通知');
+      trigger.setAttribute('aria-label', unread.length ? `消息通知，${unread.length} 条未读` : '消息通知');
       if (panel.hidden) return;
       readAll.disabled = !unread.length;
       unreadFilter.textContent = unread.length ? `未读（${unread.length}）` : '未读';
@@ -203,7 +261,7 @@
       const focusId = document.activeElement?.dataset.noticeId;
       list.replaceChildren(...items.map(itemMarkup));
       empty.hidden = !!items.length;
-      empty.textContent = filter === 'unread' ? '暂无未读消息' : '生成报告后，完成通知会显示在这里。';
+      empty.textContent = filter === 'unread' ? '暂无未读消息' : '报告完成和数据审核的消息会显示在这里。';
       if (focusId) Array.from(list.querySelectorAll('a')).find(link => link.dataset.noticeId === focusId)?.focus();
     };
 
@@ -231,7 +289,7 @@
       const link = event.target.closest('a[data-notice-id]');
       if (!link) return;
       if (link.target === '_blank') {
-        const message = read(prefix + link.dataset.noticeId);
+        const message = findMessage(link.dataset.noticeId);
         if (message) markRead(message);
         toggle(false, true);
         update();
@@ -262,7 +320,9 @@
       }
     });
     window.addEventListener('hashchange', followHash);
-    window.addEventListener('storage', event => { if (event.key === null || event.key.startsWith(prefix)) update(); });
+    window.addEventListener('storage', event => {
+      if (event.key === null || event.key.startsWith(prefix) || event.key.startsWith(sampleReadPrefix)) update();
+    });
     update();
     followHash();
   }
