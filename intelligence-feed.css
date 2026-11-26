@@ -18,13 +18,7 @@
   outline-offset: 2px;
 }
 
-.if-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin: 2px 0 20px;
-}
+.if-heading { margin: 2px 0 20px; }
 
 .if-heading h1 { font-size: 28px; line-height: 1.25; margin: 0 0 8px; }
 .if-heading p,
@@ -67,7 +61,7 @@
   background: #fff;
 }
 
-.if-metrics { display: flex; align-items: center; }
+.if-metrics { display: flex; min-width: 0; align-items: center; }
 .if-metrics > div { display: flex; flex-direction: column; gap: 5px; padding: 0 26px; }
 .if-metrics > div:first-child { padding-left: 0; }
 .if-metrics > div + div { border-left: 1px solid var(--if-line); }
@@ -501,10 +495,12 @@
 }
 
 @media (max-width: 520px) {
-  .if-heading, .if-overview { align-items: flex-start; flex-direction: column; gap: 9px; }
+  .if-overview { gap: 8px; padding: 12px 10px; }
+  .if-settings-trigger { padding-inline: 10px; }
   .if-group-tabs { gap: 4px; }
   .if-group-tab { padding-inline: 9px; }
-  .if-metrics > div { padding: 0 14px; }
+  .if-metrics > div { padding: 0 7px; }
+  .if-metrics strong { font-size: 20px; }
   .if-search { width: 100%; }
   .if-fields, .if-tag-rows { grid-template-columns: minmax(0, 1fr); }
   .if-dialog :is(.if-dialog-header, .if-dialog-body, .if-dialog-footer) { padding-left: 13px; padding-right: 13px; }

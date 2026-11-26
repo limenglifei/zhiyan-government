@@ -4,8 +4,7 @@
   const data = window.zhiyanRiskData;
   const model = window.zhiyanRiskModel;
   const main = document.querySelector('.main');
-  const feedHeader = document.querySelector('#intelligenceFeed .if-heading');
-  if (!data?.scenarios?.length || !model?.evaluate || !main || !feedHeader) return;
+  if (!data?.scenarios?.length || !model?.evaluate || !main || !document.getElementById('intelligenceFeed')) return;
 
   const modes = [
     { id: 'policy', name: '政策附件分析', detail: '识别政策条款，映射受影响节点' },
@@ -45,18 +44,6 @@
   let fileReading = false;
   let fileFeedback = '';
   let saved = readSaved();
-
-  const entry = document.createElement('button');
-  entry.type = 'button';
-  entry.className = 'if-button ir-feed-entry';
-  entry.setAttribute('data-ir-open', '');
-  entry.textContent = '产业节点风险传导与预警';
-  const headActions = document.createElement('div');
-  headActions.className = 'ir-feed-actions';
-  const create = feedHeader.querySelector('[data-if-action="create"]');
-  feedHeader.append(headActions);
-  headActions.append(entry);
-  if (create) headActions.append(create);
 
   const root = document.createElement('section');
   root.id = 'intelligenceRisk';
@@ -837,7 +824,6 @@
     if (runAnalysis()) work.querySelector('.ir-results-heading')?.scrollIntoView({ block: 'start' });
   });
 
-  entry.addEventListener('click', () => navigate(root.id));
   window.ZhiyanIntelligenceRisk = Object.freeze({ open: () => navigate(root.id) });
   resetSignals();
   if (draft.signals[0] && draft.signals[0].value === '') draft.signals[0].value = 15;

@@ -31,6 +31,15 @@
   };
   const levels = ['宏观', '行业', '企业', '个体'];
   const sentiments = ['中立', '反面', '正面'];
+  const publicationRanges = new Map([
+    ['', { label: '不限发布日期' }],
+    ['7d', { label: '近7天', days: 7 }],
+    ['30d', { label: '近30天', days: 30 }],
+    ['60d', { label: '近60天', days: 60 }],
+    ['90d', { label: '近90天', days: 90 }],
+    ['6m', { label: '近半年', months: 6 }]
+  ]);
+  const publicationOffset = 8 * 60 * 60 * 1000;
   const sampleEvents = [
     {
       id: 'battery-inspection', category: '4', subtypes: ['4.1'], level: '企业', sentiment: '正面',
@@ -212,20 +221,20 @@
   const starterSubscriptions = [
     {
       id: 'sample-tech', name: '合肥先进制造动态', enabled: true, sample: true,
-      dimensions: { city: ['合肥市'] }, levels: [], sentiments: [], eventCodes: ['4.1', '4.2', '4.4']
+      dimensions: { city: ['合肥市'] }, levels: [], sentiments: [], eventCodes: ['4.1', '4.2', '4.4'], publicationRange: ''
     },
     {
       id: 'sample-business', name: '合肥制造业政策与项目', enabled: true, sample: true,
-      dimensions: { city: ['合肥市'] }, levels: ['行业'], sentiments: [], eventCodes: ['1.2', '1.3']
+      dimensions: { city: ['合肥市'] }, levels: ['行业'], sentiments: [], eventCodes: ['1.2', '1.3'], publicationRange: ''
     },
     {
       id: 'sample-supply', name: '皖江关键零部件交付', enabled: true, sample: true,
-      dimensions: { company: ['皖江精密制造'] }, levels: [], sentiments: ['反面'], eventCodes: ['6.3', '6.4']
+      dimensions: { company: ['皖江精密制造'] }, levels: [], sentiments: ['反面'], eventCodes: ['6.3', '6.4'], publicationRange: ''
     }
   ];
   const storageKey = 'zhiyan-intelligence-feed-v2';
   const legacyStorageKey = 'zhiyan-intelligence-feed-v1';
-  const emptyRule = { dimensions: {}, levels: [], sentiments: [], eventCodes: [] };
+  const emptyRule = { dimensions: {}, levels: [], sentiments: [], eventCodes: [], publicationRange: '' };
   const main = document.querySelector('.main');
   if (!main) return;
 
@@ -236,10 +245,12 @@
   root.innerHTML = `
     <header class="if-heading">
       <div><h1 id="intelligenceFeedHeading">产业情报中心</h1><p>订阅产业动态，查看事件研判和产业链风险。</p></div>
+    </header>
+    <div class="if-overview" aria-label="订阅概况">
+      <div class="if-metrics"></div>
       <button class="if-button if-primary if-settings-trigger" type="button" data-if-action="settings"
         aria-haspopup="dialog" aria-controls="ifSubscriptionSettings">订阅设置</button>
-    </header>
-    <div class="if-overview" aria-label="订阅概况"></div>
+    </div>
     <nav class="if-tabs if-group-tabs" aria-label="订阅信息流分组"></nav>
     <p class="if-status" role="status" hidden></p>
     <div class="if-workspace"></div>`;
@@ -273,7 +284,7 @@
   sourceDialog.className = 'if-dialog if-source-dialog';
   sourceDialog.setAttribute('aria-labelledby', 'ifSourceTitle');
   document.body.appendChild(sourceDialog);
-  const overview = root.querySelector('.if-overview');
+  const metricsMount = root.querySelector('.if-metrics');
   const groupTabs = root.querySelector('.if-group-tabs');
   const workspace = root.querySelector('.if-workspace');
   const status = root.querySelector('.if-status');
@@ -311,7 +322,8 @@
 
   function migrateSubscription(rule) {
     if (!rule || typeof rule !== 'object') return null;
-    const { category, subtypes, ...current } = rule;
+    const { category, subtypes, publicationRange, ...existing } = rule;
+    const current = { ...existing, publicationRange: publicationRange ?? '' };
     if (Array.isArray(current.eventCodes)) {
       if (!current.eventCodes.every(code => subtypeLabels.has(code))) return null;
       return { ...current, eventCodes: orderedEventCodes(new Set(current.eventCodes)) };
@@ -330,6 +342,7 @@
         (Array.isArray(rule.dimensions[key]) && rule.dimensions[key].every(value => typeof value === 'string' && value.trim()))) &&
       Array.isArray(rule.levels) && rule.levels.every(level => levels.includes(level)) &&
       Array.isArray(rule.sentiments) && rule.sentiments.every(sentiment => sentiments.includes(sentiment)) &&
+      publicationRanges.has(rule.publicationRange) &&
       Array.isArray(rule.eventCodes) && rule.eventCodes.every(code => subtypeLabels.has(code));
   }
 
@@ -351,34 +364,50 @@
     }
   }
 
-  function matches(event, rule) {
+  function publishedInRange(time, { days, months }, now) {
+    const publishedAt = Date.parse(time.replace(' ', 'T') + '+08:00');
+    const cutoff = new Date(now + publicationOffset);
+    cutoff.setUTCHours(0, 0, 0, 0);
+    if (months) {
+      const targetMonth = cutoff.getUTCMonth() - months;
+      const targetMonthEnd = new Date(Date.UTC(cutoff.getUTCFullYear(), targetMonth + 1, 0)).getUTCDate();
+      cutoff.setUTCMonth(targetMonth, Math.min(cutoff.getUTCDate(), targetMonthEnd));
+    } else {
+      cutoff.setUTCDate(cutoff.getUTCDate() - days + 1);
+    }
+    return publishedAt >= cutoff.getTime() - publicationOffset && publishedAt <= now;
+  }
+
+  function matches(event, rule, now) {
     return (!rule.eventCodes.length || event.subtypes.some(code => rule.eventCodes.includes(code))) &&
       (!rule.levels.length || rule.levels.includes(event.level)) &&
       (!rule.sentiments.length || rule.sentiments.includes(event.sentiment)) &&
+      (!rule.publicationRange || publishedInRange(event.time, publicationRanges.get(rule.publicationRange), now)) &&
       Object.keys(dimensions).every(key => {
         const terms = rule.dimensions[key] || [];
         return !terms.length || terms.some(term => (event.tags[key] || []).some(tag => normalize(tag).includes(normalize(term))));
       });
   }
 
-  function hits() {
+  function hits(now = Date.now()) {
     const enabled = state.subscriptions.filter(rule => rule.enabled);
     return sampleEvents.map(event => ({
-      event, rules: enabled.filter(rule => matches(event, rule))
+      event, rules: enabled.filter(rule => matches(event, rule, now))
     })).filter(entry => entry.rules.length).sort((a, b) => b.event.time.localeCompare(a.event.time));
   }
 
   function render() {
     if (!state.subscriptions.some(rule => rule.id === view.subscription)) view.subscription = '';
-    const entries = hits();
+    const now = Date.now();
+    const entries = hits(now);
     const unread = entries.filter(entry => !state.read.includes(entry.event.id)).length;
     const active = state.subscriptions.filter(rule => rule.enabled).length;
     const metrics = [['生效订阅', active], ['命中情报', entries.length], ['未读情报', unread]];
-    overview.innerHTML = `<div class="if-metrics">${metrics.map(([label, value]) => `
-      <div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
+    metricsMount.innerHTML = metrics.map(([label, value]) => `
+      <div><span>${label}</span><strong>${value}</strong></div>`).join('');
     renderGroupTabs();
     renderFeed(entries);
-    if (settingsDialog.open) renderSubscriptionSettings();
+    if (settingsDialog.open) renderSubscriptionSettings(now);
   }
 
   function renderGroupTabs() {
@@ -674,12 +703,13 @@
     if (eventTypes.length) tags.push(...eventTypes);
     if (rule.levels.length) tags.push('影响层级 ' + (event ? event.level : rule.levels.join('、')));
     if (rule.sentiments.length) tags.push('舆情性质 ' + (event ? event.sentiment : rule.sentiments.join('、')));
+    if (rule.publicationRange) tags.push('发布日期 ' + publicationRanges.get(rule.publicationRange).label);
     return tags;
   }
 
-  function renderSubscriptionSettings() {
+  function renderSubscriptionSettings(now = Date.now()) {
     settingsList.innerHTML = state.subscriptions.length ?
-      `<div class="if-sub-grid">${state.subscriptions.map(subscriptionCard).join('')}</div>` :
+      `<div class="if-sub-grid">${state.subscriptions.map(rule => subscriptionCard(rule, now)).join('')}</div>` :
       '<div class="if-card if-empty"><strong>还没有订阅分组</strong></div>';
   }
 
@@ -690,8 +720,8 @@
     setStatus('');
   }
 
-  function subscriptionCard(rule) {
-    const count = rule.enabled ? sampleEvents.filter(event => matches(event, rule)).length : 0;
+  function subscriptionCard(rule, now) {
+    const count = rule.enabled ? sampleEvents.filter(event => matches(event, rule, now)).length : 0;
     return `<article class="if-card if-sub">
       <header><h3>${esc(rule.name)} ${rule.sample ? '<span class="if-badge if-plain">示例规则</span>' : ''}</h3><span class="if-sub-state" data-active="${rule.enabled}">${rule.enabled ? '生效中' : '已暂停'}</span></header>
       <div class="if-detail-tags">${ruleTags(rule).map(tag => `<span class="if-badge if-plain">${esc(tag)}</span>`).join('')}</div>
@@ -894,7 +924,12 @@
           <button type="button" class="if-close" data-if-close aria-label="关闭">×</button>
         </header>
         <div class="if-dialog-body">
-          <label class="if-field"><span>订阅名称 <em>必填</em></span><input name="name" required maxlength="60" placeholder="如合肥先进制造动态" value="${esc(data.name)}" autofocus></label>
+          <div class="if-fields">
+            <label class="if-field"><span>订阅名称 <em>必填</em></span><input name="name" required maxlength="60" placeholder="如合肥先进制造动态" value="${esc(data.name)}" autofocus></label>
+            <label class="if-field"><span>发布日期范围</span><select name="publicationRange">
+              ${Array.from(publicationRanges, ([value, { label }]) => option(value, label, data.publicationRange)).join('')}
+            </select></label>
+          </div>
           <fieldset>
             <legend>订阅对象</legend>
             <p class="if-help">填写一个或多个维度，多个关键词用顿号或逗号分隔。</p>
@@ -942,18 +977,19 @@
     const name = fields.get('name').trim();
     const selectedLevels = fields.getAll('levels');
     const selectedSentiments = fields.getAll('sentiments');
+    const publicationRange = fields.get('publicationRange');
     const terms = Object.fromEntries(Object.keys(dimensions).map(key => [key, splitTerms(fields.get(key))]));
     const rule = {
       id: original?.id || (window.crypto?.randomUUID?.() || 'subscription-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
       name, enabled: original?.enabled ?? true, sample: false,
-      dimensions: terms, levels: selectedLevels, sentiments: selectedSentiments, eventCodes
+      dimensions: terms, levels: selectedLevels, sentiments: selectedSentiments, eventCodes, publicationRange
     };
     if (!name) {
       showFormError('请填写订阅名称。');
       form.elements.namedItem('name').focus();
       return;
     }
-    if (!eventCodes.length && !selectedLevels.length && !selectedSentiments.length && !Object.values(terms).some(values => values.length)) {
+    if (!publicationRange && !eventCodes.length && !selectedLevels.length && !selectedSentiments.length && !Object.values(terms).some(values => values.length)) {
       showFormError('请至少设置一个订阅条件。');
       return;
     }
@@ -1090,7 +1126,7 @@
     if (!event.target.matches('.if-filters')) return;
     event.preventDefault();
     view.search = event.target.elements.search.value.trim();
-    renderFeed(hits());
+    render();
     workspace.querySelector('input[name="search"]').focus();
   });
 
@@ -1098,7 +1134,7 @@
     if (!event.target.matches('.if-filters select')) return;
     const { name, value } = event.target;
     view[name] = value;
-    renderFeed(hits());
+    render();
     workspace.querySelector('select[name="' + name + '"]').focus();
   });
 
