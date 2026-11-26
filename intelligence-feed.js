@@ -251,6 +251,7 @@
       <div class="if-metrics"></div>
       <button class="if-button if-primary if-settings-trigger" type="button" data-if-action="settings"
         aria-haspopup="dialog" aria-controls="ifSubscriptionSettings">订阅设置</button>
+      <div class="if-today-breakdown" aria-label="今日新增舆情分布"></div>
     </div>
     <nav class="if-tabs if-group-tabs" aria-label="订阅信息流分组"></nav>
     <p class="if-status" role="status" hidden></p>
@@ -286,12 +287,14 @@
   sourceDialog.setAttribute('aria-labelledby', 'ifSourceTitle');
   document.body.appendChild(sourceDialog);
   const metricsMount = root.querySelector('.if-metrics');
+  const breakdownMount = root.querySelector('.if-today-breakdown');
   const groupTabs = root.querySelector('.if-group-tabs');
   const workspace = root.querySelector('.if-workspace');
   const status = root.querySelector('.if-status');
   const settingsStatus = settingsDialog.querySelector('.if-status');
   const settingsList = settingsDialog.querySelector('.if-settings-list');
-  const view = { subscription: '', read: '', search: '', sort: 'match', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
+  const emptyFeedFilters = { read: '', search: '', sentiment: '', eventCodes: [] };
+  const view = { ...emptyFeedFilters, subscription: '', sort: 'match', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
   let state = readState() || { subscriptions: starterSubscriptions, read: [] };
   let focusBeforeDialog;
   let focusAfterSettings;
@@ -420,11 +423,14 @@
     if (!state.subscriptions.some(rule => rule.id === view.subscription)) view.subscription = '';
     const now = Date.now();
     const entries = hits(now);
-    const unread = entries.filter(entry => !state.read.includes(entry.event.id)).length;
     const active = state.subscriptions.filter(rule => rule.enabled).length;
-    const metrics = [['生效订阅', active], ['命中情报', entries.length], ['未读情报', unread]];
-    metricsMount.innerHTML = metrics.map(([label, value]) => `
-      <div><span>${label}</span><strong>${value}</strong></div>`).join('');
+    const today = entries.filter(({ event }) => publishedInRange(event.time, { days: 1 }, now));
+    metricsMount.innerHTML = `
+      <div><span>生效订阅</span><strong>${active}</strong></div>
+      <div><span>情报总推送</span><strong>${entries.length}</strong></div>
+      <div><span>今日新增</span><strong>${today.length}<small class="if-metric-unit">条</small></strong></div>`;
+    breakdownMount.innerHTML = `<span class="if-today-breakdown-label">今日舆情</span>${['正面', '反面', '中立'].map(sentiment => `
+      <span class="if-badge if-sentiment" data-sentiment="${sentiment}"><span>${sentiment}</span><b>${today.filter(({ event }) => event.sentiment === sentiment).length}</b>条</span>`).join('')}`;
     renderGroupTabs();
     renderFeed(entries);
     if (settingsDialog.open) renderSubscriptionSettings(now);
@@ -446,6 +452,8 @@
       const { event, matches } = entry;
       const groupMatch = view.subscription ? matches.find(({ rule }) => rule.id === view.subscription) : null;
       if (view.subscription && !groupMatch) return [];
+      if (view.sentiment && event.sentiment !== view.sentiment) return [];
+      if (view.eventCodes.length && !event.subtypes.some(code => view.eventCodes.includes(code))) return [];
       const isRead = state.read.includes(event.id);
       const tags = Object.values(event.tags).flat();
       if (view.read === 'unread' && isRead || view.read === 'read' && !isRead) return [];
@@ -466,15 +474,26 @@
         <label><span class="if-sr">排序</span><select name="sort">
           ${option('match', '匹配度优先', view.sort)}${option('time', '发布时间倒序', view.sort)}
         </select></label>
+        <label><span class="if-sr">舆情性质</span><select name="sentiment">
+          ${option('', '全部舆情性质', view.sentiment)}${sentiments.map(label => option(label, label, view.sentiment)).join('')}
+        </select></label>
+        ${eventPickerMarkup(true)}
       </form>
       <div class="if-feed-grid">
         <section class="if-card if-feed" aria-labelledby="ifListHeading">
-          <header class="if-list-heading"><h2 id="ifListHeading">命中情报</h2><span>${visible.length} 条</span></header>
+          <header class="if-list-heading"><h2 id="ifListHeading">情报总推送</h2><span>${visible.length} 条</span></header>
           ${visible.length ? visible.map(entry => eventRow(entry, view.selected)).join('') : emptyFeed()}
         </section>
       ${selected ? eventDetail(selected) : '<div class="if-card if-empty if-detail-empty">选择一条情报查看详情</div>'}
       </div>`;
     if (view.analysisStream) workspace.querySelector('#ifAnalysisBody').replaceWith(view.analysisStream.body);
+    bindEventPicker(workspace.querySelector('.if-filters'), view.eventCodes, {
+      onConfirm(codes) {
+        view.eventCodes = codes;
+        render();
+        workspace.querySelector('.if-feed-event-filter .if-event-picker-toggle').focus({ preventScroll: true });
+      }
+    });
   }
 
   function option(value, label, selected) {
@@ -486,7 +505,7 @@
     if (group && !group.enabled) {
       return '<div class="if-empty"><strong>当前订阅分组已暂停</strong><button class="if-link" type="button" data-if-action="settings">打开订阅设置</button></div>';
     }
-    if (view.read || view.search) {
+    if (view.read || view.search || view.sentiment || view.eventCodes.length) {
       return '<div class="if-empty"><strong>暂无符合当前筛选的情报</strong><button class="if-link" type="button" data-if-action="clear">清空筛选</button></div>';
     }
     if (group) {
@@ -639,10 +658,6 @@
             <span><time datetime="${esc(item.date)}">${esc(item.date)}</time> · ${esc(item.source)}</span>
             <p>${esc(item.similarity)}</p>
           </li>`).join('')}</ul>` : '<p>暂无可引用的历史相似事件。</p>'}
-      </section>`,
-      `<section class="if-analysis-evidence if-analysis-verification">
-        <h4>待核验关注事项</h4>
-        <p>${esc(analysis.verification)}</p>
       </section>`
     ];
   }
@@ -783,23 +798,24 @@
     return labels.length > 4 ? [...labels.slice(0, 4), '另 ' + (labels.length - 4) + ' 项'] : labels;
   }
 
-  function eventPickerMarkup() {
-    return `<fieldset class="if-event-field">
-      <legend>事件类型</legend>
-      <button class="if-event-picker-toggle" type="button" aria-expanded="false" aria-controls="ifEventPicker" aria-describedby="ifEventPickerHint">
+  function eventPickerMarkup(feed = false) {
+    const prefix = feed ? 'ifFeedEvent' : 'ifEvent';
+    return `<fieldset class="if-event-field${feed ? ' if-feed-event-filter' : ''}">
+      <legend${feed ? ' class="if-sr"' : ''}>事件类型</legend>
+      <button class="if-event-picker-toggle" type="button" aria-expanded="false" aria-controls="${prefix}Picker"${feed ? '' : ' aria-describedby="ifEventPickerHint"'}>
         <span data-if-event-value>不限事件类型</span><i aria-hidden="true">⌄</i>
       </button>
-      <div class="if-event-picker-summary" data-if-event-summary hidden></div>
-      <p class="if-help if-event-picker-hint" id="ifEventPickerHint">可跨类别多选，勾选一级即选中该类全部二级事件。任一所选事件类型命中即可。</p>
-      <div class="if-event-picker" id="ifEventPicker" hidden>
+      ${feed ? '' : `<div class="if-event-picker-summary" data-if-event-summary hidden></div>
+      <p class="if-help if-event-picker-hint" id="ifEventPickerHint">可跨类别多选，勾选一级即选中该类全部二级事件。任一所选事件类型命中即可。</p>`}
+      <div class="if-event-picker" id="${prefix}Picker" hidden>
         <div class="if-event-picker-search"><input type="search" autocomplete="off" spellcheck="false" aria-label="搜索事件类型" placeholder="搜索事件类型"></div>
         <div class="if-event-picker-columns">
-          <div role="group" aria-labelledby="ifEventParentsTitle">
-            <div class="if-event-picker-column-title" id="ifEventParentsTitle">一级事件类型</div>
+          <div role="group" aria-labelledby="${prefix}ParentsTitle">
+            <div class="if-event-picker-column-title" id="${prefix}ParentsTitle">一级事件类型</div>
             <div class="if-event-picker-options" data-if-event-parents></div>
           </div>
-          <div role="group" aria-labelledby="ifEventChildrenTitle">
-            <div class="if-event-picker-column-title" id="ifEventChildrenTitle">二级事件类型</div>
+          <div role="group" aria-labelledby="${prefix}ChildrenTitle">
+            <div class="if-event-picker-column-title" id="${prefix}ChildrenTitle">二级事件类型</div>
             <div class="if-event-picker-options" data-if-event-leaves></div>
           </div>
         </div>
@@ -831,7 +847,7 @@
     });
   }
 
-  function bindEventPicker(form, initialCodes) {
+  function bindEventPicker(form, initialCodes, { onConfirm, onClose } = {}) {
     const field = form.querySelector('.if-event-field');
     const trigger = field.querySelector('.if-event-picker-toggle');
     const summary = field.querySelector('[data-if-event-summary]');
@@ -848,9 +864,13 @@
     let visibleGroups = catalog;
 
     function renderApplied() {
-      trigger.querySelector('[data-if-event-value]').textContent = applied.length ? '已选 ' + applied.length + ' 项二级事件类型' : '不限事件类型';
-      summary.hidden = !applied.length;
-      summary.innerHTML = shortEventLabels(applied).map(label => `<span class="if-badge">${esc(label)}</span>`).join('');
+      const labels = shortEventLabels(applied);
+      trigger.querySelector('[data-if-event-value]').textContent = applied.length ?
+        (summary ? `已选 ${applied.length} 项二级事件类型` : `事件类型 · 已选 ${applied.length} 项`) : '不限事件类型';
+      if (summary) {
+        summary.hidden = !applied.length;
+        summary.innerHTML = labels.map(label => `<span class="if-badge">${esc(label)}</span>`).join('');
+      } else trigger.title = labels.join('、');
     }
 
     function updateSelection() {
@@ -896,7 +916,7 @@
       panel.hidden = true;
       trigger.setAttribute('aria-expanded', 'false');
       renderApplied();
-      showFormError('');
+      onClose?.();
       trigger.focus();
     }
 
@@ -933,6 +953,7 @@
     confirm.addEventListener('click', () => {
       applied = orderedEventCodes(draft);
       closePicker();
+      onConfirm?.(applied);
     });
     form.addEventListener('keydown', event => {
       if (event.key === 'Enter' && event.target === search) event.preventDefault();
@@ -980,7 +1001,7 @@
         <footer class="if-dialog-footer"><button class="if-button" type="button" data-if-close>取消</button><button class="if-button if-primary" type="submit">保存订阅</button></footer>
       </form>`;
     const form = dialog.querySelector('form');
-    const picker = bindEventPicker(form, data.eventCodes);
+    const picker = bindEventPicker(form, data.eventCodes, { onClose: () => showFormError('') });
     form.addEventListener('change', () => showFormError(''));
     form.addEventListener('submit', event => {
       if (picker.needsConfirmation()) {
@@ -1031,7 +1052,7 @@
       showFormError('订阅条件包含无法识别的选项，请检查后重试。');
       return;
     }
-    if (!original) Object.assign(view, { subscription: rule.id, read: '', search: '', selected: '' });
+    if (!original) Object.assign(view, emptyFeedFilters, { subscription: rule.id, selected: '' });
     saveState(current => ({
       ...current,
       subscriptions: original ? current.subscriptions.map(item => item.id === rule.id ? rule : item) : [rule, ...current.subscriptions]
@@ -1065,7 +1086,7 @@
 
   function openEvent(id) {
     if (typeof window.show === 'function') window.show(root.id);
-    Object.assign(view, { subscription: '', read: '', search: '', selected: id || '' });
+    Object.assign(view, emptyFeedFilters, { subscription: '', selected: id || '' });
     setStatus(id && !hits().some(entry => entry.event.id === id) ? '这条情报未命中当前生效的订阅。' : '');
     render();
   }
@@ -1099,7 +1120,7 @@
       return true;
     }
     if (action === 'ruleFeed') {
-      Object.assign(view, { subscription: rule.id, read: '', search: '', selected: '' });
+      Object.assign(view, emptyFeedFilters, { subscription: rule.id, selected: '' });
       render();
       focusAfterSettings = activeGroupTab();
       settingsDialog.close();
@@ -1143,7 +1164,7 @@
     }
     setStatus('');
     if (action === 'group') view.subscription = id;
-    if (action === 'clear') Object.assign(view, { read: '', search: '' });
+    if (action === 'clear') Object.assign(view, emptyFeedFilters);
     if (action === 'event') view.selected = id;
     if (action === 'read') {
       const markRead = !state.read.includes(id);
