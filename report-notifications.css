@@ -34,17 +34,14 @@
 
 .report-notice__badge {
   position: absolute;
-  right: -6px;
-  top: -6px;
-  min-width: 17px;
-  height: 17px;
-  padding: 0 3px;
+  top: -3px;
+  right: -3px;
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
   border: 2px solid #fff;
-  border-radius: 12px;
+  border-radius: 50%;
   background: var(--report-notice-unread-color);
-  color: #fff;
-  font-size: 10px;
-  line-height: 13px;
 }
 
 .report-notice__panel {
@@ -107,8 +104,8 @@
 .report-notice__filters [data-notice-filter="unread"] {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-width: 35px;
+  justify-content: center;
+  min-width: 30px;
 }
 
 .report-notice__filters i {

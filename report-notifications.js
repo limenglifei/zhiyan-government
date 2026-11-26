@@ -226,13 +226,13 @@
     root.innerHTML = `
       <button type="button" class="report-notice__trigger" aria-label="消息通知" aria-expanded="false" aria-controls="reportNoticePanel" title="消息通知">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12a2 2 0 0 0 4 0"/></svg>
-        <b class="report-notice__badge" aria-hidden="true" hidden></b>
+        <i class="report-notice__badge" aria-hidden="true" hidden></i>
       </button>
       <section class="report-notice__panel" id="reportNoticePanel" aria-labelledby="reportNoticeTitle" hidden>
         <header><h2 id="reportNoticeTitle">消息通知</h2><button type="button" data-notice-read-all>全部已读</button></header>
         <div class="report-notice__filters" role="group" aria-label="通知筛选">
           <button type="button" data-notice-filter="all" aria-pressed="true">全部消息</button>
-          <button type="button" data-notice-filter="unread" aria-pressed="false" aria-label="仅看未读消息"><i aria-hidden="true"></i><b aria-hidden="true">0</b></button>
+          <button type="button" data-notice-filter="unread" aria-pressed="false" aria-label="仅看未读消息"><i aria-hidden="true"></i></button>
         </div>
         <ul class="report-notice__list"></ul>
         <p class="report-notice__empty" hidden></p>
@@ -245,22 +245,18 @@
     const empty = root.querySelector('.report-notice__empty');
     const filters = root.querySelector('.report-notice__filters');
     const unreadFilter = filters.querySelector('[data-notice-filter="unread"]');
-    const filterCount = unreadFilter.querySelector('b');
     const readAll = root.querySelector('[data-notice-read-all]');
     let filter = 'all';
 
     update = () => {
       const all = messages();
       const unread = all.filter(message => !message.read);
-      const count = unread.length > 99 ? '99+' : String(unread.length);
-      badge.hidden = !unread.length;
-      badge.textContent = count;
-      trigger.setAttribute('aria-label', unread.length ? `消息通知，${unread.length} 条未读` : '消息通知');
+      const hasUnread = unread.length > 0;
+      badge.hidden = !hasUnread;
+      trigger.setAttribute('aria-label', hasUnread ? '消息通知，有未读消息' : '消息通知');
       if (panel.hidden) return;
-      readAll.disabled = !unread.length;
-      unreadFilter.setAttribute('aria-label', `仅看未读消息，${unread.length} 条`);
-      unreadFilter.classList.toggle('has-unread', Boolean(unread.length));
-      filterCount.textContent = count;
+      readAll.disabled = !hasUnread;
+      unreadFilter.classList.toggle('has-unread', hasUnread);
       const items = filter === 'unread' ? unread : all;
       const focusId = document.activeElement?.dataset.noticeId;
       list.replaceChildren(...items.map(itemMarkup));
