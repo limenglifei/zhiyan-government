@@ -236,16 +236,33 @@
   root.innerHTML = `
     <header class="if-heading">
       <div><h1 id="intelligenceFeedHeading">产业情报中心</h1><p>订阅产业动态，查看事件研判和产业链风险。</p></div>
-      <button class="if-button if-primary" type="button" data-if-action="create"><span aria-hidden="true">＋</span> 新建订阅</button>
+      <button class="if-button if-primary if-settings-trigger" type="button" data-if-action="settings"
+        aria-haspopup="dialog" aria-controls="ifSubscriptionSettings">订阅设置</button>
     </header>
     <div class="if-overview" aria-label="订阅概况"></div>
-    <nav class="if-tabs" aria-label="产业情报中心视图">
-      <button type="button" data-if-action="feed" aria-pressed="true">订阅信息流</button>
-      <button type="button" data-if-action="subscriptions" aria-pressed="false">我的订阅</button>
-    </nav>
+    <nav class="if-tabs if-group-tabs" aria-label="订阅信息流分组"></nav>
     <p class="if-status" role="status" hidden></p>
     <div class="if-workspace"></div>`;
   main.appendChild(root);
+
+  const settingsDialog = document.createElement('dialog');
+  settingsDialog.id = 'ifSubscriptionSettings';
+  settingsDialog.className = 'if-dialog if-settings-dialog';
+  settingsDialog.setAttribute('aria-labelledby', 'ifSettingsTitle');
+  settingsDialog.innerHTML = `
+    <header class="if-dialog-header">
+      <h2 id="ifSettingsTitle">我的订阅分组</h2>
+      <button class="if-close" type="button" data-if-settings-close aria-label="关闭订阅设置">×</button>
+    </header>
+    <div class="if-dialog-body if-settings-body">
+      <p class="if-status" role="status" hidden></p>
+      <div class="if-settings-list"></div>
+    </div>
+    <footer class="if-dialog-footer">
+      <button class="if-button" type="button" data-if-settings-close>完成</button>
+      <button class="if-button if-primary" type="button" data-if-action="create" autofocus>新建订阅</button>
+    </footer>`;
+  document.body.appendChild(settingsDialog);
 
   const dialog = document.createElement('dialog');
   dialog.className = 'if-dialog';
@@ -257,11 +274,15 @@
   sourceDialog.setAttribute('aria-labelledby', 'ifSourceTitle');
   document.body.appendChild(sourceDialog);
   const overview = root.querySelector('.if-overview');
+  const groupTabs = root.querySelector('.if-group-tabs');
   const workspace = root.querySelector('.if-workspace');
   const status = root.querySelector('.if-status');
-  const view = { tab: 'feed', subscription: '', read: '', search: '', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
+  const settingsStatus = settingsDialog.querySelector('.if-status');
+  const settingsList = settingsDialog.querySelector('.if-settings-list');
+  const view = { subscription: '', read: '', search: '', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
   let state = readState() || { subscriptions: starterSubscriptions, read: [] };
   let focusBeforeDialog;
+  let focusAfterSettings;
 
   function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -313,8 +334,11 @@
   }
 
   function setStatus(message) {
-    status.hidden = !message;
-    status.textContent = message;
+    const active = settingsDialog.open ? settingsStatus : status;
+    const inactive = settingsDialog.open ? status : settingsStatus;
+    active.hidden = !message;
+    active.textContent = message;
+    inactive.hidden = true;
   }
 
   function saveState(change, message) {
@@ -345,25 +369,29 @@
   }
 
   function render() {
+    if (!state.subscriptions.some(rule => rule.id === view.subscription)) view.subscription = '';
     const entries = hits();
     const unread = entries.filter(entry => !state.read.includes(entry.event.id)).length;
     const active = state.subscriptions.filter(rule => rule.enabled).length;
     const metrics = [['生效订阅', active], ['命中情报', entries.length], ['未读情报', unread]];
     overview.innerHTML = `<div class="if-metrics">${metrics.map(([label, value]) => `
       <div><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>`;
-    root.querySelectorAll('.if-tabs button').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.ifAction === view.tab));
-    });
-    if (view.tab === 'feed') renderFeed(entries);
-    else {
-      stopAnalysisStream();
-      renderSubscriptions();
-    }
+    renderGroupTabs();
+    renderFeed(entries);
+    if (settingsDialog.open) renderSubscriptionSettings();
+  }
+
+  function renderGroupTabs() {
+    const scrollLeft = groupTabs.scrollLeft;
+    groupTabs.innerHTML = [{ id: '', name: '全部', enabled: true }, ...state.subscriptions].map(rule => `
+      <button class="if-group-tab" type="button" data-if-action="group" data-if-id="${esc(rule.id)}"
+        aria-pressed="${rule.id === view.subscription}" title="${esc(rule.name)}">
+        <span class="if-group-name">${esc(rule.name)}</span>${rule.enabled ? '' : '<span class="if-group-state">已暂停</span>'}
+      </button>`).join('');
+    groupTabs.scrollLeft = scrollLeft;
   }
 
   function renderFeed(entries) {
-    const enabled = state.subscriptions.filter(rule => rule.enabled);
-    if (!enabled.some(rule => rule.id === view.subscription)) view.subscription = '';
     const search = normalize(view.search);
     const visible = entries.filter(({ event, rules }) => {
       const isRead = state.read.includes(event.id);
@@ -379,10 +407,6 @@
       <form class="if-filters" aria-label="筛选订阅信息流">
         <label class="if-search"><span class="if-sr">搜索情报</span><input name="search" type="search" placeholder="搜索标题、城市、主体或来源" value="${esc(view.search)}"></label>
         <button type="submit" class="if-button">搜索</button>
-        <label><span class="if-sr">订阅规则</span><select name="subscription">
-          <option value="">全部订阅</option>
-          ${enabled.map(rule => option(rule.id, rule.name, view.subscription)).join('')}
-        </select></label>
         <label><span class="if-sr">阅读状态</span><select name="read">
           ${option('', '全部状态', view.read)}${option('unread', '仅未读', view.read)}${option('read', '仅已读', view.read)}
         </select></label>
@@ -402,15 +426,18 @@
   }
 
   function emptyFeed() {
-    const enabled = state.subscriptions.some(rule => rule.enabled);
+    const group = state.subscriptions.find(rule => rule.id === view.subscription);
+    if (group && !group.enabled) {
+      return '<div class="if-empty"><strong>当前订阅分组已暂停</strong><button class="if-link" type="button" data-if-action="settings">打开订阅设置</button></div>';
+    }
     if (view.read || view.search) {
       return '<div class="if-empty"><strong>暂无符合当前筛选的情报</strong><button class="if-link" type="button" data-if-action="clear">清空筛选</button></div>';
     }
-    if (view.subscription) {
-      return `<div class="if-empty"><strong>当前订阅暂无匹配情报</strong><button class="if-link" type="button" data-if-action="edit" data-if-id="${esc(view.subscription)}">调整订阅条件</button><button class="if-link" type="button" data-if-action="clear">查看全部订阅</button></div>`;
+    if (group) {
+      return `<div class="if-empty"><strong>当前订阅分组暂无匹配情报</strong><button class="if-link" type="button" data-if-action="edit" data-if-id="${esc(group.id)}">调整订阅条件</button><button class="if-link" type="button" data-if-action="group" data-if-id="">查看全部情报</button></div>`;
     }
-    if (enabled) return '<div class="if-empty"><strong>暂无订阅命中</strong><p>可以在“我的订阅”中调整关注条件。</p></div>';
-    return '<div class="if-empty"><strong>暂无生效的订阅</strong><button class="if-link" type="button" data-if-action="subscriptions">查看我的订阅</button></div>';
+    const message = state.subscriptions.some(rule => rule.enabled) ? '暂无订阅命中' : '暂无生效的订阅';
+    return `<div class="if-empty"><strong>${message}</strong><button class="if-link" type="button" data-if-action="settings">打开订阅设置</button></div>`;
   }
 
   function eventRow({ event, rules }, selected) {
@@ -650,12 +677,17 @@
     return tags;
   }
 
-  function renderSubscriptions() {
-    workspace.innerHTML = `<div class="if-manage">
-      <header><h2>我的订阅</h2><p>暂停后规则及阅读状态会保留，恢复后继续匹配。</p></header>
-      ${state.subscriptions.length ? `<div class="if-sub-grid">${state.subscriptions.map(subscriptionCard).join('')}</div>` :
-        '<div class="if-card if-empty"><strong>还没有订阅</strong><button class="if-link" type="button" data-if-action="create">新建订阅</button></div>'}
-    </div>`;
+  function renderSubscriptionSettings() {
+    settingsList.innerHTML = state.subscriptions.length ?
+      `<div class="if-sub-grid">${state.subscriptions.map(subscriptionCard).join('')}</div>` :
+      '<div class="if-card if-empty"><strong>还没有订阅分组</strong></div>';
+  }
+
+  function openSubscriptionSettings(button) {
+    focusAfterSettings = button;
+    renderSubscriptionSettings();
+    settingsDialog.showModal();
+    setStatus('');
   }
 
   function subscriptionCard(rule) {
@@ -929,15 +961,16 @@
       showFormError('订阅条件包含无法识别的选项，请检查后重试。');
       return;
     }
-    if (!original) Object.assign(view, { tab: 'feed', subscription: rule.id, read: '', search: '', selected: '' });
+    if (!original) Object.assign(view, { subscription: rule.id, read: '', search: '', selected: '' });
     saveState(current => ({
       ...current,
-      subscriptions: [rule, ...current.subscriptions.filter(item => item.id !== rule.id)]
+      subscriptions: original ? current.subscriptions.map(item => item.id === rule.id ? rule : item) : [rule, ...current.subscriptions]
     }), original ? '订阅规则已更新，信息流已重新匹配。' : '订阅已创建，信息流已按规则匹配。');
-    focusBeforeDialog = null;
-    dialog.close();
     render();
-    root.querySelector('[data-if-action="' + view.tab + '"]').focus();
+    focusBeforeDialog = settingsDialog.open
+      ? actionButton(settingsDialog, 'edit', rule.id)
+      : activeGroupTab();
+    dialog.close();
   }
 
   function confirmRemove(rule) {
@@ -953,34 +986,72 @@
         ...current,
         subscriptions: current.subscriptions.filter(item => item.id !== rule.id)
       }), '订阅已删除。');
-      focusBeforeDialog = null;
-      dialog.close();
       render();
-      root.querySelector('[data-if-action="subscriptions"]').focus();
+      focusBeforeDialog = settingsDialog.querySelector('[data-if-action="create"]');
+      dialog.close();
     });
     dialog.showModal();
   }
 
   function openEvent(id) {
     if (typeof window.show === 'function') window.show(root.id);
-    Object.assign(view, { tab: 'feed', subscription: '', read: '', search: '', selected: id || '' });
+    Object.assign(view, { subscription: '', read: '', search: '', selected: id || '' });
     setStatus(id && !hits().some(entry => entry.event.id === id) ? '这条情报未命中当前生效的订阅。' : '');
     render();
   }
 
-  function restoreButton(action, id) {
-    const button = [...root.querySelectorAll('[data-if-action="' + action + '"]')].find(item => item.dataset.ifId === id);
-    (button || root.querySelector('[data-if-action="' + view.tab + '"]')).focus();
+  function actionButton(container, action, id) {
+    return [...container.querySelectorAll('[data-if-action="' + action + '"]')].find(item => item.dataset.ifId === id);
+  }
+
+  function activeGroupTab() {
+    return groupTabs.querySelector('[aria-pressed="true"]');
+  }
+
+  function handleSubscriptionAction(button) {
+    const { ifAction: action, ifId: id } = button.dataset;
+    if (action === 'settings') {
+      openSubscriptionSettings(button);
+      return true;
+    }
+    if (action === 'create') {
+      formDialog();
+      return true;
+    }
+    const rule = state.subscriptions.find(item => item.id === id);
+    if (!rule) return false;
+    if (action === 'edit') {
+      formDialog(rule);
+      return true;
+    }
+    if (action === 'remove') {
+      confirmRemove(rule);
+      return true;
+    }
+    if (action === 'ruleFeed') {
+      Object.assign(view, { subscription: rule.id, read: '', search: '', selected: '' });
+      render();
+      focusAfterSettings = activeGroupTab();
+      settingsDialog.close();
+      return true;
+    }
+    if (action === 'toggle') {
+      saveState(current => ({
+        ...current,
+        subscriptions: current.subscriptions.map(item => item.id === id ? { ...item, enabled: !item.enabled } : item)
+      }), rule.enabled ? '已暂停该订阅。' : '已恢复该订阅。');
+      render();
+      actionButton(settingsDialog, 'toggle', id)?.focus();
+      return true;
+    }
+    return false;
   }
 
   root.addEventListener('click', event => {
     const button = event.target.closest('[data-if-action]');
     if (!button) return;
     const { ifAction: action, ifId: id } = button.dataset;
-    const rule = state.subscriptions.find(item => item.id === id);
-    if (action === 'create') return formDialog();
-    if (action === 'edit' && rule) return formDialog(rule);
-    if (action === 'remove' && rule) return confirmRemove(rule);
+    if (handleSubscriptionAction(button)) return;
     if (action === 'analysis') return toggleAnalysis(button, id);
     if (action === 'generate-analysis' || action === 'cancel-analysis') {
       const selected = sampleEvents.find(item => item.id === id);
@@ -1001,9 +1072,8 @@
       return;
     }
     setStatus('');
-    if (action === 'feed' || action === 'subscriptions') view.tab = action;
-    if (action === 'ruleFeed' && rule) Object.assign(view, { tab: 'feed', subscription: rule.id, read: '', search: '', selected: '' });
-    if (action === 'clear') Object.assign(view, { subscription: '', read: '', search: '' });
+    if (action === 'group') view.subscription = id;
+    if (action === 'clear') Object.assign(view, { read: '', search: '' });
     if (action === 'event') view.selected = id;
     if (action === 'read') {
       const markRead = !state.read.includes(id);
@@ -1012,14 +1082,8 @@
         read: markRead ? [...new Set([...current.read, id])] : current.read.filter(item => item !== id)
       }), markRead ? '已标为已读。' : '已标为未读。');
     }
-    if (action === 'toggle' && rule) {
-      saveState(current => ({
-        ...current,
-        subscriptions: current.subscriptions.map(item => item.id === id ? { ...item, enabled: !rule.enabled } : item)
-      }), rule.enabled ? '已暂停该订阅。' : '已恢复该订阅。');
-    }
     render();
-    if (!button.isConnected) restoreButton(action, id);
+    if (!button.isConnected) (actionButton(root, action, id) || activeGroupTab()).focus();
   });
 
   workspace.addEventListener('submit', event => {
@@ -1038,11 +1102,27 @@
     workspace.querySelector('select[name="' + name + '"]').focus();
   });
 
+  settingsDialog.addEventListener('click', event => {
+    if (event.target === settingsDialog || event.target.closest('[data-if-settings-close]')) {
+      settingsDialog.close();
+      return;
+    }
+    const button = event.target.closest('[data-if-action]');
+    if (button) handleSubscriptionAction(button);
+  });
+  settingsDialog.addEventListener('close', () => {
+    const target = focusAfterSettings?.isConnected ? focusAfterSettings : root.querySelector('.if-settings-trigger');
+    target.focus();
+    focusAfterSettings = null;
+  });
   dialog.addEventListener('click', event => {
     if (event.target === dialog || event.target.closest('[data-if-close]')) dialog.close();
   });
   dialog.addEventListener('close', () => {
-    if (focusBeforeDialog?.isConnected) focusBeforeDialog.focus();
+    const target = focusBeforeDialog?.isConnected ? focusBeforeDialog :
+      settingsDialog.open ? settingsDialog.querySelector('[data-if-action="create"]') : activeGroupTab();
+    target?.focus();
+    focusBeforeDialog = null;
   });
   sourceDialog.addEventListener('click', event => {
     if (event.target === sourceDialog || event.target.closest('[data-if-source-close]')) sourceDialog.close();
