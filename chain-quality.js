@@ -657,7 +657,8 @@
       const stage = item.querySelector('.cq-issue-stage');
       stage.hidden = !issue.stage;
       stage.textContent = parentLabel(issue.stage);
-      item.querySelector('h5').textContent = '修改建议：' + issue.title.replace(/^修改建议[：:]\s*/, '');
+      const title = issue.title.trim().replace(/^(?:(?:修改建议|AI\s*质检建议)\s*[：:]\s*)+/, '');
+      item.querySelector('h5').textContent = 'AI质检建议：' + title;
       const rationale = item.querySelector('.cq-rationale');
       const basis = String(issue.basis ?? '').trim();
       const detail = String(issue.detail ?? '').trim().replace(/[。！？.!?]+$/, '') || '需补充具体修改理由';
