@@ -651,7 +651,7 @@
           <h5></h5><span class="cq-issue-stage"></span>
         </header>
         <div class="cq-rationale" role="group" aria-label="理由与依据">
-          <div class="cq-rationale-heading"><h6>理由与依据</h6></div>
+          <h6>理由与依据</h6>
           <p></p>
         </div>`;
       const stage = item.querySelector('.cq-issue-stage');
@@ -690,7 +690,7 @@
         if (issue.label) confirm.title = issue.label;
         actions.append(confirm, decisionButton('defer', '不采纳', 'secondary cq-decision-defer'));
       }
-      rationale.querySelector('.cq-rationale-heading').append(actions);
+      rationale.append(actions);
       item.append(renderIssueValues(issue), rationale);
       return item;
     }
