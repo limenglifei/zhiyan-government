@@ -5,7 +5,7 @@
   const dimensions = [
     ['add', '新增子节点'], ['delete', '删除子节点'], ['revise', '修正子节点属性'],
     ['advantage', '优势环节描述修正'], ['weak', '薄弱环节描述修正'], ['enterprise', '链主及重点企业修正'],
-    ['structure', '产业链结构描述修正'], ['source', '数据来源依据修正']
+    ['structure', '产业链结构修正'], ['source', '数据来源依据修正']
   ];
   const qualityModel = '星火 X2.6';
   const storageKey = 'zhiyan-government-quality-graphs-v1';
@@ -605,26 +605,23 @@
       item.className = 'cq-issue';
       item.dataset.cqKind = issue.kind;
       item.innerHTML = `
-        <div class="cq-issue-heading">
-          <span class="cq-section-label">问题类型</span>
-          <span class="cq-issue-kind"></span><span class="cq-issue-stage"></span>
-        </div>
-        <h5></h5>
-        <div class="cq-rationale" role="group" aria-label="修改理由和依据">
-          <h6>修改理由和依据</h6>
+        <header class="cq-issue-heading">
+          <h5></h5><span class="cq-issue-stage"></span>
+        </header>
+        <div class="cq-rationale" role="group" aria-label="理由与依据">
+          <h6>理由与依据</h6>
           <p></p>
         </div>`;
-      item.querySelector('.cq-issue-kind').textContent = dimensions.find(([kind]) => kind === issue.kind)?.[1] || '';
       const stage = item.querySelector('.cq-issue-stage');
       stage.hidden = !issue.stage;
       stage.textContent = parentLabel(issue.stage);
       item.querySelector('h5').textContent = '修改建议：' + issue.title.replace(/^修改建议[：:]\s*/, '');
+      const rationale = item.querySelector('.cq-rationale');
       const basis = String(issue.basis ?? '').trim();
       const detail = String(issue.detail ?? '').trim().replace(/[。！？.!?]+$/, '') || '需补充具体修改理由';
       const context = basis ? '根据' + basis + '，' : '现有材料缺少可核验依据，';
-      item.querySelector('.cq-rationale p').textContent = (issue.reviewStatus ? '' : context) + detail + '。';
+      rationale.querySelector('p').textContent = (issue.reviewStatus ? '' : context) + detail + '。';
 
-      item.append(renderIssueValues(issue));
       const footer = document.createElement('div');
       footer.className = 'cq-issue-action';
       function decisionButton(action, label, className) {
@@ -640,16 +637,18 @@
       if (decision) {
         const state = document.createElement('span');
         state.className = 'cq-decision-status';
+        state.dataset.cqIssue = index;
+        state.tabIndex = -1;
         const confirmed = resultsMode === 'examples' ? '已采纳 · 示例' :
           (issue.action === 'sync' ? '已采纳 · 保存画布后生效' : '已采纳 · 待人工核验');
         state.textContent = decision === 'deferred' ? '不采纳' : confirmed;
-        footer.append(state, decisionButton('reopen', '恢复处理', 'cq-link'));
+        footer.append(state);
       } else {
         const confirm = decisionButton('confirm', '采纳', 'primary cq-decision-confirm');
         if (issue.label) confirm.title = issue.label;
         footer.append(confirm, decisionButton('defer', '不采纳', 'secondary cq-decision-defer'));
       }
-      item.append(footer);
+      item.append(renderIssueValues(issue), footer, rationale);
       return item;
     }
 
@@ -727,10 +726,7 @@
       if (!isExample && !validateReport()) return;
       const choices = isExample ? exampleChoices : reportChoices;
       const key = isExample ? issue : decisionKey(issue);
-      if (action === 'reopen') {
-        choices.delete(key);
-        if (!isExample && issue.action === 'sync') pendingDescriptions.delete(issue.kind);
-      } else if (action === 'defer') {
+      if (action === 'defer') {
         choices.set(key, 'deferred');
       } else if (!isExample && canApplyToCanvas(issue)) {
         if (mutateNode(issue)) {

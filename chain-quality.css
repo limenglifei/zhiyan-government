@@ -11,7 +11,7 @@
 }
 
 .cq-dialog {
-  width: min(1000px, calc(100% - 36px));
+  width: min(1120px, calc(100% - 36px));
   max-height: min(800px, calc(100dvh - 36px));
   margin: auto;
   padding: 0;
@@ -393,24 +393,15 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 7px;
-  margin-bottom: 6px;
 }
 
-.cq-section-label {
-  color: #526683;
-  font-size: 12px;
-  font-weight: 650;
-}
-
-.cq-issue-kind, .cq-issue-stage {
+.cq-issue-stage {
   padding: 2px 6px;
   border-radius: 4px;
-  color: #225d9f;
-  background: #eaf3ff;
+  background: #eef2f6;
+  color: #536a81;
   font-size: 11px;
 }
-
-.cq-issue-stage { background: #eef2f6; color: #536a81; }
 
 .cq-issue h5 {
   color: #203e61;
@@ -473,7 +464,7 @@
 }
 .cq-node-fields dd { margin: 0; }
 
-.cq-rationale { margin-top: 12px; }
+.cq-rationale { margin-top: 12px; padding-top: 9px; border-top: 1px solid #e5edf6; }
 .cq-rationale h6, .cq-node-fields h6 { margin: 0 0 5px; color: #203e61; font-size: 13px; }
 .cq-rationale p { color: #435b75; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
 .cq-source-changes {
