@@ -32,6 +32,7 @@
   const dimensionWeights = { city: 5, company: 13, product: 10, technology: 10, person: 12 };
   const levels = ['宏观', '行业', '企业', '个体'];
   const sentiments = ['中立', '反面', '正面'];
+  const summarySentiments = ['正面', '中立', '反面'];
   const publicationRanges = new Map([
     ['', { label: '不限发布日期' }],
     ['7d', { label: '近7天', days: 7 }],
@@ -243,6 +244,7 @@
   const storageKey = 'zhiyan-intelligence-feed-v2';
   const legacyStorageKey = 'zhiyan-intelligence-feed-v1';
   const emptyRule = { dimensions: {}, levels: [], sentiments: [], eventCodes: [], publicationRange: '', sourceSites: [] };
+  const icon = (name, symbol) => `<span class="if-icon" data-icon="${name}" data-symbol="${symbol}" aria-hidden="true"></span>`;
   const main = document.querySelector('.main');
   if (!main) return;
 
@@ -253,14 +255,18 @@
   root.innerHTML = `
     <header class="if-heading">
       <div><h1 id="intelligenceFeedHeading">产业情报中心</h1><p>订阅产业动态，查看事件研判和产业链风险。</p></div>
+      <button class="if-button if-primary if-settings-trigger" type="button" data-if-action="settings"
+        aria-haspopup="dialog" aria-controls="ifSubscriptionSettings">${icon('plus', '+')}订阅设置</button>
     </header>
     <div class="if-overview" aria-label="订阅概况">
       <div class="if-metrics"></div>
-      <button class="if-button if-primary if-settings-trigger" type="button" data-if-action="settings"
-        aria-haspopup="dialog" aria-controls="ifSubscriptionSettings">订阅设置</button>
-      <div class="if-today-breakdown" aria-label="今日新增舆情分布"></div>
+      <div class="if-today-breakdown" aria-labelledby="ifSentimentHeading"></div>
     </div>
-    <nav class="if-tabs if-group-tabs" aria-label="订阅信息流分组"></nav>
+    <div class="if-group-strip">
+      <button class="if-group-arrow" type="button" data-if-scroll-groups="-1" aria-label="向左查看订阅分组" hidden>‹</button>
+      <nav class="if-tabs if-group-tabs" aria-label="订阅信息流分组"></nav>
+      <button class="if-group-arrow" type="button" data-if-scroll-groups="1" aria-label="向右查看订阅分组" hidden>›</button>
+    </div>
     <p class="if-status" role="status" hidden></p>
     <div class="if-workspace"></div>`;
   main.appendChild(root);
@@ -295,7 +301,9 @@
   document.body.appendChild(sourceDialog);
   const metricsMount = root.querySelector('.if-metrics');
   const breakdownMount = root.querySelector('.if-today-breakdown');
+  const groupStrip = root.querySelector('.if-group-strip');
   const groupTabs = root.querySelector('.if-group-tabs');
+  const groupArrows = [...groupStrip.querySelectorAll('[data-if-scroll-groups]')];
   const workspace = root.querySelector('.if-workspace');
   const status = root.querySelector('.if-status');
   const settingsStatus = settingsDialog.querySelector('.if-status');
@@ -433,34 +441,61 @@
     });
   }
 
-  function render() {
+  function render({ resetFeedScroll = false } = {}) {
     if (!state.subscriptions.some(rule => rule.id === view.subscription)) view.subscription = '';
     const now = Date.now();
     const entries = hits(now);
     const active = state.subscriptions.filter(rule => rule.enabled).length;
     const today = entries.filter(({ event }) => publishedInRange(event.time, { days: 1 }, now));
-    metricsMount.innerHTML = `
-      <div><span>生效订阅</span><strong>${active}</strong></div>
-      <div><span>情报总推送</span><strong>${entries.length}</strong></div>
-      <div><span>今日新增</span><strong>${today.length}<small class="if-metric-unit">条</small></strong></div>`;
-    breakdownMount.innerHTML = `<span class="if-today-breakdown-label">今日舆情</span>${['正面', '反面', '中立'].map(sentiment => `
-      <span class="if-badge if-sentiment" data-sentiment="${sentiment}"><span>${sentiment}</span><b>${today.filter(({ event }) => event.sentiment === sentiment).length}</b>条</span>`).join('')}`;
-    renderGroupTabs();
-    renderFeed(entries, now);
+    const yesterday = entries.filter(({ event }) => publishedInRange(event.time, { days: 2 }, now)).length - today.length;
+    const delta = today.length - yesterday;
+    const change = delta ? `<small class="if-metric-change" data-direction="${delta > 0 ? 'up' : 'down'}">${delta > 0 ? '+' : '−'} ${Math.abs(delta)} 较昨日</small>` : '';
+    metricsMount.innerHTML = [
+      { label: '生效订阅', value: active, unit: '个', glyph: icon('subscription', '▤') },
+      { label: '情报总推送', value: entries.length, unit: '条', glyph: icon('intelligence', '▤') },
+      { label: '今日新增', value: today.length, unit: '条', glyph: icon('plus', '+'), foot: change }
+    ].map(({ label, value, unit, glyph, foot }) => `
+      <div><span class="if-metric-label">${glyph}${label}</span>
+        <strong>${value}<small class="if-metric-unit">${unit}</small></strong>${foot || ''}</div>`).join('');
+    const breakdown = summarySentiments.map(sentiment => [
+      sentiment, today.filter(({ event }) => event.sentiment === sentiment).length
+    ]);
+    breakdownMount.innerHTML = `
+      <div id="ifSentimentHeading" class="if-today-breakdown-label">${icon('distribution', '▥')}今日舆情性质分布</div>
+      <div class="if-sentiment-bar" aria-hidden="true">${today.length ? breakdown.map(([sentiment, count]) =>
+        `<span data-sentiment="${sentiment}" style="flex-basis:${100 * count / today.length}%"></span>`).join('') : ''}</div>
+      <div class="if-sentiment-legend">${breakdown.map(([sentiment, count]) => `
+        <span class="if-sentiment" data-sentiment="${sentiment}"><i aria-hidden="true"></i><span>${sentiment}</span><b>${count}</b>条</span>`).join('')}</div>`;
+    renderGroupTabs(entries);
+    renderFeed(entries, now, resetFeedScroll);
     if (settingsDialog.open) renderSubscriptionSettings(now);
   }
 
-  function renderGroupTabs() {
+  function updateGroupScrollControls() {
+    const overflow = groupStrip.clientWidth > 0 && groupTabs.scrollWidth > groupStrip.clientWidth + 1;
+    groupArrows.forEach(arrow => { arrow.hidden = !overflow; });
+    if (!overflow) return;
+    groupArrows[0].disabled = groupTabs.scrollLeft <= 1;
+    groupArrows[1].disabled = groupTabs.scrollLeft + groupTabs.clientWidth >= groupTabs.scrollWidth - 1;
+  }
+
+  function renderGroupTabs(entries) {
     const scrollLeft = groupTabs.scrollLeft;
+    const counts = new Map([['', entries.length]]);
+    for (const { matches } of entries) {
+      for (const { rule } of matches) counts.set(rule.id, (counts.get(rule.id) || 0) + 1);
+    }
     groupTabs.innerHTML = [{ id: '', name: '全部', enabled: true }, ...state.subscriptions].map(rule => `
       <button class="if-group-tab" type="button" data-if-action="group" data-if-id="${esc(rule.id)}"
         aria-pressed="${rule.id === view.subscription}" title="${esc(rule.name)}">
-        <span class="if-group-name">${esc(rule.name)}</span>${rule.enabled ? '' : '<span class="if-group-state">已暂停</span>'}
+        <span class="if-group-name">${esc(rule.name)}</span><span class="if-group-count">(${counts.get(rule.id) || 0})</span>${rule.enabled ? '' : '<span class="if-group-state">已暂停</span>'}
       </button>`).join('');
     groupTabs.scrollLeft = scrollLeft;
+    updateGroupScrollControls();
   }
 
-  function renderFeed(entries, now) {
+  function renderFeed(entries, now, resetFeedScroll) {
+    const listScroll = resetFeedScroll ? 0 : workspace.querySelector('.if-feed-items')?.scrollTop || 0;
     const search = normalize(view.search);
     const range = view.publicationRange === 'custom' ? null : publicationRanges.get(view.publicationRange);
     const customWindow = view.publicationRange === 'custom' ? view.customPublicationWindow : null;
@@ -487,8 +522,8 @@
     if (view.analysisStream && view.analysisStream.eventId !== view.selected) stopAnalysisStream();
     workspace.innerHTML = `
       <form class="if-filters" aria-label="筛选订阅信息流">
-        <label class="if-search"><span class="if-sr">搜索情报</span><input name="search" type="search" placeholder="搜索标题关键词" value="${esc(view.search)}"></label>
-        <button type="submit" class="if-button">搜索</button>
+        <label class="if-search"><span class="if-sr">搜索情报</span>${icon('search', '⌕')}<input name="search" type="search" placeholder="搜索标题关键词" value="${esc(view.search)}"></label>
+        <button type="submit" class="if-button if-primary if-search-submit">搜索</button>
         <label><span class="if-sr">阅读状态</span><select name="read">
           ${option('', '全部状态', view.read)}${option('unread', '仅未读', view.read)}${option('read', '仅已读', view.read)}
         </select></label>
@@ -506,21 +541,26 @@
           <header class="if-list-heading">
             <div class="if-list-heading-main">
               <h2 id="ifListHeading">情报总推送</h2>
-              <label class="if-list-sort"><span class="if-sr">排序</span><select name="sort">
-                ${option('match', '匹配度优先', view.sort)}${option('time', '发布时间倒序', view.sort)}
-              </select></label>
+              <span class="if-list-count">· ${visible.length} 条</span>
             </div>
-            <span>${visible.length} 条</span>
+            <div class="if-list-sort" role="group" aria-label="排序">
+              <button type="button" data-if-action="sort" data-if-id="match" aria-pressed="${view.sort === 'match'}">匹配度</button>
+              <button type="button" data-if-action="sort" data-if-id="time" aria-pressed="${view.sort === 'time'}">最新</button>
+            </div>
           </header>
-          ${visible.length ? visible.map(entry => eventRow(entry, view.selected)).join('') : emptyFeed()}
+          <p class="if-list-sort-note">${view.sort === 'match' ? '按订阅条件匹配度从高到低排列，同分按发布时间倒序。' : '按发布时间倒序排列。'}</p>
+          <div class="if-feed-items" role="region" aria-label="情报列表"${visible.length ? ' tabindex="0"' : ''}>
+            ${visible.length ? visible.map(entry => eventRow(entry, view.selected, now)).join('') : emptyFeed()}
+          </div>
         </section>
       ${selected ? eventDetail(selected) : '<div class="if-card if-empty if-detail-empty">选择一条情报查看详情</div>'}
       </div>`;
     if (view.analysisStream) workspace.querySelector('#ifAnalysisBody').replaceWith(view.analysisStream.body);
+    workspace.querySelector('.if-feed-items').scrollTop = listScroll;
     feedEventPicker = bindEventPicker(workspace.querySelector('.if-filters'), view.eventCodes, {
       onConfirm(codes) {
         view.eventCodes = codes;
-        render();
+        render({ resetFeedScroll: true });
         workspace.querySelector('.if-feed-event-filter .if-event-picker-toggle').focus({ preventScroll: true });
       }
     });
@@ -567,7 +607,7 @@
     }
     view.customPublicationWindow = { start, end, startAt, endBefore: endAt + minute };
     view.publicationDraft = null;
-    render();
+    render({ resetFeedScroll: true });
     workspace.querySelector('[name="applyPublicationWindow"]').focus({ preventScroll: true });
   }
 
@@ -590,36 +630,44 @@
     return event.sourceName || '发布机构未披露';
   }
 
-  function eventRow({ event, score }, selected) {
+  function eventRow({ event, score }, selected, now) {
     const unread = !state.read.includes(event.id);
-    return `<button class="if-event" type="button" data-if-action="event" data-if-id="${event.id}" aria-pressed="${event.id === selected}">
-      <span class="if-event-meta"><span class="if-badge">${categories.get(event.category).label}</span><time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time.slice(5)}</time></span>
-      <strong>${unread ? '<i class="if-unread-dot" aria-label="未读"></i>' : ''}${esc(event.title)}</strong>
-      <span class="if-event-summary">${esc(event.summary)}</span>
-      <span class="if-event-meta if-event-footer">
-        <span class="if-event-publisher" title="${esc(publisher(event))}">${esc(publisher(event))}</span>
-        <span class="if-event-score" title="按订阅规则计算，满分100分">匹配度 <b>${score}</b> 分</span>
+    const isNew = unread && publishedInRange(event.time, { days: 1 }, now);
+    const tone = score >= 90 ? 'high' : score >= 80 ? 'standard' : 'medium';
+    return `<button class="if-event" type="button" data-category="${event.category}" data-if-action="event" data-if-id="${event.id}" aria-pressed="${event.id === selected}">
+      <span class="if-event-main">
+        <span class="if-event-meta">
+          <span class="if-event-kind"><span class="if-badge">${categories.get(event.category).label}</span>
+            ${isNew ? '<span class="if-event-new" aria-label="今日发布，未读">NEW</span>' : ''}</span>
+          <time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time.slice(5)}</time>
+        </span>
+        <strong>${unread && !isNew ? '<i class="if-unread-dot" aria-label="未读"></i>' : ''}${esc(event.title)}</strong>
+        <span class="if-event-summary">${esc(event.summary)}</span>
+        <span class="if-event-publisher" title="${esc(publisher(event))}">${icon('publisher', '♙')}${esc(publisher(event))}</span>
       </span>
+      <span class="if-event-score" data-score-tone="${tone}" style="--if-score:${score}" role="img"
+        aria-label="匹配度 ${score} 分" title="匹配度 ${score} 分，满分 100 分"><b>${score}</b></span>
     </button>`;
   }
 
   function eventDetail({ event, matches }) {
     const unread = !state.read.includes(event.id);
-    const tagRows = Object.entries(dimensions)
-      .filter(([key]) => event.tags[key]?.length)
-      .map(([key, { label }]) => `<div><dt>${label}</dt><dd>${event.tags[key].map(value => `<span class="if-badge if-plain">${esc(value)}</span>`).join('')}</dd></div>`);
+    const tagRows = ['city', 'company', 'person', 'product', 'technology']
+      .filter(key => event.tags[key]?.length)
+      .map(key => `<div><dt>${dimensions[key].label}</dt><dd>${event.tags[key].map(value => `<span class="if-badge if-plain">${esc(value)}</span>`).join('')}</dd></div>`);
     const original = webLink(event.sourceUrl);
+    const sourceLabel = `查看原文 ${icon('external', '↗')}`;
     const source = original
-      ? `<a class="if-source-link" href="${esc(original)}" target="_blank" rel="noopener noreferrer">查看原文</a>`
-      : `<a class="if-source-link" href="?module=intelligenceFeed&amp;original=${encodeURIComponent(event.id)}" data-if-action="source" data-if-id="${esc(event.id)}">查看原文</a>`;
+      ? `<a class="if-source-link" href="${esc(original)}" target="_blank" rel="noopener noreferrer">${sourceLabel}</a>`
+      : `<a class="if-source-link" href="?module=intelligenceFeed&amp;original=${encodeURIComponent(event.id)}" data-if-action="source" data-if-id="${esc(event.id)}">${sourceLabel}</a>`;
 
     return `<article class="if-card if-detail" aria-labelledby="ifEventTitle">
       <header>
-        <h2 id="ifEventTitle">${esc(event.title)}</h2>
-        <div class="if-detail-meta">
-          <p class="if-detail-date"><span class="if-sr">发文来源机构</span><span class="if-source-name">${esc(publisher(event))}</span> · <time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time}</time> ${source}</p>
-          <button class="if-button if-detail-read" type="button" data-if-action="read" data-if-id="${event.id}">${unread ? '标为已读' : '标为未读'}</button>
+        <div class="if-detail-title">
+          <h2 id="ifEventTitle">${esc(event.title)}</h2>
+          <p class="if-detail-date if-detail-meta"><span class="if-sr">发文来源机构</span><span class="if-source-name">${esc(publisher(event))}</span><span aria-hidden="true">·</span><time datetime="${event.time.replace(' ', 'T')}+08:00">${event.time}</time><span aria-hidden="true">·</span>${source}</p>
         </div>
+        <button class="if-button if-detail-read" type="button" data-if-action="read" data-if-id="${event.id}">${unread ? '标为已读' : '标为未读'}</button>
       </header>
       <section><h3>事件标签</h3>
         <dl class="if-tag-rows">
@@ -631,7 +679,8 @@
       </section>
       <section><h3>事件摘要</h3><p>${esc(event.summary)}</p></section>
       <section><h3>命中订阅</h3><ul class="if-matches">${matches.map(({ rule }) => `
-        <li><b>${esc(rule.name)}</b><span>${ruleTags(rule, event).map(esc).join(' · ')}</span></li>`).join('')}</ul>
+        <li><span class="if-match-icon" aria-hidden="true">${icon('subscription', '▤')}</span>
+          <div><b>${esc(rule.name)}</b><span>${ruleTags(rule, event).map(esc).join(' · ')}</span></div></li>`).join('')}</ul>
       </section>
       ${eventAnalysis(event)}
     </article>`;
@@ -705,7 +754,8 @@
         aria-expanded="${expanded}" aria-controls="ifAnalysisBody">${expanded ? '收起分析' : '展开分析'}</button>` :
       available ? `<button type="button" class="if-button if-primary" data-if-action="generate-analysis" data-if-id="${esc(id)}">生成分析</button>` : '';
     return `<header class="if-analysis-head">
-      <div><h3 id="ifAnalysisTitle">AI 推理分析</h3><p role="status"${running ? ' class="if-analysis-progress"' : ''}>${description}</p></div>
+      <div class="if-analysis-heading"><span class="if-analysis-icon" aria-hidden="true">${icon('analysis', '✦')}</span>
+        <div><h3 id="ifAnalysisTitle">AI 推理分析</h3><p role="status"${running ? ' class="if-analysis-progress"' : ''}>${description}</p></div></div>
       ${controls}
     </header>`;
   }
@@ -1172,7 +1222,7 @@
       ...current,
       subscriptions: original ? current.subscriptions.map(item => item.id === rule.id ? rule : item) : [rule, ...current.subscriptions]
     }), original ? '订阅规则已更新，信息流已重新匹配。' : '订阅已创建，信息流已按规则匹配。');
-    render();
+    render({ resetFeedScroll: !original || view.subscription === rule.id });
     focusBeforeDialog = settingsDialog.open
       ? actionButton(settingsDialog, 'edit', rule.id)
       : activeGroupTab();
@@ -1203,7 +1253,7 @@
     if (typeof window.show === 'function') window.show(root.id);
     Object.assign(view, emptyFeedFilters, { subscription: '', selected: id || '' });
     setStatus(id && !hits().some(entry => entry.event.id === id) ? '这条情报未命中当前生效的订阅。' : '');
-    render();
+    render({ resetFeedScroll: true });
   }
 
   function actionButton(container, action, id) {
@@ -1236,7 +1286,7 @@
     }
     if (action === 'ruleFeed') {
       Object.assign(view, emptyFeedFilters, { subscription: rule.id, selected: '' });
-      render();
+      render({ resetFeedScroll: true });
       focusAfterSettings = activeGroupTab();
       settingsDialog.close();
       return true;
@@ -1277,8 +1327,10 @@
       openSource(sampleEvents.find(item => item.id === id));
       return;
     }
+    if (action === 'sort' && view.sort === id) return;
     setStatus('');
     if (action === 'group') view.subscription = id;
+    if (action === 'sort') view.sort = id;
     if (action === 'clear') Object.assign(view, emptyFeedFilters);
     if (action === 'event') view.selected = id;
     if (action === 'read') {
@@ -1288,9 +1340,18 @@
         read: markRead ? [...new Set([...current.read, id])] : current.read.filter(item => item !== id)
       }), markRead ? '已标为已读。' : '已标为未读。');
     }
-    render();
-    if (!button.isConnected) (actionButton(root, action, id) || activeGroupTab()).focus();
+    render({ resetFeedScroll: action === 'group' || action === 'sort' || action === 'clear' });
+    if (!button.isConnected) (actionButton(root, action, id) || activeGroupTab())?.focus({ preventScroll: true });
   });
+
+  groupTabs.addEventListener('scroll', updateGroupScrollControls, { passive: true });
+  for (const arrow of groupArrows) {
+    arrow.addEventListener('click', () => groupTabs.scrollBy({
+      left: Math.max(180, groupTabs.clientWidth * 0.65) * Number(arrow.dataset.ifScrollGroups),
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+    }));
+  }
+  new ResizeObserver(updateGroupScrollControls).observe(groupStrip);
 
   workspace.addEventListener('submit', event => {
     if (!event.target.matches('.if-filters')) return;
@@ -1300,15 +1361,15 @@
       return;
     }
     view.search = event.target.elements.search.value.trim();
-    render();
-    workspace.querySelector('input[name="search"]').focus();
+    render({ resetFeedScroll: true });
+    workspace.querySelector('input[name="search"]').focus({ preventScroll: true });
   });
 
   workspace.addEventListener('change', event => {
-    if (!event.target.matches('.if-filters > label select, .if-list-sort select')) return;
+    if (!event.target.matches('.if-filters > label select')) return;
     const { name, value } = event.target;
     view[name] = value;
-    render();
+    render({ resetFeedScroll: true });
     workspace.querySelector('select[name="' + name + '"]').focus({ preventScroll: true });
   });
 
