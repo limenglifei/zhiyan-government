@@ -244,6 +244,28 @@
   const storageKey = 'zhiyan-intelligence-feed-v2';
   const legacyStorageKey = 'zhiyan-intelligence-feed-v1';
   const emptyRule = { dimensions: {}, levels: [], sentiments: [], eventCodes: [], publicationRange: '', sourceSites: [] };
+  const additionalStarterSubscriptions = [
+    { id: 'sample-manufacturing-aid', name: '制造业财政支持与申报项目', eventCodes: ['1.2'], sourceSites: ['policy-news.example'] },
+    { id: 'sample-inspection-access', name: '工业检测机构与准入动态', eventCodes: ['1.3'], sourceSites: ['policy-news.example'] },
+    { id: 'sample-component-standards', name: '汽车电子与零部件技术标准', eventCodes: ['4.4'], sourceSites: ['industry-observer.example'] },
+    { id: 'sample-equipment-orders', name: '工业视觉与检测设备订单', eventCodes: ['7.4'], sourceSites: ['manufacturing-news.example'] },
+    { id: 'sample-energy-storage', name: '工商业储能量产与交付动态', eventCodes: ['4.2', '9.1'],
+      dimensions: { product: ['工商业储能'] }, sourceSites: ['manufacturing-news.example'] },
+    { id: 'sample-power-semiconductors', name: '车规功率器件与碳化硅进展', eventCodes: ['4.1'],
+      dimensions: { technology: ['碳化硅'] }, sourceSites: ['manufacturing-news.example'] },
+    { id: 'sample-advanced-packaging', name: '先进封装与芯粒可靠性验证', eventCodes: ['4.4', '11.4'],
+      dimensions: { technology: ['先进封装'] }, sourceSites: ['industry-observer.example'] },
+    { id: 'sample-import-export', name: '工业设备进出口与贸易合规', eventCodes: ['2.3', '2.4', '2.9'],
+      sourceSites: ['policy-news.example', 'industry-observer.example'] },
+    { id: 'sample-raw-materials', name: '关键原材料价格与汇率行情', eventCodes: ['3.2', '3.5'], sourceSites: ['industry-observer.example'] },
+    { id: 'sample-partner-investment', name: '重点企业扩产及园区战略合作', eventCodes: ['7.3', '7.5'], sourceSites: ['manufacturing-news.example'] },
+    { id: 'sample-enterprise-compliance', name: '装备制造企业经营与合规动态', eventCodes: ['8.3', '9.6', '9.7'],
+      sourceSites: ['manufacturing-news.example'] },
+    { id: 'sample-park-logistics', name: '长三角园区物流与交付动态', eventCodes: ['5.2', '6.3', '6.4'],
+      dimensions: { city: ['合肥市', '芜湖市'] }, sourceSites: ['policy-news.example', 'industry-observer.example'] }
+  ].map(rule => ({ ...emptyRule, ...rule, enabled: true, sample: true, publicationRange: '6m' }));
+  const starterGroupVersion = 2;
+  const defaultState = { subscriptions: [...starterSubscriptions, ...additionalStarterSubscriptions], read: [], starterGroupVersion };
   const icon = (name, symbol) => `<span class="if-icon" data-icon="${name}" data-symbol="${symbol}" aria-hidden="true"></span>`;
   const main = document.querySelector('.main');
   if (!main) return;
@@ -310,10 +332,19 @@
   const settingsList = settingsDialog.querySelector('.if-settings-list');
   const emptyFeedFilters = { read: '', search: '', sentiment: '', publicationRange: '', customPublicationWindow: null, publicationDraft: null, eventCodes: [] };
   const view = { ...emptyFeedFilters, subscription: '', sort: 'match', selected: '', collapsedAnalysis: new Set(), analyses: new Map(), analysisStream: null };
-  let state = readState() || { subscriptions: starterSubscriptions, read: [] };
+  let state = readState() || defaultState;
   let feedEventPicker;
   let focusBeforeDialog;
   let focusAfterSettings;
+  let scoreEntries = new Map();
+  let scoreTooltipAnchor;
+  let scoreTooltipTimer;
+  const scoreTooltip = document.createElement('div');
+  scoreTooltip.id = 'ifScoreTooltip';
+  scoreTooltip.className = 'if-score-tooltip';
+  scoreTooltip.setAttribute('role', 'tooltip');
+  scoreTooltip.hidden = true;
+  document.body.appendChild(scoreTooltip);
 
   function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -327,9 +358,16 @@
     try {
       const stored = JSON.parse(localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey));
       if (!stored || !Array.isArray(stored.subscriptions) || !Array.isArray(stored.read)) return null;
+      const subscriptions = stored.subscriptions.map(migrateSubscription).filter(isValidSubscription);
+      // Extend only the untouched prototype defaults. Editing a group clears its sample flag.
+      const hasOriginalDefaults = stored.starterGroupVersion === undefined &&
+        stored.subscriptions.length === starterSubscriptions.length && starterSubscriptions.every(
+          ({ id }) => subscriptions.some(rule => rule.id === id && rule.sample === true && rule.enabled)
+        );
       return {
-        subscriptions: stored.subscriptions.map(migrateSubscription).filter(isValidSubscription),
-        read: stored.read.filter(id => sampleEvents.some(event => event.id === id))
+        subscriptions: hasOriginalDefaults ? [...subscriptions, ...additionalStarterSubscriptions] : subscriptions,
+        read: stored.read.filter(id => sampleEvents.some(event => event.id === id)),
+        starterGroupVersion
       };
     } catch (error) {
       return null;
@@ -403,30 +441,36 @@
     return publishedAt >= cutoff.getTime() - publicationOffset && publishedAt <= now;
   }
 
-  function matchScore(event, rule, now) {
+  function matchScore(event, rule, now, components) {
     if (rule.levels.length && !rule.levels.includes(event.level)) return null;
     if (rule.sentiments.length && !rule.sentiments.includes(event.sentiment)) return null;
     if (rule.publicationRange && !publishedInRange(event.time, publicationRanges.get(rule.publicationRange), now)) return null;
     if (rule.sourceSites?.length && !rule.sourceSites.includes(eventSourceSite(event))) return null;
 
     let score = 60;
+    components?.push({ label: '基础分', points: score });
+    const addPoints = (label, points) => {
+      score += points;
+      components?.push({ label, points });
+    };
     if (rule.eventCodes.length) {
       const matches = event.subtypes.filter(code => rule.eventCodes.includes(code));
       if (!matches.length) return null;
       // A specific subtype selection contributes more than a broad event category.
-      score += 8 + Math.round(8 / Math.sqrt(rule.eventCodes.length)) + Math.min(2, matches.length - 1);
+      addPoints('事件类型匹配', 8 + Math.round(8 / Math.sqrt(rule.eventCodes.length)) + Math.min(2, matches.length - 1));
     }
     for (const [key, weight] of Object.entries(dimensionWeights)) {
       const terms = rule.dimensions[key] || [];
       if (!terms.length) continue;
       const tags = (event.tags[key] || []).map(normalize);
       const keywords = terms.map(normalize);
-      if (keywords.some(term => tags.includes(term))) score += weight;
-      else if (keywords.some(term => tags.some(tag => tag.includes(term)))) score += weight * 0.7;
+      const label = dimensions[key].label;
+      if (keywords.some(term => tags.includes(term))) addPoints(`${label}精确匹配`, weight);
+      else if (keywords.some(term => tags.some(tag => tag.includes(term)))) addPoints(`${label}部分匹配`, weight * 0.7);
       else return null;
     }
-    if (rule.levels.length) score += Math.round(4 / rule.levels.length);
-    if (rule.sentiments.length) score += Math.round(4 / rule.sentiments.length);
+    if (rule.levels.length) addPoints('影响层级匹配', Math.round(4 / rule.levels.length));
+    if (rule.sentiments.length) addPoints('舆情性质匹配', Math.round(4 / rule.sentiments.length));
     return Math.min(100, Math.round(score));
   }
 
@@ -434,8 +478,9 @@
     const enabled = state.subscriptions.filter(rule => rule.enabled);
     return sampleEvents.flatMap(event => {
       const matches = enabled.flatMap(rule => {
-        const score = matchScore(event, rule, now);
-        return score === null ? [] : [{ rule, score }];
+        const components = [];
+        const score = matchScore(event, rule, now, components);
+        return score === null ? [] : [{ rule, score, components }];
       });
       return matches.length ? [{ event, matches }] : [];
     });
@@ -474,13 +519,17 @@
   function updateGroupScrollControls() {
     const overflow = groupStrip.clientWidth > 0 && groupTabs.scrollWidth > groupStrip.clientWidth + 1;
     groupArrows.forEach(arrow => { arrow.hidden = !overflow; });
-    if (!overflow) return;
-    groupArrows[0].disabled = groupTabs.scrollLeft <= 1;
-    groupArrows[1].disabled = groupTabs.scrollLeft + groupTabs.clientWidth >= groupTabs.scrollWidth - 1;
+    const canScrollBack = overflow && groupTabs.scrollLeft > 1;
+    const canScrollForward = overflow && groupTabs.scrollLeft + groupTabs.clientWidth < groupTabs.scrollWidth - 1;
+    groupArrows[0].disabled = !canScrollBack;
+    groupArrows[1].disabled = !canScrollForward;
+    groupStrip.toggleAttribute('data-more-groups-left', canScrollBack);
+    groupStrip.toggleAttribute('data-more-groups-right', canScrollForward);
   }
 
   function renderGroupTabs(entries) {
     const scrollLeft = groupTabs.scrollLeft;
+    const previousGroup = groupTabs.querySelector('[aria-pressed="true"]')?.dataset.ifId;
     const counts = new Map([['', entries.length]]);
     for (const { matches } of entries) {
       for (const { rule } of matches) counts.set(rule.id, (counts.get(rule.id) || 0) + 1);
@@ -492,9 +541,16 @@
       </button>`).join('');
     groupTabs.scrollLeft = scrollLeft;
     updateGroupScrollControls();
+    if (previousGroup !== view.subscription) {
+      const tab = groupTabs.querySelector('[aria-pressed="true"]').getBoundingClientRect();
+      const viewport = groupTabs.getBoundingClientRect();
+      if (tab.left < viewport.left) groupTabs.scrollLeft += tab.left - viewport.left;
+      else if (tab.right > viewport.right) groupTabs.scrollLeft += tab.right - viewport.right;
+    }
   }
 
   function renderFeed(entries, now, resetFeedScroll) {
+    hideScoreTooltip();
     const listScroll = resetFeedScroll ? 0 : workspace.querySelector('.if-feed-items')?.scrollTop || 0;
     const search = normalize(view.search);
     const range = view.publicationRange === 'custom' ? null : publicationRanges.get(view.publicationRange);
@@ -514,9 +570,11 @@
       const tags = Object.values(event.tags).flat();
       if (view.read === 'unread' && isRead || view.read === 'read' && !isRead) return [];
       if (search && !normalize([event.title, event.summary, publisher(event), ...tags].join(' ')).includes(search)) return [];
-      return [{ ...entry, score: groupMatch?.score ?? Math.max(...matches.map(({ score }) => score)) }];
+      const scoreMatch = groupMatch || matches.reduce((best, match) => match.score > best.score ? match : best);
+      return [{ ...entry, scoreMatch, score: scoreMatch.score }];
     });
     visible.sort((a, b) => (view.sort === 'match' ? b.score - a.score : 0) || b.event.time.localeCompare(a.event.time));
+    scoreEntries = new Map(visible.map(entry => [entry.event.id, entry]));
     const selected = visible.find(entry => entry.event.id === view.selected) || visible[0];
     view.selected = selected?.event.id || '';
     if (view.analysisStream && view.analysisStream.eventId !== view.selected) stopAnalysisStream();
@@ -646,8 +704,67 @@
         <span class="if-event-publisher" title="${esc(publisher(event))}">${icon('publisher', '♙')}${esc(publisher(event))}</span>
       </span>
       <span class="if-event-score" data-score-tone="${tone}" style="--if-score:${score}" role="img"
-        aria-label="匹配度 ${score} 分" title="匹配度 ${score} 分，满分 100 分"><b>${score}</b></span>
+        aria-label="匹配度 ${score} 分，满分 100 分"><b>${score}</b></span>
     </button>`;
+  }
+
+  function hideScoreTooltip() {
+    clearTimeout(scoreTooltipTimer);
+    scoreTooltipAnchor?.closest('.if-event')?.removeAttribute('aria-describedby');
+    scoreTooltipAnchor = null;
+    scoreTooltip.hidden = true;
+  }
+
+  function positionScoreTooltip() {
+    if (!scoreTooltipAnchor) return;
+    if (!scoreTooltipAnchor.isConnected || !scoreTooltipAnchor.getClientRects().length) return hideScoreTooltip();
+    const anchor = scoreTooltipAnchor.getBoundingClientRect();
+    const list = scoreTooltipAnchor.closest('.if-feed-items').getBoundingClientRect();
+    const { clientWidth: width, clientHeight: height } = document.documentElement;
+    if (anchor.bottom <= Math.max(0, list.top) || anchor.top >= Math.min(height, list.bottom)) return hideScoreTooltip();
+
+    const margin = 10;
+    const gap = 9;
+    const center = anchor.left + anchor.width / 2;
+    const left = Math.max(margin, Math.min(anchor.right - scoreTooltip.offsetWidth, width - scoreTooltip.offsetWidth - margin));
+    const below = height - anchor.bottom - gap - margin;
+    const above = anchor.top - gap - margin;
+    const displayAbove = below < scoreTooltip.firstElementChild.scrollHeight && above > below;
+    scoreTooltip.dataset.side = displayAbove ? 'above' : 'below';
+    scoreTooltip.style.setProperty('--if-score-tooltip-height', `${Math.max(0, displayAbove ? above : below)}px`);
+    const top = displayAbove ? anchor.top - gap - scoreTooltip.offsetHeight : anchor.bottom + gap;
+    scoreTooltip.style.left = `${left}px`;
+    scoreTooltip.style.top = `${Math.max(margin, top)}px`;
+    scoreTooltip.style.setProperty('--if-score-tooltip-arrow', `${center - left}px`);
+  }
+
+  function showScoreTooltip(anchor) {
+    const card = anchor?.closest('.if-event');
+    const entry = scoreEntries.get(card?.dataset.ifId);
+    if (!entry) return;
+    hideScoreTooltip();
+    const { score, scoreMatch, matches } = entry;
+    const formatPoints = points => Math.round(points * 10) / 10;
+    const raw = formatPoints(scoreMatch.components.reduce((total, { points }) => total + points, 0));
+    const adjustments = raw !== score ? `<p class="if-score-tooltip-note">原始得分 ${raw}，${raw > 100 ? '封顶为 100 分' : `四舍五入为 ${score} 分`}。</p>` : '';
+    scoreTooltip.innerHTML = `<div class="if-score-tooltip-content">
+      <div class="if-score-tooltip-total"><strong>匹配总分</strong><b>${score}<small> / 100</small></b></div>
+      <dl>${scoreMatch.components.map(({ label, points }) => `<div><dt>${label}</dt><dd>${label === '基础分' ? '' : '+'}${formatPoints(points)} 分</dd></div>`).join('')}</dl>
+      ${adjustments}
+      <div class="if-score-tooltip-sources"><strong>命中订阅</strong><ul>${matches.map(match =>
+        `<li><span>${esc(match.rule.name)}${match === scoreMatch && matches.length > 1 ? ' <small>计分</small>' : ''}</span><b>${match.score} 分</b></li>`).join('')}</ul></div>
+    </div>`;
+    scoreTooltip.style.removeProperty('--if-score-tooltip-height');
+    scoreTooltipAnchor = anchor;
+    scoreTooltip.hidden = false;
+    card.setAttribute('aria-describedby', scoreTooltip.id);
+    positionScoreTooltip();
+  }
+
+  function leaveScoreTooltip(destination) {
+    if (scoreTooltip.contains(destination) || scoreTooltipAnchor?.contains(destination)) return;
+    clearTimeout(scoreTooltipTimer);
+    scoreTooltipTimer = setTimeout(hideScoreTooltip, 150);
   }
 
   function eventDetail({ event, matches }) {
@@ -1328,6 +1445,9 @@
       return;
     }
     if (action === 'sort' && view.sort === id) return;
+    const tappedScore = action === 'event' && (event.pointerType === 'touch' || event.sourceCapabilities?.firesTouchEvents)
+      ? event.target.closest('.if-event-score') : null;
+    const openTappedScore = tappedScore && tappedScore !== scoreTooltipAnchor;
     setStatus('');
     if (action === 'group') view.subscription = id;
     if (action === 'sort') view.sort = id;
@@ -1342,6 +1462,8 @@
     }
     render({ resetFeedScroll: action === 'group' || action === 'sort' || action === 'clear' });
     if (!button.isConnected) (actionButton(root, action, id) || activeGroupTab())?.focus({ preventScroll: true });
+    if (openTappedScore) showScoreTooltip(actionButton(workspace, 'event', id)?.querySelector('.if-event-score'));
+    else if (tappedScore) hideScoreTooltip();
   });
 
   groupTabs.addEventListener('scroll', updateGroupScrollControls, { passive: true });
@@ -1382,6 +1504,31 @@
     if (!event.target.closest('.if-feed-event-filter')) feedEventPicker?.dismiss();
   });
 
+  workspace.addEventListener('pointerover', event => {
+    const anchor = event.target.closest('.if-event-score');
+    if (event.pointerType !== 'touch' && anchor && !anchor.contains(event.relatedTarget)) showScoreTooltip(anchor);
+  });
+  workspace.addEventListener('pointerout', event => {
+    if (scoreTooltipAnchor?.contains(event.target) && event.pointerType !== 'touch') leaveScoreTooltip(event.relatedTarget);
+  });
+  workspace.addEventListener('focusin', event => {
+    if (event.target.matches('.if-event:focus-visible')) showScoreTooltip(event.target.querySelector('.if-event-score'));
+  });
+  workspace.addEventListener('focusout', event => {
+    if (event.target === scoreTooltipAnchor?.closest('.if-event')) hideScoreTooltip();
+  });
+  scoreTooltip.addEventListener('pointerenter', () => clearTimeout(scoreTooltipTimer));
+  scoreTooltip.addEventListener('pointerleave', event => leaveScoreTooltip(event.relatedTarget));
+  document.addEventListener('pointerdown', event => {
+    if (!scoreTooltip.contains(event.target) && !scoreTooltipAnchor?.contains(event.target)) hideScoreTooltip();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') hideScoreTooltip();
+  });
+  document.addEventListener('scroll', positionScoreTooltip, { capture: true, passive: true });
+  window.addEventListener('resize', positionScoreTooltip);
+  new MutationObserver(positionScoreTooltip).observe(root, { attributes: true, attributeFilter: ['class'] });
+
   settingsDialog.addEventListener('click', event => {
     if (event.target === settingsDialog || event.target.closest('[data-if-settings-close]')) {
       settingsDialog.close();
@@ -1409,7 +1556,7 @@
   });
   window.addEventListener('storage', event => {
     if (event.key !== storageKey && event.key !== legacyStorageKey && event.key !== null) return;
-    state = readState() || { subscriptions: starterSubscriptions, read: [] };
+    state = readState() || defaultState;
     render();
   });
 
