@@ -12,7 +12,7 @@
 
 .cq-dialog {
   width: min(1120px, calc(100% - 36px));
-  max-height: min(800px, calc(100dvh - 36px));
+  max-height: min(900px, calc(100dvh - 24px));
   margin: auto;
   padding: 0;
   border: 1px solid #dce6f3;
@@ -412,17 +412,10 @@
   overflow-wrap: anywhere;
 }
 
-.cq-issue-heading, .cq-issue-title {
+.cq-issue-heading, .cq-rationale-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.cq-issue-heading { gap: 7px 12px; }
-
-.cq-issue-title {
-  flex: 1 1 14rem;
-  min-width: 0;
   gap: 7px;
 }
 
@@ -496,7 +489,9 @@
 .cq-node-fields dd { margin: 0; }
 
 .cq-rationale { margin-top: 12px; padding-top: 9px; border-top: 1px solid #e5edf6; }
-.cq-rationale h6, .cq-node-fields h6 { margin: 0 0 5px; color: #203e61; font-size: 13px; }
+.cq-rationale-heading { margin-bottom: 5px; }
+.cq-rationale h6, .cq-node-fields h6 { margin: 0; color: #203e61; font-size: 13px; }
+.cq-node-fields h6 { margin-bottom: 5px; }
 .cq-rationale p { color: #435b75; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
 .cq-source-changes {
   display: grid;
@@ -539,9 +534,15 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   max-width: 100%;
   margin-inline-start: auto;
+  font-size: 12px;
+}
+
+.cq-dialog .cq-issue-action button {
+  min-height: 28px;
+  padding: 3px 9px;
   font-size: 12px;
 }
 
