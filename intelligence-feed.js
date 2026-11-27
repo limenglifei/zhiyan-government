@@ -530,8 +530,12 @@
     return `<option value="${esc(value)}"${value === selected ? ' selected' : ''}>${esc(label)}</option>`;
   }
 
-  function publicationRangeOptions(selected) {
-    return Array.from(publicationRanges, ([value, { label }]) => option(value, label, selected)).join('');
+  function publicationRangeOptions(selected, placeholder) {
+    return Array.from(publicationRanges, ([value, { label }]) =>
+      !value && placeholder
+        ? `<option value="" disabled${selected ? '' : ' selected'}>${esc(placeholder)}</option>`
+        : option(value, label, selected)
+    ).join('');
   }
 
   function publicationWindowMarkup() {
@@ -1066,14 +1070,15 @@
         <div class="if-dialog-body">
           <div class="if-fields">
             <label class="if-field"><span>订阅名称 <em>必填</em></span><input name="name" required maxlength="60" placeholder="如合肥先进制造动态" value="${esc(data.name)}" autofocus></label>
-            <label class="if-field"><span>发布日期范围</span><select name="publicationRange">
-              ${publicationRangeOptions(data.publicationRange)}
-            </select></label>
+            <label class="if-field"><span>发布日期范围 <em>必填</em></span><select name="publicationRange" required aria-describedby="ifRulePublicationError">
+              ${publicationRangeOptions(data.publicationRange, '请选择发布日期范围')}
+            </select><small class="if-form-error" id="ifRulePublicationError" role="alert" hidden>请选择发布日期范围。</small></label>
           </div>
-          <fieldset>
-            <legend>信源站点</legend>
-            <p class="if-help">可多选，任一站点命中即可。不选则不限。当前为演示站点。</p>
+          <fieldset aria-describedby="ifRuleSourceHint ifRuleSourceError">
+            <legend>信源站点 <em>必填</em></legend>
+            <p class="if-help" id="ifRuleSourceHint">至少选择一个站点，可多选，任一站点命中即可。当前为演示站点。</p>
             <div class="if-chips">${chips('sourceSites', siteOptions, chosenSites)}</div>
+            <p class="if-form-error if-source-error" id="ifRuleSourceError" role="alert" hidden>请至少选择一个信源站点。</p>
           </fieldset>
           <fieldset>
             <legend>订阅对象</legend>
@@ -1086,13 +1091,27 @@
             <fieldset><legend>舆情性质</legend><div class="if-chips">${chips('sentiments', sentiments.map(label => ({ code: label, label })), data.sentiments)}</div></fieldset>
           </div>
           ${eventPickerMarkup()}
-          <p class="if-form-error" role="alert" hidden></p>
+          <p class="if-form-error" data-if-rule-error role="alert" hidden></p>
         </div>
         <footer class="if-dialog-footer"><button class="if-button" type="button" data-if-close>取消</button><button class="if-button if-primary" type="submit">保存订阅</button></footer>
       </form>`;
     const form = dialog.querySelector('form');
+    const publication = form.elements.namedItem('publicationRange');
+    const publicationError = form.querySelector('#ifRulePublicationError');
+    const sourceError = form.querySelector('#ifRuleSourceError');
     const picker = bindEventPicker(form, data.eventCodes, { onClose: () => showFormError('') });
-    form.addEventListener('change', () => showFormError(''));
+    publication.addEventListener('invalid', () => {
+      publication.setAttribute('aria-invalid', 'true');
+      publicationError.hidden = false;
+    });
+    form.addEventListener('change', event => {
+      showFormError('');
+      if (event.target === publication) {
+        publication.removeAttribute('aria-invalid');
+        publicationError.hidden = true;
+      }
+      if (event.target.name === 'sourceSites' && event.target.checked) sourceError.hidden = true;
+    });
     form.addEventListener('submit', event => {
       if (picker.needsConfirmation()) {
         event.preventDefault();
@@ -1106,7 +1125,7 @@
   }
 
   function showFormError(message) {
-    const error = dialog.querySelector('.if-form-error');
+    const error = dialog.querySelector('[data-if-rule-error]');
     error.hidden = !message;
     error.textContent = message;
   }
@@ -1124,21 +1143,26 @@
     const selectedSentiments = fields.getAll('sentiments');
     const publicationRange = fields.get('publicationRange');
     const sourceSites = fields.getAll('sourceSites');
+    if (!name) {
+      showFormError('请填写订阅名称。');
+      form.elements.namedItem('name').focus();
+      return;
+    }
+    if (!publicationRange) {
+      form.elements.namedItem('publicationRange').reportValidity();
+      return;
+    }
+    if (!sourceSites.length) {
+      form.querySelector('#ifRuleSourceError').hidden = false;
+      form.querySelector('input[name="sourceSites"]')?.focus();
+      return;
+    }
     const terms = Object.fromEntries(Object.keys(dimensions).map(key => [key, splitTerms(fields.get(key))]));
     const rule = {
       id: original?.id || (window.crypto?.randomUUID?.() || 'subscription-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
       name, enabled: original?.enabled ?? true, sample: false,
       dimensions: terms, levels: selectedLevels, sentiments: selectedSentiments, eventCodes, publicationRange, sourceSites
     };
-    if (!name) {
-      showFormError('请填写订阅名称。');
-      form.elements.namedItem('name').focus();
-      return;
-    }
-    if (!publicationRange && !sourceSites.length && !eventCodes.length && !selectedLevels.length && !selectedSentiments.length && !Object.values(terms).some(values => values.length)) {
-      showFormError('请至少设置一个订阅条件。');
-      return;
-    }
     if (!isValidSubscription(rule)) {
       showFormError('订阅条件包含无法识别的选项，请检查后重试。');
       return;

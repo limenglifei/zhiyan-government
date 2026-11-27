@@ -453,7 +453,7 @@
 .if-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .if-field { min-width: 0; display: grid; gap: 5px; }
 .if-field > span { color: var(--if-ink); font-size: 13px; font-weight: 600; }
-.if-field em { color: #a13945; font-size: 11px; font-weight: 400; font-style: normal; }
+.if-field em, .if-dialog legend em { color: #a13945; font-size: 11px; font-weight: 400; font-style: normal; }
 .if-help { margin: 0 0 8px; color: var(--if-muted); font-size: 12px; line-height: 1.5; }
 .if-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .if-chip { position: relative; display: inline-flex; max-width: 100%; }
@@ -552,6 +552,7 @@
 .if-event-picker-footer .if-link:disabled { color: #687a93; opacity: .6; cursor: default; text-decoration: none; }
 .if-event-picker-footer .if-button { min-height: 31px; padding: 5px 10px; font-size: 12px; }
 .if-form-error { margin: 0; color: #a13945; font-size: 13px; }
+.if-source-error { margin-top: 8px; }
 .if-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--if-line); padding: 11px 21px; }
 
 @media (max-width: 1050px) {
