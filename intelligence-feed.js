@@ -544,7 +544,7 @@
               <span class="if-list-count">· ${visible.length} 条</span>
             </div>
             <div class="if-list-sort" role="group" aria-label="排序">
-              <button type="button" data-if-action="sort" data-if-id="match" aria-pressed="${view.sort === 'match'}">匹配度</button>
+              <button type="button" data-if-action="sort" data-if-id="match" aria-pressed="${view.sort === 'match'}">智能排序</button>
               <button type="button" data-if-action="sort" data-if-id="time" aria-pressed="${view.sort === 'time'}">最新</button>
             </div>
           </header>
