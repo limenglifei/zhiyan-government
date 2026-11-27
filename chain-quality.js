@@ -11,7 +11,13 @@
   const storageKey = 'zhiyan-government-quality-graphs-v1';
   const pdfBase = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/';
   const ocrBase = 'https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/';
-  const maxFileSize = 20 * 1024 * 1024;
+  const maxFileSize = 50 * 1024 * 1024;
+  const attachmentTypes = new Map([
+    ['pdf', 'pdf'], ['doc', 'doc'], ['docx', 'docx'], ['html', 'html'], ['htm', 'html'], ['txt', 'txt'],
+    ['jpg', 'image'], ['jpeg', 'image'], ['png', 'image'], ['webp', 'image']
+  ]);
+  const attachmentFormats = 'PDF、DOC、DOCX、HTML、TXT、JPG、JPEG、PNG 和 WebP';
+  const stageLabels = new Map(Object.entries(stages).map(([key, label]) => [label, key]));
   const savedFields = ['title', 'sub', 'nodes', 'weak', 'advantage', 'advantageSegments', 'advantageLinks', 'lead', 'linkedCompanies', 'updatedAt', 'description', 'regionScope', 'structure', 'graphNodes', 'networkSupplement', 'graphSourceNote', 'graphSources'];
   const byId = (id) => document.getElementById(id);
   const canonical = (name) => String(name || '').normalize('NFKC').toLowerCase().replace(/[\s·,，。]+/g, '');
@@ -20,7 +26,8 @@
   const isEditableName = (name) => name.length <= 40 && !/[<>＜＞\u0000-\u001f]/.test(name);
   const trimDiagramText = (name) => name.trim().replace(/(?<=\p{Script=Han})\s+(?=\p{Script=Han})/gu, '');
   const nodeKey = (node) => `${nodeStage(node)}:${canonical(node.name)}`;
-  const attachmentType = (file) => /\.pdf$/i.test(file.name) ? 'pdf' : /\.(png|jpe?g|webp)$/i.test(file.name) ? 'image' : '';
+  const extensionOf = (file) => /\.([a-z0-9]+)$/i.exec(file.name)?.[1].toLowerCase();
+  const attachmentType = (file) => attachmentTypes.get(extensionOf(file));
   const emptyReferences = () => ({ up: [], mid: [], down: [], service: [] });
   const parentLabel = (stage) => stage === 'service' ? '下游 · 配套服务' : (Object.hasOwn(stages, stage) ? stages[stage] : '未指定环节');
   const nodeType = (node) => node.nodeType || node.type || '一般节点';
@@ -132,6 +139,21 @@
       .map(({ text, bbox, confidence }) => ({ text: text.trim(), confidence, x: (bbox.x0 + bbox.x1) / 2, y: (bbox.y0 + bbox.y1) / 2 }));
   }
 
+  function addReferenceNode(result, annotations, stage, text) {
+    const value = trimDiagramText(text);
+    const attributeLabel = value.match(/[（(](?:(核心节点|一般节点|配套服务)(?:[、，,·/]\s*(强|弱|普通))?|(强|弱|普通))[）)]$/);
+    const name = (attributeLabel ? value.slice(0, attributeLabel.index) : value).trim();
+    if (name.length < 2 || name.length > 30 || !/[\p{L}]/u.test(name) || !isNodeName(name) || !isEditableName(name)) return;
+    if (/[|\[\]]|图表|^图\s*\d|产业链|资料来源|证券研究所|^来源|^[a-z\s]{1,3}$/.test(name) || stageLabels.has(canonical(name))) return;
+    if (attributeLabel?.[1] === '配套服务') stage = 'service';
+    const key = canonical(name);
+    if (!result[stage].some((item) => canonical(item) === key)) result[stage].push(name);
+    if (attributeLabel) annotations.set(`${stage}:${key}`, {
+      nodeType: stage === 'service' ? '配套服务' : attributeLabel[1],
+      strength: attributeLabel[2] || attributeLabel[3]
+    });
+  }
+
   function suggestReferenceNodes(lines, annotations) {
     const result = emptyReferences();
     const headers = Object.keys(stages).map((key) => {
@@ -144,20 +166,37 @@
     if (spread(axis) < 30) return result;
     const ordered = headers.sort((a, b) => a[axis] - b[axis]);
     lines.forEach((line) => {
-      const text = trimDiagramText(line.text);
-      const attributeLabel = text.match(/[（(](?:(核心节点|一般节点|配套服务)(?:[、，,·/]\s*(强|弱|普通))?|(强|弱|普通))[）)]$/);
-      const name = (attributeLabel ? text.slice(0, attributeLabel.index) : text).trim();
-      if (name.length < 2 || name.length > 30 || !/[\p{L}]/u.test(name) || !isNodeName(name) || !isEditableName(name)) return;
-      if (line.confidence < 55 || /[|\[\]]|图表|^图\s*\d|产业链|资料来源|证券研究所|^来源|^[a-z\s]{1,3}$/.test(name) || Object.values(stages).includes(canonical(name))) return;
+      if (line.confidence < 55) return;
       if (axis === 'x' && line.y <= Math.min(...headers.map((item) => item.y))) return;
       const header = ordered.reduce((nearest, item) => Math.abs(item[axis] - line[axis]) < Math.abs(nearest[axis] - line[axis]) ? item : nearest);
-      const stage = attributeLabel?.[1] === '配套服务' ? 'service' : header.key;
-      if (!result[stage].some((item) => canonical(item) === canonical(name))) result[stage].push(name);
-      if (attributeLabel) annotations.set(`${stage}:${canonical(name)}`, {
-        nodeType: stage === 'service' ? '配套服务' : attributeLabel[1],
-        strength: attributeLabel[2] || attributeLabel[3]
-      });
+      addReferenceNode(result, annotations, header.key, line.text);
     });
+    return result;
+  }
+
+  function documentReferenceNodes(lines, annotations) {
+    const result = emptyReferences();
+    let stage;
+    let consecutiveHeadings = 0;
+    for (const line of lines) {
+      let text = line.replace(/^(?:#{1,6}\s*|[•●·-]\s*|[\d一二三四五六七八九十]+[、.)．）]\s*)/, '').trim();
+      if (/^(?:来源|资料来源|参考资料|参考文献|附录|说明)\s*(?:[：:]|$)/.test(text)) {
+        stage = null;
+        consecutiveHeadings = 0;
+        continue;
+      }
+      const heading = /^(上游|中游|下游|配套服务)(?:环节)?(?:\s*[：:]\s*(.*))?$/.exec(text);
+      if (heading) {
+        text = heading[2] || '';
+        // Successive column headers carry no reliable node-to-stage mapping after flattening.
+        consecutiveHeadings = text ? 0 : consecutiveHeadings + 1;
+        stage = consecutiveHeadings < 3 ? stageLabels.get(heading[1]) : null;
+      }
+      if (!text) continue;
+      consecutiveHeadings = 0;
+      if (!stage) continue;
+      for (const node of text.split(/[、；;](?![^（(]*[）)])/)) addReferenceNode(result, annotations, stage, node);
+    }
     return result;
   }
 
@@ -339,8 +378,8 @@
             </div>
             <p class="cq-note">联网搜索为原型配置，当前使用本地规则与图谱识别质检。</p>
             <h3>标准产业链图谱 <small>选填</small></h3>
-            <p>支持 PNG、JPG、WebP 和 PDF，单个文件不超过 20 MB。</p>
-            <label class="cq-upload"><span>上传参照图谱</span><input type="file" id="chainQualityFile" accept=".png,.jpg,.jpeg,.webp,.pdf"></label>
+            <p>支持 ${attachmentFormats} 等格式，单个文件不超过 50 MB。</p>
+            <label class="cq-upload"><span>上传参照图谱</span><input type="file" id="chainQualityFile" accept="${[...attachmentTypes.keys()].map((extension) => '.' + extension).join(',')}"></label>
             <p class="cq-feedback cq-error" id="chainQualityFileError" role="status"></p>
             <div class="cq-attachment" hidden>
               <div><a id="chainQualityAttachmentLink" target="_blank" rel="noopener noreferrer"></a><button type="button" id="chainQualityRemove" class="cq-link">移除</button></div>
@@ -361,7 +400,7 @@
             <p class="cq-results-note cq-action-status" id="chainQualityActionStatus" role="status" hidden></p>
             <div class="cq-dimensions" id="chainQualityDimensions" role="group" aria-label="八类质检结果" hidden></div>
             <button type="button" class="cq-link cq-show-all" id="chainQualityShowAll" hidden>查看全部建议</button>
-            <div class="cq-issues" id="chainQualityIssues"></div>
+            <div class="cq-issues" id="chainQualityIssues" role="region" aria-label="质检建议清单" tabindex="-1"></div>
           </section>
         </div>
         <footer class="cq-foot"><p>画布修正需保存到产业链库后生效。</p><button class="primary" type="button" id="chainQualityApplyAll" disabled>全部修正</button></footer>
@@ -477,9 +516,11 @@
       actionStatus.textContent = message;
     }
 
-    function renderResults() {
+    function renderResults({ resetListScroll = false } = {}) {
       const examples = resultsMode === 'examples';
       const results = resultsForView();
+      const scrollTop = resetListScroll ? 0 : issuesMount.scrollTop;
+      issuesMount.tabIndex = results?.length ? 0 : -1;
       const activeDimension = selectedDimensions[resultsMode];
       modes.querySelectorAll('[data-cq-mode]').forEach((button) => {
         button.setAttribute('aria-pressed', String(button.dataset.cqMode === resultsMode));
@@ -525,6 +566,7 @@
         items.forEach(({ issue, index }) => list.append(renderIssue(issue, index)));
         issuesMount.append(list);
       });
+      issuesMount.scrollTop = scrollTop;
     }
 
     function emptyResult() {
@@ -905,21 +947,21 @@
       if (!button || button.dataset.cqMode === resultsMode) return;
       resultsMode = button.dataset.cqMode;
       setActionStatus('');
-      renderResults();
+      renderResults({ resetListScroll: true });
     });
     dimensionMount.addEventListener('click', (event) => {
       const button = event.target.closest('[data-cq-dimension]');
       if (!button || !resultsForView()) return;
       const kind = button.dataset.cqDimension;
       selectedDimensions[resultsMode] = selectedDimensions[resultsMode] === kind ? '' : kind;
-      renderResults();
+      renderResults({ resetListScroll: true });
       dimensionMount.querySelector(`[data-cq-dimension="${kind}"]`).focus({ preventScroll: true });
     });
     showAll.addEventListener('click', () => {
       if (!resultsForView()) return;
       const previous = selectedDimensions[resultsMode];
       selectedDimensions[resultsMode] = '';
-      renderResults();
+      renderResults({ resetListScroll: true });
       dimensionMount.querySelector(`[data-cq-dimension="${previous}"]`)?.focus({ preventScroll: true });
     });
     applyAll.addEventListener('click', chooseAll);
@@ -936,7 +978,7 @@
       const type = attachmentType(file);
       const error = byId('chainQualityFileError');
       if (!type || file.size > maxFileSize || !file.size) {
-        error.textContent = '请选择非空的 PNG、JPG、WebP 或 PDF 文件，大小不超过 20 MB。';
+        error.textContent = file.size > maxFileSize ? '单个文件不超过 50 MB。' : `请选择非空的 ${attachmentFormats} 格式文件。`;
         input.value = '';
         return;
       }
@@ -945,10 +987,14 @@
       invalidateReport();
       error.textContent = '';
       attachment = file;
-      attachmentUrl = URL.createObjectURL(new Blob([file], { type: type === 'pdf' ? 'application/pdf' : `image/${/\.jpe?g$/i.test(file.name) ? 'jpeg' : file.name.split('.').pop().toLowerCase()}` }));
+      const mime = type === 'pdf' ? 'application/pdf' : type === 'image'
+        ? `image/${extensionOf(file).replace(/^jpg$/, 'jpeg')}` : 'application/octet-stream';
+      attachmentUrl = URL.createObjectURL(new Blob([file], { type: mime }));
       const link = byId('chainQualityAttachmentLink');
       link.textContent = file.name;
       link.href = attachmentUrl;
+      if (type === 'pdf' || type === 'image') link.removeAttribute('download');
+      else link.download = file.name;
       dialog.querySelector('.cq-attachment').hidden = false;
       dialog.querySelector('.cq-page').hidden = type !== 'pdf';
       byId('chainQualityPage').value = '1';
@@ -974,17 +1020,26 @@
       readStatus.textContent = '正在读取附件并加载识别组件…';
       const onProgress = (progress) => { if (run === recognitionRun) readStatus.textContent = `正在识别图谱文字 · ${progress}%`; };
       try {
-        const lines = type === 'pdf' ? await readPdf(file, pageNumber, onProgress) : await readImage(await imageToCanvas(file), onProgress);
+        const isDocument = type !== 'pdf' && type !== 'image';
+        let lines;
+        if (type === 'pdf') lines = await readPdf(file, pageNumber, onProgress);
+        else if (type === 'image') lines = await readImage(await imageToCanvas(file), onProgress);
+        else {
+          const reader = window.zhiyanChainQualityDocument;
+          if (!reader) throw new Error('图谱文档读取组件未加载，请刷新后重试');
+          lines = await reader.readLines(file, type);
+        }
         if (run !== recognitionRun) return false;
-        references = suggestReferenceNodes(lines, annotations);
+        references = isDocument ? documentReferenceNodes(lines, annotations) : suggestReferenceNodes(lines, annotations);
         referencePage = pageNumber;
         byId('chainQualityRaw').hidden = !lines.length;
-        byId('chainQualityRawText').textContent = lines.map((line) => line.text).join('\n');
+        byId('chainQualityRawText').textContent = (isDocument ? lines : lines.map((line) => line.text)).join('\n');
         const count = Object.values(references).flat().length;
         readStatus.textContent = count ? `已识别 ${count} 个图谱节点，将自动参与质检比对。` :
           (lines.length ? '已提取文字，暂无法识别节点所属环节，将进行结构质检。' : '未识别到图谱文字，将进行结构质检。');
       } catch (error) {
-        if (run === recognitionRun) readStatus.textContent = `${error.message.startsWith('PDF 共 ') ? error.message : '暂未识别出图谱文字'}。本次将进行结构质检。`;
+        const message = error instanceof Error ? error.message.replace(/[。！？]+$/, '') : '';
+        if (run === recognitionRun) readStatus.textContent = `${message.startsWith('PDF 共 ') || (type !== 'pdf' && type !== 'image' && message) ? message : '暂未识别出图谱文字'}。本次将进行结构质检。`;
       } finally {
         if (run === recognitionRun) {
           reading = false;

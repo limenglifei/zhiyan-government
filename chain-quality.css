@@ -83,22 +83,34 @@
 .cq-body {
   display: grid;
   grid-template-columns: minmax(245px, 0.82fr) minmax(0, 1.65fr);
+  grid-template-rows: minmax(0, 1fr);
   flex: 1 1 auto;
   min-height: min(440px, 50vh);
-  overflow: auto;
+  overflow: hidden;
 }
 
 .cq-input, .cq-results {
   min-width: 0;
+  min-height: 0;
   padding: 22px 24px;
 }
 
 .cq-input {
+  overflow: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid #e5edf6;
   background: #f7faff;
   font-size: 13px;
   line-height: 1.6;
 }
+
+.cq-results {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cq-results > :not(.cq-issues) { flex: none; }
 
 .cq-settings {
   display: grid;
@@ -377,7 +389,19 @@
   gap: 10px;
 }
 
-.cq-issues { margin-top: 16px; row-gap: 18px; }
+.cq-issues {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 16px;
+  align-content: start;
+  row-gap: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.cq-issues:focus-visible { outline: 2px solid #307fd3; outline-offset: 2px; }
 .cq-result-group > h4 { color: #203e61; font-size: 14px; }
 
 .cq-issue {
@@ -534,13 +558,14 @@
 
 @media (max-width: 700px) {
   .cq-dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); }
-  .cq-body { grid-template-columns: minmax(0, 1fr); }
-  .cq-input { border-right: 0; border-bottom: 1px solid #e5edf6; }
+  .cq-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .cq-input { max-height: min(26dvh, 215px); border-right: 0; border-bottom: 1px solid #e5edf6; }
   .cq-head, .cq-foot, .cq-input, .cq-results { padding: 13px 16px; }
   .cq-head h2 { font-size: 19px; }
   .cq-issue { padding: 10px; }
 }
 
 @media (max-width: 430px) {
+  .cq-dimensions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cq-comparison :is(th, td) { padding-inline: 6px; }
 }

@@ -385,7 +385,7 @@
     catch { return new TextDecoder('gb18030', { fatal: true }).decode(bytes); }
   }
 
-  function findDocumentEntry(data) {
+  function findDocumentEntry(data, xmlLimit) {
     const view = new DataView(data);
     let end = view.byteLength - 22;
     const minimum = Math.max(0, end - 65535);
@@ -408,7 +408,7 @@
         const compressedSize = view.getUint32(entry + 20, true);
         const expandedSize = view.getUint32(entry + 24, true);
         const local = view.getUint32(entry + 42, true);
-        if (flags & 1 || expandedSize > maxXmlBytes || local + 30 > entry || view.getUint32(local, true) !== 0x04034b50) throw new Error('DOCX 正文受到保护、格式异常或超出读取上限。');
+        if (flags & 1 || expandedSize > xmlLimit || local + 30 > entry || view.getUint32(local, true) !== 0x04034b50) throw new Error('DOCX 正文受到保护、格式异常或超出读取上限。');
         const offset = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
         if (offset + compressedSize > entry) throw new Error('DOCX 正文的压缩数据不完整。');
         return { method, expandedSize, compressed: new Uint8Array(data, offset, compressedSize) };
@@ -437,8 +437,8 @@
     return output;
   }
 
-  async function textFromDocx(data) {
-    const content = await decompressDocument(findDocumentEntry(data));
+  async function textFromDocx(data, xmlLimit = maxXmlBytes) {
+    const content = await decompressDocument(findDocumentEntry(data, xmlLimit));
     const source = new TextDecoder('utf-8', { fatal: true }).decode(content);
     if (/<!DOCTYPE\b/i.test(source)) throw new Error('DOCX 正文包含不支持的 XML 文档类型。');
     const document = new DOMParser().parseFromString(source, 'application/xml');
@@ -595,5 +595,9 @@
   }
 
   const policyTags = policyTagRules.map(([label, pattern]) => ({ label, pattern: pattern.source, version: metadata.mappingVersion }));
-  window.zhiyanRiskData = { scenarios, metrics, interactions, levels, evaluatePolicy, readPolicyFile, policyExamples, policyTypes, policyTags, metadata };
+  const documentText = Object.freeze({
+    decode: textFromBytes,
+    readDocx: (data) => textFromDocx(data, 16 * 1024 * 1024)
+  });
+  window.zhiyanRiskData = { scenarios, metrics, interactions, levels, evaluatePolicy, readPolicyFile, policyExamples, policyTypes, policyTags, metadata, documentText };
 })();
