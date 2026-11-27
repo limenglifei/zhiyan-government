@@ -39,9 +39,9 @@
     const strength = attributes?.strength || '普通';
     return {
       kind: 'add', action: 'add', stage, name, nodeType: type, strength, basis,
-      title: name ? `新增建议 · ${name}` : `补充${parentLabel(stage)}节点`,
-      detail: name ? '参照图谱列出了该节点。确认适用后可加入当前骨架，分类和强弱可在画布内调整。' :
-        '当前骨架缺少这一环节的有效节点，可按产业范围在画布内补录。',
+      title: name ? `新增${name}` : `补充${parentLabel(stage)}节点`,
+      detail: name ? '该节点尚未纳入当前骨架，核实适用范围后可新增。' :
+        '当前骨架缺少这一环节的有效节点，建议补录。',
       label: name ? '加入画布' : '进入新增',
       changes: [...nodeChanges(null, { name: name || '在画布填写', nodeType: type, strength }),
         { label: '挂靠父级', suggestion: parentLabel(stage) }]
@@ -57,7 +57,7 @@
     Object.keys(stages).forEach((stage) => {
       if (stage === 'service' || nodes.some((node) => nodeStage(node) === stage && isNodeName(node.name))) return;
       if (references[stage].length) return;
-      issues.push(addition(stage, null, '骨架环节覆盖'));
+      issues.push(addition(stage, null, '画布环节检查'));
     });
 
     nodes.forEach((node, index) => {
@@ -75,7 +75,7 @@
         const sameType = nodeType(first) === nodeType(node);
         const sameStrength = nodeStrength(first) === nodeStrength(node);
         const removable = sameType && sameStrength && (first.name === name || !hasLinks(name));
-        issues.push({ kind: 'delete', action: removable ? 'delete' : 'review', index, stage, title: `删除建议 · ${name}`,
+        issues.push({ kind: 'delete', action: removable ? 'delete' : 'review', index, stage, title: `核对重复节点「${name}」`,
           detail: removable ? `同一环节已有「${first.name}」，可移除重复项。` : '同名节点的类型、强弱或关联企业有所不同，需核对后再处理。',
           basis: '同环节同名检查', label: removable ? '移除重复项' : '定位节点',
           changes: [...nodeChanges(node, {}), { label: '挂靠父级', current: parentLabel(stage) }] });
@@ -91,8 +91,8 @@
       if (nameChanged || attributesChanged) {
         const linked = nameChanged && hasLinks(name);
         issues.push({ kind: 'revise', action: linked ? 'review' : 'correct', index, stage, proposed, basis: evidence,
-          title: `属性修正建议 · ${name}`, detail: linked ? '规范名称有差异，请一并核对企业挂靠。' :
-            '对照同一环节的图谱节点，可统一名称或采用图谱中明确标注的类型和强弱。',
+          title: `修正「${name}」的属性`, detail: linked ? '建议统一名称前先核对关联企业。' :
+            '建议同步同环节节点的名称或已标注的属性。',
           label: linked ? '定位节点' : (attributesChanged ? '应用属性修正' : '应用名称修正'), changes: nodeChanges(node, proposed) });
         return;
       }
@@ -101,7 +101,7 @@
       const confirmedParts = parts.every((part) => references[stage].some((value) => canonical(value) === canonical(part)));
       const linked = hasLinks(name);
       const splitProposal = { name: parts.join('、'), nodeType: nodeType(node), strength: nodeStrength(node) };
-      issues.push({ kind: 'revise', action: linked ? 'review' : 'split', index, stage, parts, title: `拆解建议 · ${name}`,
+      issues.push({ kind: 'revise', action: linked ? 'review' : 'split', index, stage, parts, title: `拆解「${name}」`,
         detail: linked ? '当前节点有关联企业，拆解前请核对企业挂靠。' : '拆解后沿用原环节和节点属性，已有同名节点会保留。',
         basis: confirmedParts ? evidence : '节点名称粒度检查', label: linked ? '定位节点' : '拆解为独立节点',
         changes: nodeChanges(node, splitProposal) });
@@ -446,8 +446,7 @@
       const linkedCompanies = Array.isArray(activeRow?.linkedCompanies) ? activeRow.linkedCompanies : [];
       const results = reviewGraph(graphBuilderNodes, references, annotations, evidence, linkedCompanies).concat(
         window.zhiyanChainQualityMetadata.review({
-          row: reviewRow, nodes: graphBuilderNodes, sourceNote: reviewRow?.graphSourceNote,
-          attachmentName: attachment?.name, attachmentMatched: referenceCount > 0, linkedCompanies
+          row: reviewRow, nodes: graphBuilderNodes, sourceNote: reviewRow?.graphSourceNote, linkedCompanies
         })
       );
       currentReport = { fingerprint: JSON.stringify(graphBuilderNodes), results, model: qualityModel, webEnabled: web.checked };
@@ -535,9 +534,36 @@
       return empty;
     }
 
+    function renderSourceChanges(changes) {
+      const list = document.createElement('ul');
+      list.className = 'cq-source-changes';
+      list.setAttribute('aria-label', '新闻资讯变更明细');
+      for (const { sourceAction, source } of changes) {
+        const row = document.createElement('li');
+        const action = document.createElement('strong');
+        action.textContent = sourceAction === 'add' ? '新增新闻资讯' : '删除新闻资讯';
+        const fields = document.createElement('dl');
+        for (const [label, value] of [['标题', source.title], ['发布机构', source.publisher], ['时间', source.publishedAt]]) {
+          const field = document.createElement('div');
+          const name = document.createElement('dt');
+          const item = document.createElement('dd');
+          name.textContent = label;
+          item.textContent = value || '—';
+          field.append(name, item);
+          fields.append(field);
+        }
+        row.append(action, fields);
+        list.append(row);
+      }
+      return list;
+    }
+
     function renderIssueValues(issue) {
       const changes = issue.changes?.length ? issue.changes : [{}];
       const shownValue = (value) => value == null || value === '' ? '—' : value;
+      if (issue.kind === 'source' && changes.every(({ sourceAction, source }) => source && ['add', 'delete'].includes(sourceAction))) {
+        return renderSourceChanges(changes);
+      }
       if (issue.kind === 'add' || issue.kind === 'delete') {
         const adding = issue.kind === 'add';
         const fields = document.createElement('section');
@@ -586,21 +612,17 @@
         <h5></h5>
         <div class="cq-rationale" role="group" aria-label="修改理由和依据">
           <h6>修改理由和依据</h6>
-          <dl>
-            <div><dt>修改理由</dt><dd class="cq-reason"></dd></div>
-            <div><dt>依据</dt><dd><span class="cq-basis"></span><span class="cq-review-state" hidden>待核验</span></dd></div>
-          </dl>
+          <p></p>
         </div>`;
       item.querySelector('.cq-issue-kind').textContent = dimensions.find(([kind]) => kind === issue.kind)?.[1] || '';
       const stage = item.querySelector('.cq-issue-stage');
       stage.hidden = !issue.stage;
       stage.textContent = parentLabel(issue.stage);
-      item.querySelector('h5').textContent = issue.title;
+      item.querySelector('h5').textContent = '修改建议：' + issue.title.replace(/^修改建议[：:]\s*/, '');
       const basis = String(issue.basis ?? '').trim();
-      item.querySelector('.cq-reason').textContent = issue.detail || '待补充';
-      item.querySelector('.cq-basis').textContent = basis || '未提供依据';
-      item.querySelector('.cq-review-state').hidden = Boolean(basis)
-        && issue.action !== 'review' && !['enterprise', 'source'].includes(issue.kind);
+      const detail = String(issue.detail ?? '').trim().replace(/[。！？.!?]+$/, '') || '需补充具体修改理由';
+      const context = basis ? '根据' + basis + '，' : '现有材料缺少可核验依据，';
+      item.querySelector('.cq-rationale p').textContent = (issue.reviewStatus ? '' : context) + detail + '。';
 
       item.append(renderIssueValues(issue));
       const footer = document.createElement('div');
