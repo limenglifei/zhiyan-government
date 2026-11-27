@@ -33,6 +33,58 @@
   const nodeType = (node) => node.nodeType || node.type || '一般节点';
   const nodeStrength = (node) => node.strength || '普通';
 
+  const nodeFieldLabels = ['子节点名称', '节点类型', '节点强弱', '挂靠父级'];
+  const comparisonLabels = {
+    advantage: '优势环节描述', weak: '薄弱环节描述', enterprise: '链主及重点企业',
+    structure: '产业链结构描述', source: '来源概述'
+  };
+  const isDisplayValue = (value) => value === null || typeof value === 'string';
+  const isCardObject = (value) => value && typeof value === 'object' && !Array.isArray(value);
+  const hasDisplayFields = (record, fields) => isCardObject(record) && fields.every((field) => isDisplayValue(record[field]));
+
+  function localizedCardStage(fields) {
+    const parent = typeof fields['挂靠父级'] === 'string' ? fields['挂靠父级'].trim() : '';
+    if (fields['节点类型'] === '配套服务' || /^下游\s*·\s*配套服务/.test(parent)) return 'service';
+    return Object.keys(stages).find((stage) => parent.startsWith(stages[stage]));
+  }
+
+  function localizedCard(issue) {
+    const kind = dimensions.find(([, label]) => label === issue['建议类型'])?.[0];
+    const title = issue['处理建议标题'];
+    const rationale = issue['理由与依据'];
+    if (!kind || typeof title !== 'string' || !title.trim() || typeof rationale !== 'string' || !rationale.trim()) return null;
+
+    if (kind === 'add' || kind === 'delete') {
+      if (!hasDisplayFields(issue, nodeFieldLabels)) return null;
+      const changes = nodeFieldLabels.map((label) => kind === 'add'
+        ? { label, current: null, suggestion: issue[label] } : { label, current: issue[label], suggestion: null });
+      return { kind, title, rationale, stage: localizedCardStage(issue), changes };
+    }
+
+    const current = issue['原先是什么'];
+    const suggestion = issue['修改后是什么'];
+    if (kind === 'revise') {
+      const fields = nodeFieldLabels.slice(0, 3);
+      if (!hasDisplayFields(current, fields) || !hasDisplayFields(suggestion, fields)) return null;
+      const parentLabel = nodeFieldLabels[3];
+      if (isDisplayValue(current[parentLabel]) || isDisplayValue(suggestion[parentLabel])) fields.push(parentLabel);
+      const changes = fields.map((label) => ({ label, current: current[label] ?? null, suggestion: suggestion[label] ?? null }));
+      return { kind, title, rationale, stage: localizedCardStage(suggestion) || localizedCardStage(current), changes };
+    }
+
+    if (kind === 'source' && (Object.hasOwn(issue, '新增新闻资讯') || Object.hasOwn(issue, '删除新闻资讯'))) {
+      const groups = [['add', issue['新增新闻资讯']], ['delete', issue['删除新闻资讯']]];
+      const changes = groups.flatMap(([sourceAction, entries]) => (Array.isArray(entries) ? entries : [])
+        .filter((entry) => hasDisplayFields(entry, ['标题', '发布机构', '时间']))
+        .map((entry) => ({
+          sourceAction, source: { title: entry['标题'], publisher: entry['发布机构'], publishedAt: entry['时间'] }
+        })));
+      return changes.length ? { kind, title, rationale, changes } : null;
+    }
+    return isDisplayValue(current) && isDisplayValue(suggestion)
+      ? { kind, title, rationale, changes: [{ label: comparisonLabels[kind], current, suggestion }] } : null;
+  }
+
   function nodeChanges(current, proposed) {
     return [
       ['子节点名称', current?.name, proposed.name],
@@ -496,8 +548,16 @@
       renderResults();
     }
 
+    const localizedCards = new WeakMap();
     function resultsForView() {
-      return resultsMode === 'examples' ? window.zhiyanChainQualityExamples : currentReport?.results;
+      const results = resultsMode === 'examples' ? window.zhiyanChainQualityExamples : currentReport?.results;
+      if (!Array.isArray(results)) return undefined;
+      return results.map((issue) => {
+        if (!isCardObject(issue)) return null;
+        if (!Object.hasOwn(issue, '建议类型')) return dimensions.some(([kind]) => issue.kind === kind) ? issue : null;
+        if (!localizedCards.has(issue)) localizedCards.set(issue, localizedCard(issue));
+        return localizedCards.get(issue);
+      }).filter(Boolean);
     }
 
     function decisionKey(issue) {
@@ -663,7 +723,7 @@
       const basis = String(issue.basis ?? '').trim();
       const detail = String(issue.detail ?? '').trim().replace(/[。！？.!?]+$/, '') || '需补充具体修改理由';
       const context = basis ? '根据' + basis + '，' : '现有材料缺少可核验依据，';
-      rationale.querySelector('p').textContent = (issue.reviewStatus ? '' : context) + detail + '。';
+      rationale.querySelector('p').textContent = issue.rationale ?? ((issue.reviewStatus ? '' : context) + detail + '。');
 
       const actions = document.createElement('div');
       actions.className = 'cq-issue-action';
@@ -802,7 +862,7 @@
         return;
       }
       if (!validateReport()) return;
-      const pending = currentReport.results
+      const pending = resultsForView()
         .map((issue) => ({ issue, key: decisionKey(issue) }))
         .filter(({ key }) => !reportChoices.has(key));
       const canvas = pending.filter(({ issue }) => canApplyToCanvas(issue))
