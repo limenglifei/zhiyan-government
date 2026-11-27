@@ -388,10 +388,17 @@
   overflow-wrap: anywhere;
 }
 
-.cq-issue-heading {
+.cq-issue-heading, .cq-issue-title {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.cq-issue-heading { gap: 7px 12px; }
+
+.cq-issue-title {
+  flex: 1 1 14rem;
+  min-width: 0;
   gap: 7px;
 }
 
@@ -509,7 +516,8 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 9px;
+  max-width: 100%;
+  margin-inline-start: auto;
   font-size: 12px;
 }
 

@@ -606,7 +606,7 @@
       item.dataset.cqKind = issue.kind;
       item.innerHTML = `
         <header class="cq-issue-heading">
-          <h5></h5><span class="cq-issue-stage"></span>
+          <div class="cq-issue-title"><h5></h5><span class="cq-issue-stage"></span></div>
         </header>
         <div class="cq-rationale" role="group" aria-label="理由与依据">
           <h6>理由与依据</h6>
@@ -622,8 +622,8 @@
       const context = basis ? '根据' + basis + '，' : '现有材料缺少可核验依据，';
       rationale.querySelector('p').textContent = (issue.reviewStatus ? '' : context) + detail + '。';
 
-      const footer = document.createElement('div');
-      footer.className = 'cq-issue-action';
+      const actions = document.createElement('div');
+      actions.className = 'cq-issue-action';
       function decisionButton(action, label, className) {
         const button = document.createElement('button');
         button.type = 'button';
@@ -642,13 +642,14 @@
         const confirmed = resultsMode === 'examples' ? '已采纳 · 示例' :
           (issue.action === 'sync' ? '已采纳 · 保存画布后生效' : '已采纳 · 待人工核验');
         state.textContent = decision === 'deferred' ? '不采纳' : confirmed;
-        footer.append(state);
+        actions.append(state);
       } else {
         const confirm = decisionButton('confirm', '采纳', 'primary cq-decision-confirm');
         if (issue.label) confirm.title = issue.label;
-        footer.append(confirm, decisionButton('defer', '不采纳', 'secondary cq-decision-defer'));
+        actions.append(confirm, decisionButton('defer', '不采纳', 'secondary cq-decision-defer'));
       }
-      item.append(renderIssueValues(issue), footer, rationale);
+      item.querySelector('.cq-issue-heading').append(actions);
+      item.append(renderIssueValues(issue), rationale);
       return item;
     }
 
